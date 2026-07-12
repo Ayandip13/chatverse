@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #6366F1;
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary: #EC4899;
+  --color-secondary-foreground: #FFFFFF;
+  --color-accent: #8B5CF6;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-info: #3B82F6;
+  
+  --color-background-light: #F8FAFC;
+  --color-background-dark: #0F172A;
+  --color-surface-light: #FFFFFF;
+  --color-surface-dark: #1E293B;
+  --color-border-light: #E2E8F0;
+  --color-border-dark: #334155;
+  --color-textMain-light: #0F172A;
+  --color-textMain-dark: #F8FAFC;
+  --color-textSecondary-light: #475569;
+  --color-textSecondary-dark: #94A3B8;
+  --color-textMuted-light: #94A3B8;
+  --color-textMuted-dark: #64748B;
+  --color-placeholder-light: #CBD5E1;
+  --color-placeholder-dark: #475569;
+
+  --font-sans: "Inter", sans-serif;
+
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-pill: 9999px;
+
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+@layer base {
+  body {
+    @apply bg-background-light text-textMain-light transition-colors duration-200;
+  }
+  
+  .dark body {
+    @apply bg-background-dark text-textMain-dark;
+  }
+}

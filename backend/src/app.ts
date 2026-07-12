@@ -15,7 +15,19 @@ const app: Application = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: envConfig.FRONTEND_URL,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      const allowedOrigins = envConfig.FRONTEND_URL.split(',').map(u => u.trim());
+      if (allowedOrigins.indexOf(origin) === -1) {
+        // Fallback for local development or wildcards
+        if (envConfig.FRONTEND_URL === '*' || allowedOrigins.includes('*')) {
+           return callback(null, true);
+        }
+        const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+        return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    },
     credentials: true,
   })
 );

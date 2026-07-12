@@ -1,6 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 import { IUser } from '@/types/models.type';
-import { Role, BoyStatus, GirlStatus } from '@/constants/enums.constant';
+import { Role, BoyStatus, GirlStatus, AdminStatus } from '@/constants/enums.constant';
 
 const UserSchema = new Schema<IUser>(
   {
@@ -27,6 +27,9 @@ const UserSchema = new Schema<IUser>(
       required: true,
       validate: {
         validator: function (v: string) {
+          if (this.role === Role.ADMIN) {
+            return Object.values(AdminStatus).includes(v as AdminStatus);
+          }
           if (this.role === Role.BOY) {
             return Object.values(BoyStatus).includes(v as BoyStatus);
           }

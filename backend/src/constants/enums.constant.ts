@@ -1,6 +1,7 @@
 export enum Role {
   BOY = 'BOY',
   GIRL = 'GIRL',
+  ADMIN = 'ADMIN',
 }
 
 export enum BoyStatus {
@@ -15,6 +16,11 @@ export enum GirlStatus {
   REJECTED = 'REJECTED',
   SUSPENDED = 'SUSPENDED',
   BANNED = 'BANNED',
+}
+
+export enum AdminStatus {
+  ACTIVE = 'ACTIVE',
+  SUSPENDED = 'SUSPENDED',
 }
 
 export enum ChatRequestStatus {

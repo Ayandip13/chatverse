@@ -8,7 +8,7 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('15m'),
   JWT_REFRESH_SECRET: z.string().min(1, 'JWT Refresh Secret is required'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
-  FRONTEND_URL: z.string().url().default('http://localhost:3000'),
+  FRONTEND_URL: z.string().default('http://localhost:3000'),
 });
 
 const parseEnv = () => {
