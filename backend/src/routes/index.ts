@@ -7,6 +7,8 @@ import adminRoutes from '@/api/admin/admin.route';
 import chatRequestRoutes from '@/api/chat-requests/chatRequest.route';
 import notificationRoutes from '@/api/notifications/notification.route';
 import reportRoutes from '@/api/reports/report.route';
+import girlsRoutes from '@/api/girls/girls.route';
+import chatRoutes from '@/api/chats/chat.route';
 
 const router = Router();
 
@@ -19,5 +21,7 @@ router.use('/admin', adminRoutes);
 router.use('/chat-requests', chatRequestRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/reports', reportRoutes);
+router.use('/girls', girlsRoutes);
+router.use('/chats', chatRoutes);
 
 export default router;

@@ -116,6 +116,8 @@ To ensure frontend predictability, every response uses a strict JSON envelope.
 ### 4.6 Chat APIs
 - **GET `/api/v1/chats`**
   - **Purpose:** List active or historical chats.
+- **GET `/api/v1/chats/:id`**
+  - **Purpose:** Get chat details and metadata.
 - **GET `/api/v1/chats/:id/messages`**
   - **Purpose:** Paginated chat history (REST fallback/sync for Socket.IO).
 - **POST `/api/v1/chats/:id/end`**
