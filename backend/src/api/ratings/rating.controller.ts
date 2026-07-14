@@ -8,11 +8,14 @@ import mongoose from 'mongoose';
 export const rateUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const reviewerId = req.user!.userId;
-    const { targetUserId, chatId, score, review } = req.body;
+    const { targetUserId, score, review } = req.body;
+    const chatId = req.params.id || req.body.chatId;
 
     if (reviewerId === targetUserId) {
       throw new ApiError(400, 'Cannot rate yourself');
     }
+
+    if (!chatId) throw new ApiError(400, 'Chat ID is required');
 
     // Verify chat existed between these users
     const chat = await Chat.findById(chatId);
@@ -75,6 +78,41 @@ export const getRatings = async (req: Request, res: Response, next: NextFunction
     const total = await Rating.countDocuments(query);
 
     res.status(200).json({ success: true, data: ratings, meta: { total, page, limit } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateRating = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const reviewerId = req.user!.userId;
+    const ratingId = req.params.id;
+    const { score, review } = req.body;
+
+    const rating = await Rating.findOne({ _id: ratingId, reviewerId });
+    if (!rating) {
+      throw new ApiError(404, 'Rating not found or you are not authorized to edit it');
+    }
+
+    if (score !== undefined) rating.score = score;
+    if (review !== undefined) rating.review = review;
+    
+    await rating.save();
+
+    // Update aggregate logic here if score changed...
+    const agg = await Rating.aggregate([
+      { $match: { targetUserId: rating.targetUserId } },
+      { $group: { _id: null, avgScore: { $avg: '$score' }, count: { $sum: 1 } } }
+    ]);
+
+    if (agg.length > 0) {
+      await User.findByIdAndUpdate(rating.targetUserId, {
+        averageRating: parseFloat(agg[0].avgScore.toFixed(1)),
+        totalRatings: agg[0].count
+      });
+    }
+
+    res.status(200).json(new ApiResponse(rating, 'Rating updated successfully'));
   } catch (error) {
     next(error);
   }

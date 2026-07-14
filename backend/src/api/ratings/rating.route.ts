@@ -10,5 +10,6 @@ router.use(requireAuth);
 
 router.post('/', validate(createRatingSchema), ratingController.rateUser);
 router.get('/', validate(getRatingsQuerySchema), ratingController.getRatings);
+router.patch('/:id', ratingController.updateRating);
 
 export default router;

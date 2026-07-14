@@ -32,5 +32,9 @@ router.get('/transactions', validate(getTransactionsQuerySchema), adminControlle
 // Withdrawal Management
 router.get('/withdrawals', validate(getWithdrawalsQuerySchema), adminController.getWithdrawals);
 router.patch('/withdrawals/:id/status', validate(updateWithdrawalSchema), adminController.updateWithdrawal);
+router.post('/withdrawals/:id/process', validate(updateWithdrawalSchema), adminController.updateWithdrawal); // Alias to match contract
+
+// Reports
+router.get('/reports', adminController.getReports);
 
 export default router;

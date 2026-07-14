@@ -22,6 +22,8 @@ export interface IUser extends Document {
   phone?: string;
   avatar?: string;
   bio?: string;
+  languagePreference?: string;
+  notificationPreference?: boolean;
   tokenVersion: number;
   averageRating: number;
   totalRatings: number;

@@ -74,9 +74,15 @@ To ensure frontend predictability, every response uses a strict JSON envelope.
 - **GET `/api/v1/users/me`**
   - **Auth:** Required. Returns current user profile.
 - **PATCH `/api/v1/users/me`**
-  - **Body:** `{ name, bio, ... }`
-- **POST `/api/v1/users/me/avatar`**
-  - **Purpose:** Upload profile picture (Multipart Form-Data).
+  - **Body:** `{ name, bio, languagePreference, notificationPreference, avatar }`
+  - **Notes:** Cannot update role, status, or wallet via this endpoint.
+- **POST `/api/v1/users/avatar`**
+  - **Purpose:** Upload profile picture (Multipart Form-Data, `< 5MB`, JPEG/PNG).
+  - **Notes:** Automatically compresses and deletes the previous avatar from cloud storage.
+- **DELETE `/api/v1/users/avatar`**
+  - **Purpose:** Remove current avatar.
+- **GET `/api/v1/users/:id/public`**
+  - **Purpose:** Retrieve public profile (excludes sensitive data like email/wallet).
 - **DELETE `/api/v1/users/me`**
   - **Purpose:** Soft delete account.
 

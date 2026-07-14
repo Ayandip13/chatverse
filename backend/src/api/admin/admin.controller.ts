@@ -5,6 +5,7 @@ import { STATUS_CODES } from '@/constants/statusCodes.constant';
 import { verificationService } from '@/services/verification.service';
 import { adminService } from '@/services/admin.service';
 import { WithdrawStatus } from '@/constants/enums.constant';
+import { reportRepository } from '@/repositories/report.repository';
 
 export const getDashboard = asyncHandler(async (req: Request, res: Response) => {
   const metrics = await adminService.getDashboardMetrics();
@@ -62,4 +63,15 @@ export const updateWithdrawal = asyncHandler(async (req: Request, res: Response)
   const adminId = (req as any).admin?.adminId || 'mock_admin_id';
   const updated = await adminService.updateWithdrawalStatus(req.params.id, status as WithdrawStatus, adminId, notes);
   res.status(STATUS_CODES.OK).json(new ApiResponse(updated, 'Withdrawal status updated'));
+});
+
+// Reports
+export const getReports = asyncHandler(async (req: Request, res: Response) => {
+  const { page = '1', limit = '20', status } = req.query as any;
+  const result = await reportRepository.getPaginatedReports(
+    status ? { status } : {},
+    parseInt(page, 10),
+    parseInt(limit, 10)
+  );
+  res.status(STATUS_CODES.OK).json({ success: true, data: result.reports, meta: { total: result.total } });
 });
