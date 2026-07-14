@@ -140,6 +140,22 @@ class GirlsService {
       isOnline: new Date(girl.updatedAt).getTime() > Date.now() - 15 * 60000
     };
   }
+
+  async toggleFavorite(boyId: string, girlId: string, isFavorite: boolean) {
+    if (!mongoose.Types.ObjectId.isValid(girlId)) {
+      throw new ApiError(STATUS_CODES.BAD_REQUEST, 'Invalid girl ID', 'VALIDATION_ERROR');
+    }
+
+    if (isFavorite) {
+      await Favorite.updateOne(
+        { boyId, girlId },
+        { boyId, girlId },
+        { upsert: true }
+      );
+    } else {
+      await Favorite.deleteOne({ boyId, girlId });
+    }
+  }
 }
 
 export const girlsService = new GirlsService();

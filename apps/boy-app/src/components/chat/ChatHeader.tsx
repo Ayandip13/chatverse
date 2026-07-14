@@ -1,0 +1,45 @@
+import { View, Text, TouchableOpacity, Image } from 'react-native';
+import { ArrowLeft, MoreVertical, Clock } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { ChatDetails } from '../../api/messagingApi';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+export function ChatHeader({ chat }: { chat: ChatDetails }) {
+  const router = useRouter();
+
+  return (
+    <SafeAreaView edges={['top']} className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
+      <View className="flex-row items-center px-4 py-3 justify-between">
+        <View className="flex-row items-center">
+          <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
+            <ArrowLeft size={24} color="#374151" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity onPress={() => router.push(`/girl/${chat.otherParticipant._id}`)} className="flex-row items-center">
+            <View className="relative w-10 h-10 rounded-full mr-3">
+              <Image 
+                source={{ uri: chat.otherParticipant.avatar || 'https://via.placeholder.com/150' }} 
+                className="w-full h-full rounded-full"
+              />
+              {chat.otherParticipant.isOnline && (
+                <View className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-900" />
+              )}
+            </View>
+            <View>
+              <Text className="font-bold text-gray-900 dark:text-white text-base">
+                {chat.otherParticipant.name}
+              </Text>
+              <Text className="text-xs text-green-500 font-medium">
+                {chat.otherParticipant.isOnline ? 'Online' : 'Offline'}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity className="p-2">
+          <MoreVertical size={20} color="#6b7280" />
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}

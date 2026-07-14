@@ -103,6 +103,9 @@ To ensure frontend predictability, every response uses a strict JSON envelope.
   - **Purpose:** Paginated transaction history.
 
 ### 4.5 Chat Request APIs
+- **GET `/api/v1/chat-requests`**
+  - **Purpose:** List paginated chat requests for the current user.
+  - **Filters:** `?page=1&limit=20&status=PENDING`
 - **POST `/api/v1/chat-requests`**
   - **Purpose:** Boy sends request to Girl.
   - **Body:** `{ targetUserId }`

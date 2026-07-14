@@ -26,3 +26,15 @@ export const getGirlDetails = asyncHandler(async (req: Request, res: Response) =
   
   res.status(STATUS_CODES.OK).json(new ApiResponse(result, 'Girl details retrieved'));
 });
+
+export const addFavorite = asyncHandler(async (req: Request, res: Response) => {
+  const girlId = req.params.id;
+  await girlsService.toggleFavorite(req.user!.userId, girlId, true);
+  res.status(STATUS_CODES.OK).json(new ApiResponse(null, 'Added to favorites'));
+});
+
+export const removeFavorite = asyncHandler(async (req: Request, res: Response) => {
+  const girlId = req.params.id;
+  await girlsService.toggleFavorite(req.user!.userId, girlId, false);
+  res.status(STATUS_CODES.OK).json(new ApiResponse(null, 'Removed from favorites'));
+});

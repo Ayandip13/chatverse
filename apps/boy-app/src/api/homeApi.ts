@@ -14,6 +14,8 @@ export interface GirlProfile {
   averageRating: number;
   isOnline: boolean;
   isFavorite: boolean;
+  totalReviews?: number;
+  phone?: string;
 }
 
 export interface ChatSummary {
@@ -49,4 +51,17 @@ export const fetchDiscoveryGirls = async (filters: Record<string, any>): Promise
 export const fetchRecentChats = async (): Promise<ChatSummary[]> => {
   const { data } = await apiClient.get('/chats?limit=5');
   return data.data;
+};
+
+export const fetchGirlDetails = async (id: string): Promise<GirlProfile> => {
+  const { data } = await apiClient.get(`/girls/${id}`);
+  return data.data;
+};
+
+export const toggleFavorite = async (id: string, isFavorite: boolean): Promise<void> => {
+  if (isFavorite) {
+    await apiClient.post(`/girls/${id}/favorite`);
+  } else {
+    await apiClient.delete(`/girls/${id}/favorite`);
+  }
 };

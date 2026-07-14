@@ -9,6 +9,7 @@ interface User {
   role: string;
   status: string;
   avatar?: string;
+  bio?: string;
   walletBalance?: number;
 }
 

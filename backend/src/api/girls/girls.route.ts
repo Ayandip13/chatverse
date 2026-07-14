@@ -13,5 +13,7 @@ router.use(requireRole([Role.BOY]));
 
 router.get('/', validate(getGirlsQuerySchema), girlsController.getGirls);
 router.get('/:id', girlsController.getGirlDetails);
+router.post('/:id/favorite', girlsController.addFavorite);
+router.delete('/:id/favorite', girlsController.removeFavorite);
 
 export default router;
