@@ -11,9 +11,9 @@ import envConfig from '@/config/env.config';
 
 class WalletService {
   async getWalletSummary(userId: string) {
-    const wallet = await walletRepository.findByUserId(userId);
+    let wallet = await walletRepository.findByUserId(userId);
     if (!wallet) {
-      throw new ApiError(STATUS_CODES.NOT_FOUND, 'Wallet not found', 'WALLET_NOT_FOUND');
+      wallet = await walletRepository.create(userId);
     }
     return wallet;
   }
@@ -54,9 +54,9 @@ class WalletService {
     }
 
     // 3. Get Wallet
-    const wallet = await walletRepository.findByUserId(userId);
+    let wallet = await walletRepository.findByUserId(userId);
     if (!wallet) {
-      throw new ApiError(STATUS_CODES.NOT_FOUND, 'Wallet not found', 'WALLET_NOT_FOUND');
+      wallet = await walletRepository.create(userId);
     }
 
     // 4. Calculate Coins (Assumption 1 INR = 1 Coin for now)

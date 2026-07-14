@@ -87,7 +87,7 @@ export const updateRating = async (req: Request, res: Response, next: NextFuncti
   try {
     const reviewerId = req.user!.userId;
     const ratingId = req.params.id;
-    const { score, review } = req.body;
+    const { score, comment } = req.body;
 
     const rating = await Rating.findOne({ _id: ratingId, reviewerId });
     if (!rating) {
@@ -95,18 +95,18 @@ export const updateRating = async (req: Request, res: Response, next: NextFuncti
     }
 
     if (score !== undefined) rating.score = score;
-    if (review !== undefined) rating.review = review;
+    if (comment !== undefined) rating.comment = comment;
     
     await rating.save();
 
     // Update aggregate logic here if score changed...
     const agg = await Rating.aggregate([
-      { $match: { targetUserId: rating.targetUserId } },
+      { $match: { targetId: rating.targetId } },
       { $group: { _id: null, avgScore: { $avg: '$score' }, count: { $sum: 1 } } }
     ]);
 
     if (agg.length > 0) {
-      await User.findByIdAndUpdate(rating.targetUserId, {
+      await User.findByIdAndUpdate(rating.targetId, {
         averageRating: parseFloat(agg[0].avgScore.toFixed(1)),
         totalRatings: agg[0].count
       });
