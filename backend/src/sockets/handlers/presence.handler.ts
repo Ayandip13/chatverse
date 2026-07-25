@@ -27,3 +27,14 @@ export const registerPresenceHandlers = (io: Server, socket: AuthenticatedSocket
     // but typically billing continues until the chat is explicitly ended by a user or zero balance.
   });
 };
+
+export const isUserOnline = (userId: string): boolean => {
+  try {
+    const { getIO } = require('@/sockets');
+    const io = getIO();
+    const room = io.sockets.adapter.rooms.get(`user:${userId}`);
+    return !!(room && room.size > 0);
+  } catch (error) {
+    return false;
+  }
+};

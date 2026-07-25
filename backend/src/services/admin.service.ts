@@ -78,11 +78,11 @@ class AdminService {
       throw new ApiError(STATUS_CODES.BAD_REQUEST, `Withdrawal already ${withdrawal.status}`, 'INVALID_TRANSITION');
     }
 
-    const updated = await withdrawRequestRepository.update(withdrawalId, { 
-      status, 
-      notes, 
-      processedById: new Types.ObjectId(adminId) 
-    });
+    const updateData: any = { status, notes };
+    if (adminId && Types.ObjectId.isValid(adminId) && /^[0-9a-fA-F]{24}$/.test(adminId)) {
+      updateData.processedById = new Types.ObjectId(adminId);
+    }
+    const updated = await withdrawRequestRepository.update(withdrawalId, updateData);
 
     if (status === WithdrawStatus.REJECTED) {
       // Refund the girl's wallet if rejected

@@ -5,6 +5,7 @@ import logger from '@/config/logger.config';
 import { socketAuthMiddleware, AuthenticatedSocket } from '@/middlewares/socketAuth.middleware';
 import { registerChatHandlers } from './handlers/chat.handler';
 import { registerPresenceHandlers } from './handlers/presence.handler';
+import { registerChatRequestHandlers } from './handlers/chatRequest.handler';
 
 let io: SocketIOServer;
 
@@ -39,6 +40,7 @@ export const initializeSocket = (server: HttpServer): void => {
     // Register Handlers
     registerPresenceHandlers(io, socket);
     registerChatHandlers(io, socket);
+    registerChatRequestHandlers(io, socket);
 
     // Initial join room is handled in presence handler (user:<id>)
   });

@@ -3,6 +3,7 @@ import { ArrowLeft, MoreVertical, Clock } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { ChatDetails } from '../../api/messagingApi';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getAvatarUrl } from '../../utils/avatarUtil';
 
 export function ChatHeader({ chat }: { chat: ChatDetails }) {
   const router = useRouter();
@@ -18,7 +19,7 @@ export function ChatHeader({ chat }: { chat: ChatDetails }) {
           <TouchableOpacity onPress={() => router.push(`/girl/${chat.otherParticipant._id}`)} className="flex-row items-center">
             <View className="relative w-10 h-10 rounded-full mr-3">
               <Image 
-                source={{ uri: chat.otherParticipant.avatar || 'https://via.placeholder.com/150' }} 
+                source={{ uri: getAvatarUrl(chat.otherParticipant?.avatar, chat.otherParticipant?.name, chat.otherParticipant?._id) }} 
                 className="w-full h-full rounded-full"
               />
               {chat.otherParticipant.isOnline && (

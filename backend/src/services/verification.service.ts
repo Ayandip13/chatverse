@@ -36,7 +36,7 @@ class VerificationService {
     user.status = status as BoyStatus | GirlStatus;
     user.verifiedAt = new Date();
     
-    if (Types.ObjectId.isValid(adminId)) {
+    if (adminId && Types.ObjectId.isValid(adminId) && /^[0-9a-fA-F]{24}$/.test(adminId)) {
       user.verifiedByAdminId = new Types.ObjectId(adminId);
     }
 

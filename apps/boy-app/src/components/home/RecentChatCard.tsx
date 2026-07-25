@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ChatSummary } from '../../api/homeApi';
 import { formatRelativeTime } from '../../utils/date';
+import { getAvatarUrl } from '../../utils/avatarUtil';
 
 export function RecentChatCard({ chat }: { chat: ChatSummary }) {
   const router = useRouter();
@@ -13,7 +14,7 @@ export function RecentChatCard({ chat }: { chat: ChatSummary }) {
     >
       <View className="relative w-12 h-12 rounded-full mr-3">
         <Image 
-          source={{ uri: chat.otherParticipant.avatar || 'https://via.placeholder.com/150' }} 
+          source={{ uri: getAvatarUrl(chat.otherParticipant?.avatar, chat.otherParticipant?.name, chat.otherParticipant?._id) }} 
           className="w-full h-full rounded-full"
         />
         {chat.otherParticipant.isOnline && (

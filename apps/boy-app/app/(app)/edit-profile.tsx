@@ -1,10 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Camera, User } from 'lucide-react-native';
+import { ArrowLeft, Sparkles, User } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/store/authStore';
 import { useUpdateProfile } from '../../src/hooks/useUser';
+import { getAvatarUrl } from '../../src/utils/avatarUtil';
+
+const BOY_AVATAR_PRESETS = [
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=500&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=500&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=500&auto=format&fit=crop&q=80',
+];
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -13,6 +22,7 @@ export default function EditProfileScreen() {
 
   const [name, setName] = useState(user?.name || '');
   const [bio, setBio] = useState(user?.bio || '');
+  const [avatar, setAvatar] = useState(getAvatarUrl(user?.avatar, user?.name, user?._id));
 
   const handleSave = () => {
     if (!name.trim()) {
@@ -20,8 +30,9 @@ export default function EditProfileScreen() {
       return;
     }
     
-    updateProfile({ name, bio }, {
+    updateProfile({ name: name.trim(), bio: bio.trim(), avatar }, {
       onSuccess: () => {
+        Alert.alert('Profile Saved', 'Your profile and picture have been updated!');
         router.back();
       },
       onError: (err: any) => {
@@ -50,17 +61,32 @@ export default function EditProfileScreen() {
 
       <ScrollView className="flex-1 px-6 py-6" showsVerticalScrollIndicator={false}>
         {/* Avatar Edit */}
-        <View className="items-center mb-8">
-          <View className="relative w-24 h-24 rounded-full bg-gray-100 dark:bg-gray-800 items-center justify-center border-2 border-indigo-100 dark:border-indigo-900">
-            {user?.avatar ? (
-              <Image source={{ uri: user.avatar }} className="w-full h-full rounded-full" />
-            ) : (
-              <User size={40} color="#9ca3af" />
-            )}
-            <TouchableOpacity className="absolute bottom-0 right-0 bg-indigo-600 w-8 h-8 rounded-full items-center justify-center shadow-sm">
-              <Camera size={14} color="#ffffff" />
-            </TouchableOpacity>
+        <View className="items-center mb-6">
+          <View className="relative w-24 h-24 rounded-full bg-gray-100 dark:bg-gray-800 items-center justify-center border-2 border-indigo-100 dark:border-indigo-900 overflow-hidden shadow-md">
+            <Image source={{ uri: avatar }} className="w-full h-full" />
           </View>
+          <Text className="text-xs font-semibold text-gray-500 mt-2">Current Avatar</Text>
+        </View>
+
+        {/* Preset Selector */}
+        <View className="mb-6 bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700">
+          <View className="flex-row items-center gap-2 mb-3">
+            <Sparkles size={16} color="#4f46e5" />
+            <Text className="text-sm font-bold text-gray-900 dark:text-white">Choose Profile Picture</Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {BOY_AVATAR_PRESETS.map((url, idx) => (
+              <TouchableOpacity
+                key={idx}
+                onPress={() => setAvatar(url)}
+                className={`mr-3 w-14 h-14 rounded-full border-2 overflow-hidden ${
+                  avatar === url ? 'border-indigo-600 scale-105' : 'border-transparent opacity-70'
+                }`}
+              >
+                <Image source={{ uri: url }} className="w-full h-full" />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
 
         {/* Form */}

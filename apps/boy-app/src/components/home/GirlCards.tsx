@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Star } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { GirlProfile } from '../../api/homeApi';
+import { getAvatarUrl } from '../../utils/avatarUtil';
 
 export function GirlAvatarCard({ girl }: { girl: GirlProfile }) {
   const router = useRouter();
@@ -13,7 +14,7 @@ export function GirlAvatarCard({ girl }: { girl: GirlProfile }) {
     >
       <View className="relative w-16 h-16 rounded-full border-2 border-indigo-100 dark:border-gray-800 p-0.5">
         <Image 
-          source={{ uri: girl.avatar || 'https://via.placeholder.com/150' }} 
+          source={{ uri: getAvatarUrl(girl.avatar, girl.name, girl._id) }} 
           className="w-full h-full rounded-full"
         />
         {girl.isOnline && (
@@ -37,7 +38,7 @@ export function GirlDetailCard({ girl }: { girl: GirlProfile }) {
     >
       <View className="relative w-full h-48">
         <Image 
-          source={{ uri: girl.avatar || 'https://via.placeholder.com/150' }} 
+          source={{ uri: getAvatarUrl(girl.avatar, girl.name, girl._id) }} 
           className="w-full h-full"
           style={{ resizeMode: 'cover' }}
         />

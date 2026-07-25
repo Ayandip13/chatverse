@@ -70,11 +70,14 @@ class ReportService {
       throw new ApiError(STATUS_CODES.NOT_FOUND, 'Report not found', 'NOT_FOUND');
     }
 
-    const updated = await reportRepository.updateStatus(reportId, {
+    const updateData: any = {
       status,
       notes: notes || report.notes,
-      resolvedById: new Types.ObjectId(adminId),
-    });
+    };
+    if (adminId && Types.ObjectId.isValid(adminId) && /^[0-9a-fA-F]{24}$/.test(adminId)) {
+      updateData.resolvedById = new Types.ObjectId(adminId);
+    }
+    const updated = await reportRepository.updateStatus(reportId, updateData);
 
     // In the future, if a user is BANNED as a result of a report, 
     // the verificationService.updateUserStatus would be called here.

@@ -6,6 +6,10 @@ class ChatRepository {
   async create(boyId: string, girlId: string, chatRequestId: string): Promise<IChat> {
     return Chat.create({ boyId, girlId, chatRequestId, status: ChatStatus.ACTIVE });
   }
+
+  async findActiveChat(boyId: string, girlId: string): Promise<IChat | null> {
+    return Chat.findOne({ boyId, girlId, status: ChatStatus.ACTIVE, deletedAt: null }).exec();
+  }
 }
 
 export const chatRepository = new ChatRepository();

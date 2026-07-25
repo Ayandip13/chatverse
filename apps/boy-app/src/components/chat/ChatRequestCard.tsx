@@ -2,6 +2,7 @@ import { View, Text, Image, TouchableOpacity } from 'react-native';
 import { formatRelativeTime } from '../../utils/date';
 import { ChatRequest } from '../../api/messagingApi';
 import { CheckCircle2, XCircle, Clock } from 'lucide-react-native';
+import { getAvatarUrl } from '../../utils/avatarUtil';
 
 export function ChatRequestCard({ request, onCancel }: { request: ChatRequest, onCancel: () => void }) {
   const getStatusColor = (status: string) => {
@@ -16,7 +17,7 @@ export function ChatRequestCard({ request, onCancel }: { request: ChatRequest, o
   return (
     <View className="bg-white dark:bg-gray-800 rounded-2xl p-4 mb-4 shadow-sm shadow-gray-200 dark:shadow-none border border-gray-100 dark:border-gray-700 flex-row items-center">
       <Image 
-        source={{ uri: request.targetUser?.avatar || 'https://via.placeholder.com/150' }} 
+        source={{ uri: getAvatarUrl(request.targetUser?.avatar, request.targetUser?.name, request.targetUser?._id) }} 
         className="w-14 h-14 rounded-full mr-4"
       />
       <View className="flex-1">

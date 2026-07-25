@@ -75,8 +75,8 @@ This document outlines the complete engineering backlog for the ChatVerse platfo
 |---|---|---|
 | Workspace Setup | ✅ Complete | Expo SDK 57, React Native 0.86, NativeWind 4, TanStack Query, Zustand architecture built. |
 | Registration & Verification | ✅ Complete | Complete flow with manual phone verification requirement, status screens, and role guards. |
-| Dashboard & Incoming Requests | ❌ Not Started | Needs to handle Accept/Reject flow. |
-| Active Chats & Earnings UI | ❌ Not Started | Must display live earnings during chat. |
+| Dashboard & Incoming Requests | ✅ Complete | Full real-time incoming chat request notifications, 60s countdown, Accept/Reject flow implemented. |
+| Active Chats & Earnings UI | ✅ Complete | Active chat screen with live +8 coins/min earnings counter, messaging stream, and socket integration. |
 | Wallet & Withdrawal Request | ❌ Not Started | Form for UPI payouts. |
 | Profile & Settings | ❌ Not Started | Standard user management. |
 
@@ -101,10 +101,10 @@ This document outlines the complete engineering backlog for the ChatVerse platfo
   - **Description:** Scaffold React Native Expo app, configure navigation, and build Auth/Verification screens. (✅ COMPLETED)
   - **Complexity/Effort:** L / 4 Days
 - **Title:** Girls App Dashboard & Requests
-  - **Description:** Implement the UI to view incoming chat requests, accept/reject logic, and socket initialization.
+  - **Description:** Implement the UI to view incoming chat requests, accept/reject logic, and socket initialization. (✅ COMPLETED)
   - **Complexity/Effort:** M / 3 Days
 - **Title:** Girls App Chat & Earnings
-  - **Description:** Implement the chat screen with a focus on real-time earnings accumulation (opposite to Boys App deduction).
+  - **Description:** Implement the chat screen with a focus on real-time earnings accumulation. (✅ COMPLETED)
   - **Complexity/Effort:** L / 3 Days
 
 ### Sprint 3 (Admin Panel & Payments)
