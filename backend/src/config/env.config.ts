@@ -1,4 +1,8 @@
+import dotenv from 'dotenv';
 import { z } from 'zod';
+
+// Ensure environment variables are loaded regardless of module import order
+dotenv.config();
 
 const envSchema = z.object({
   PORT: z.string().default('5000'),

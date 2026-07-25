@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import path from 'path';
 import { userRepository } from '@/repositories/user.repository';
 import { ApiError } from '@/utils/ApiError.util';
 import { ApiResponse } from '@/utils/ApiResponse.util';
@@ -54,7 +55,17 @@ export const uploadMyAvatar = async (req: Request, res: Response, next: NextFunc
       throw new ApiError(400, 'No file uploaded or invalid file type');
     }
 
-    const avatarUrl = (req.file as any).path || (req.file as any).secure_url;
+    const file = req.file as any;
+    let avatarUrl = '';
+    if (file.secure_url) {
+      avatarUrl = file.secure_url;
+    } else if (file.path && file.path.startsWith('http')) {
+      avatarUrl = file.path;
+    } else if (file.filename) {
+      avatarUrl = `/uploads/avatars/${file.filename}`;
+    } else {
+      avatarUrl = `/uploads/avatars/${path.basename(file.path)}`;
+    }
 
     // Cleanup old avatar if exists
     const currentUser = await userRepository.findById(userId);

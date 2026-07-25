@@ -8,6 +8,7 @@ export const registerSchema = z.object({
     role: z.nativeEnum(Role),
     name: z.string().min(2, 'Name must be at least 2 characters'),
     phone: z.string().optional(),
+    bio: z.string().max(500).optional(),
   }),
 });
 

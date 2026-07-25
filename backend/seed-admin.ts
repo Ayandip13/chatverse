@@ -3,21 +3,21 @@ import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://bookosaurs_db_user:cwqV0FPhgfwGWwgR@cluster0.u2kx0pf.mongodb.net/';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://bookosaurs_db_user:cwqV0FPhgfwGWwgR@cluster0.u2kx0pf.mongodb.net/chatverse?retryWrites=true&w=majority';
 
 const seedAdmin = async () => {
   try {
     await mongoose.connect(MONGO_URI);
-    const db = mongoose.connection.useDb('test'); // Use the DB connection mongoose provides
+    const db = mongoose.connection;
 
-    // Using raw collection to avoid Model initialization issues outside the app
     const usersCollection = db.collection('users');
 
     const adminEmail = 'admin@chatverse.com';
     const existingAdmin = await usersCollection.findOne({ email: adminEmail });
 
+    const hashedPassword = await bcrypt.hash('Admin@1234', 10);
+
     if (!existingAdmin) {
-      const hashedPassword = await bcrypt.hash('Admin@1234', 10);
       await usersCollection.insertOne({
         email: adminEmail,
         password: hashedPassword,
@@ -31,14 +31,16 @@ const seedAdmin = async () => {
       });
       console.log('Admin user created successfully: admin@chatverse.com / Admin@1234');
     } else {
-      const hashedPassword = await bcrypt.hash('Admin@1234', 10);
-      await usersCollection.updateOne({ email: adminEmail }, { $set: { password: hashedPassword, role: 'ADMIN', status: 'ACTIVE' } });
-      console.log('Admin user updated: admin@chatverse.com / Admin@1234');
+      await usersCollection.updateOne(
+        { email: adminEmail },
+        { $set: { password: hashedPassword, role: 'ADMIN', status: 'ACTIVE' } }
+      );
+      console.log('Admin user updated in chatverse database: admin@chatverse.com / Admin@1234');
     }
   } catch (error) {
     console.error('Seed error:', error);
   } finally {
-    mongoose.disconnect();
+    await mongoose.disconnect();
   }
 };
 

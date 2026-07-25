@@ -9,7 +9,7 @@ import crypto from 'crypto';
 
 class AuthService {
   async register(data: any) {
-    const { email, password, role, name, phone } = data;
+    const { email, password, role, name, phone, bio } = data;
 
     const existingUser = await userRepository.findByEmail(email);
     if (existingUser) {
@@ -25,6 +25,7 @@ class AuthService {
       role,
       name,
       phone,
+      bio,
       status,
       authProvider: 'LOCAL',
     });
