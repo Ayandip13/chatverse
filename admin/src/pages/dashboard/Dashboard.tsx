@@ -116,61 +116,61 @@ export const Dashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 mb-8">
         <KpiCard 
           title="Total Boys" 
-          value={metrics.totalBoys} 
+          value={metrics.totalBoys ?? 0} 
           icon={<Users />} 
           isLoading={isLoadingMetrics}
         />
         <KpiCard 
           title="Total Girls" 
-          value={metrics.totalGirls} 
+          value={metrics.totalGirls ?? 0} 
           icon={<UserCheck />} 
           isLoading={isLoadingMetrics}
         />
         <KpiCard 
           title="Pending Verification" 
-          value={metrics.pendingGirls} 
+          value={metrics.pendingGirls ?? 0} 
           icon={<ShieldAlert />} 
           isLoading={isLoadingMetrics}
         />
         <KpiCard 
           title="Active Chats" 
-          value={metrics.activeChats} 
+          value={metrics.activeChats ?? 0} 
           icon={<MessageCircle />} 
           isLoading={isLoadingMetrics}
         />
         <KpiCard 
           title="Pending Withdrawals" 
-          value={metrics.pendingWithdrawals} 
+          value={metrics.pendingWithdrawals ?? 0} 
           icon={<CreditCard />} 
           isLoading={isLoadingMetrics}
         />
         <KpiCard 
           title="Total Revenue" 
-          value={metrics.totalRevenue ? `₹${metrics.totalRevenue}` : '₹0'} 
+          value={`₹${metrics.totalRevenue ?? 0}`} 
           icon={<Wallet />} 
           isLoading={isLoadingMetrics}
         />
         <KpiCard 
           title="Today's Revenue" 
-          value="₹0" // Placeholder until backend supports daily aggregate
+          value={`₹${metrics.todayRevenue ?? 0}`} 
           icon={<Wallet />} 
           isLoading={isLoadingMetrics}
         />
         <KpiCard 
           title="Online Girls" 
-          value="0" // Placeholder until redis presence is merged
+          value={metrics.onlineGirls ?? 0} 
           icon={<Activity />} 
           isLoading={isLoadingMetrics}
         />
         <KpiCard 
           title="Online Boys" 
-          value="0" // Placeholder until redis presence is merged
+          value={metrics.onlineBoys ?? 0} 
           icon={<Users />} 
           isLoading={isLoadingMetrics}
         />
         <KpiCard 
           title="Total Recharges" 
-          value="N/A" // Placeholder 
+          value={metrics.totalRecharges ?? 0} 
           icon={<CreditCard />} 
           isLoading={isLoadingMetrics}
         />

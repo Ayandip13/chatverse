@@ -47,6 +47,10 @@ const UserSchema = new Schema<IUser>(
     tokenVersion: { type: Number, default: 0 },
     averageRating: { type: Number, default: 0 },
     totalRatings: { type: Number, default: 0 },
+    verifiedByAdminId: { type: Schema.Types.ObjectId, ref: 'Admin', default: null },
+    verifiedAt: { type: Date, default: null },
+    rejectionReason: { type: String, default: null },
+    statusReason: { type: String, default: null },
     deletedAt: { type: Date, default: null },
   },
   { timestamps: true }

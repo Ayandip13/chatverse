@@ -27,6 +27,10 @@ export interface IUser extends Document {
   tokenVersion: number;
   averageRating: number;
   totalRatings: number;
+  verifiedByAdminId?: Types.ObjectId;
+  verifiedAt?: Date;
+  rejectionReason?: string;
+  statusReason?: string;
   deletedAt?: Date;
   createdAt: Date;
   updatedAt: Date;

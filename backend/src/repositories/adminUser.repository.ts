@@ -26,10 +26,12 @@ class AdminUserRepository {
       ];
     }
 
-    const skip = (page - 1) * limit;
+    const pageNum = Number.isNaN(Number(page)) || Number(page) < 1 ? 1 : Number(page);
+    const limitNum = Number.isNaN(Number(limit)) || Number(limit) < 1 ? 10 : Number(limit);
+    const skip = (pageNum - 1) * limitNum;
 
     const [users, total] = await Promise.all([
-      User.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).select('-password').exec(),
+      User.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum).select('-password').exec(),
       User.countDocuments(query).exec(),
     ]);
 

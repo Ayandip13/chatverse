@@ -60,11 +60,15 @@ export default function AccountSuspendedScreen() {
           <View className="flex-row items-center gap-3 mb-1">
             <AlertOctagon color={theme.colors.danger} size={20} />
             <Text className="font-bold text-slate-900 dark:text-white text-base">
-              Restrictions in effect
+              Suspension Details & Reason
             </Text>
           </View>
 
-          <Text className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
+          <Text className="text-slate-700 dark:text-slate-200 text-sm leading-relaxed bg-rose-500/10 p-3 rounded-xl border border-rose-500/20 font-medium">
+            {user?.statusReason || 'Access restricted due to policy violation or manual administrative action.'}
+          </Text>
+
+          <Text className="text-xs text-slate-400 dark:text-slate-500 pt-2 border-t border-slate-100 dark:border-slate-700">
             While suspended, you cannot receive incoming chat requests, communicate with users, or withdraw earnings.
           </Text>
         </View>

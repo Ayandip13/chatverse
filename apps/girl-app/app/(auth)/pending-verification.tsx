@@ -13,6 +13,31 @@ export default function PendingVerificationScreen() {
   const { user, checkAccountStatus, logout } = useAuthStore();
   const [checking, setChecking] = useState(false);
 
+  React.useEffect(() => {
+    let isMounted = true;
+    const interval = setInterval(async () => {
+      try {
+        const updatedUser = await checkAccountStatus();
+        if (isMounted && updatedUser) {
+          if (updatedUser.status === 'APPROVED') {
+            router.replace('/(app)/dashboard');
+          } else if (updatedUser.status === 'REJECTED') {
+            router.replace('/(auth)/account-rejected');
+          } else if (updatedUser.status === 'SUSPENDED' || updatedUser.status === 'BANNED') {
+            router.replace('/(auth)/account-suspended');
+          }
+        }
+      } catch (e) {
+        // Silent catch for background polling
+      }
+    }, 10000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
   const handleRefreshStatus = async () => {
     try {
       setChecking(true);

@@ -64,8 +64,34 @@ export const VerificationList = () => {
         </Button>
       }
     >
-      <Card className="p-4 border-none shadow-card mb-6 flex flex-col sm:flex-row gap-4 items-end">
-        <div className="flex-1">
+      {/* Status Filter Tabs */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {[
+          { label: 'All Girls', value: '' },
+          { label: 'Pending Verification', value: 'PENDING' },
+          { label: 'Approved', value: 'APPROVED' },
+          { label: 'Rejected', value: 'REJECTED' },
+          { label: 'Suspended', value: 'SUSPENDED' },
+        ].map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => {
+              setStatusFilter(tab.value);
+              setPage(1);
+            }}
+            className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${
+              statusFilter === tab.value
+                ? 'bg-primary text-white shadow-sm'
+                : 'bg-surface-light dark:bg-surface-dark text-textSecondary-light dark:text-textSecondary-dark hover:bg-surface-light/80 border border-border-light dark:border-border-dark'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <Card className="p-4 border-none shadow-card mb-6 flex flex-col sm:flex-row gap-4 items-center">
+        <div className="flex-1 w-full">
           <div className="relative">
             <Input
               placeholder="Search by name or email..."
@@ -78,24 +104,6 @@ export const VerificationList = () => {
             />
             <Search className="w-5 h-5 text-textMuted-light dark:text-textMuted-dark absolute left-3 top-2.5" />
           </div>
-        </div>
-        <div className="w-full sm:w-48 relative">
-          <select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setPage(1);
-            }}
-            className="flex h-10 w-full appearance-none rounded-md border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-3 py-2 text-sm text-textMain-light dark:text-textMain-dark focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-          >
-            <option value="">All Statuses</option>
-            <option value="PENDING">Pending</option>
-            <option value="APPROVED">Approved</option>
-            <option value="REJECTED">Rejected</option>
-            <option value="SUSPENDED">Suspended</option>
-            <option value="BANNED">Banned</option>
-          </select>
-          <Filter className="w-4 h-4 text-textMuted-light dark:text-textMuted-dark absolute right-3 top-3 pointer-events-none" />
         </div>
       </Card>
 

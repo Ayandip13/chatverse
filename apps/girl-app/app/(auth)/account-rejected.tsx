@@ -62,16 +62,16 @@ export default function AccountRejectedScreen() {
           <View className="flex-row items-center gap-3 mb-1">
             <HelpCircle color={theme.colors.secondary} size={20} />
             <Text className="font-bold text-slate-900 dark:text-white text-base">
-              Why was my application rejected?
+              Reason for Rejection
             </Text>
           </View>
 
-          <Text className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
-            Common reasons include unverified phone details, incomplete profile information, or failure to meet platform creator guidelines.
+          <Text className="text-slate-700 dark:text-slate-200 text-sm leading-relaxed bg-amber-500/10 p-3 rounded-xl border border-amber-500/20 font-medium">
+            {user?.rejectionReason || user?.statusReason || 'Incomplete profile details or failure to complete phone verification.'}
           </Text>
 
           <Text className="text-xs text-slate-400 dark:text-slate-500 pt-2 border-t border-slate-100 dark:border-slate-700">
-            If you believe this was an error or wish to request re-application, please contact support.
+            If you believe this was an error or wish to request re-application, please contact platform administration.
           </Text>
         </View>
 

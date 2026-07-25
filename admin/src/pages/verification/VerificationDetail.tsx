@@ -215,17 +215,48 @@ export const VerificationDetail = () => {
             </CardContent>
           </Card>
 
-          {/* Verification History (Placeholder block for future use or extended schemas) */}
+          {/* Audit & Verification History */}
           <Card className="border-none shadow-card">
             <CardHeader>
-              <CardTitle>Verification History</CardTitle>
+              <CardTitle>Audit & Verification Info</CardTitle>
             </CardHeader>
             <CardContent>
-              <EmptyState 
-                title="No history recorded" 
-                description="Status changes and admin notes will appear here if supported by the backend." 
-                className="py-8"
-              />
+              {user.verifiedAt || user.rejectionReason || user.statusReason ? (
+                <div className="space-y-4 text-sm">
+                  {user.verifiedAt && (
+                    <div className="flex justify-between py-2 border-b border-border-light dark:border-border-dark">
+                      <span className="text-textSecondary-light dark:text-textSecondary-dark font-medium">Last Verification Action</span>
+                      <span className="text-textMain-light dark:text-textMain-dark font-semibold">
+                        {format(new Date(user.verifiedAt), 'PPP p')}
+                      </span>
+                    </div>
+                  )}
+                  {user.verifiedByAdminId && (
+                    <div className="flex justify-between py-2 border-b border-border-light dark:border-border-dark">
+                      <span className="text-textSecondary-light dark:text-textSecondary-dark font-medium">Verified By Admin</span>
+                      <span className="text-textMain-light dark:text-textMain-dark font-mono font-semibold">
+                        {user.verifiedByAdminId}
+                      </span>
+                    </div>
+                  )}
+                  {(user.rejectionReason || user.statusReason) && (
+                    <div className="py-2">
+                      <span className="text-textSecondary-light dark:text-textSecondary-dark font-medium block mb-1">
+                        Reason / Notes:
+                      </span>
+                      <p className="p-3 bg-amber-500/10 dark:bg-amber-500/20 text-amber-900 dark:text-amber-200 rounded-xl font-medium leading-relaxed">
+                        {user.rejectionReason || user.statusReason}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <EmptyState 
+                  title="No Verification Notes" 
+                  description="This account has not had verification notes or status reason recorded yet." 
+                  className="py-8"
+                />
+              )}
             </CardContent>
           </Card>
         </div>

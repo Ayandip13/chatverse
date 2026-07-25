@@ -14,8 +14,12 @@ export const getDashboard = asyncHandler(async (req: Request, res: Response) => 
 
 // User & Verification Management
 export const getUsers = asyncHandler(async (req: Request, res: Response) => {
-  const { page, limit, role, status, search } = req.query as any;
-  const result = await verificationService.getUsers({ role, status, search }, parseInt(page, 10), parseInt(limit, 10));
+  const { page = '1', limit = '10', role, status, search } = req.query as any;
+  const result = await verificationService.getUsers(
+    { role, status, search },
+    parseInt(page as string, 10) || 1,
+    parseInt(limit as string, 10) || 10
+  );
   res.status(STATUS_CODES.OK).json({ success: true, data: result.users, meta: { total: result.total } });
 });
 
@@ -33,28 +37,44 @@ export const updateUserStatus = asyncHandler(async (req: Request, res: Response)
 
 // Chat Monitoring
 export const getChats = asyncHandler(async (req: Request, res: Response) => {
-  const { page, limit, status } = req.query as any;
-  const result = await adminService.getChats({ status }, parseInt(page, 10), parseInt(limit, 10));
+  const { page = '1', limit = '10', status } = req.query as any;
+  const result = await adminService.getChats(
+    { status },
+    parseInt(page as string, 10) || 1,
+    parseInt(limit as string, 10) || 10
+  );
   res.status(STATUS_CODES.OK).json({ success: true, data: result.chats, meta: { total: result.total } });
 });
 
 export const getChatMessages = asyncHandler(async (req: Request, res: Response) => {
-  const { page, limit } = req.query as any;
-  const result = await adminService.getChatMessages(req.params.id, parseInt(page, 10), parseInt(limit, 10));
+  const { page = '1', limit = '20' } = req.query as any;
+  const result = await adminService.getChatMessages(
+    req.params.id,
+    parseInt(page as string, 10) || 1,
+    parseInt(limit as string, 10) || 20
+  );
   res.status(STATUS_CODES.OK).json({ success: true, data: result.messages, meta: { total: result.total } });
 });
 
 // Transactions
 export const getTransactions = asyncHandler(async (req: Request, res: Response) => {
-  const { page, limit, type, startDate, endDate } = req.query as any;
-  const result = await adminService.getTransactions({ type, startDate, endDate }, parseInt(page, 10), parseInt(limit, 10));
+  const { page = '1', limit = '10', type, startDate, endDate } = req.query as any;
+  const result = await adminService.getTransactions(
+    { type, startDate, endDate },
+    parseInt(page as string, 10) || 1,
+    parseInt(limit as string, 10) || 10
+  );
   res.status(STATUS_CODES.OK).json({ success: true, data: result.transactions, meta: { total: result.total } });
 });
 
 // Withdrawals
 export const getWithdrawals = asyncHandler(async (req: Request, res: Response) => {
-  const { page, limit, status } = req.query as any;
-  const result = await adminService.getWithdrawals({ status }, parseInt(page, 10), parseInt(limit, 10));
+  const { page = '1', limit = '10', status } = req.query as any;
+  const result = await adminService.getWithdrawals(
+    { status },
+    parseInt(page as string, 10) || 1,
+    parseInt(limit as string, 10) || 10
+  );
   res.status(STATUS_CODES.OK).json({ success: true, data: result.requests, meta: { total: result.total } });
 });
 
@@ -70,8 +90,8 @@ export const getReports = asyncHandler(async (req: Request, res: Response) => {
   const { page = '1', limit = '20', status } = req.query as any;
   const result = await reportRepository.getPaginatedReports(
     status ? { status } : {},
-    parseInt(page, 10),
-    parseInt(limit, 10)
+    parseInt(page as string, 10) || 1,
+    parseInt(limit as string, 10) || 20
   );
   res.status(STATUS_CODES.OK).json({ success: true, data: result.reports, meta: { total: result.total } });
 });

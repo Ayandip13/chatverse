@@ -15,6 +15,8 @@ export interface User {
   walletBalance?: number;
   averageRating?: number;
   totalRatings?: number;
+  rejectionReason?: string;
+  statusReason?: string;
 }
 
 interface AuthState {
