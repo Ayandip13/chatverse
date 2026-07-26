@@ -164,3 +164,17 @@ export interface IPlatformSetting extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface ISettlement extends Document {
+  chatId: Types.ObjectId;
+  boyId: Types.ObjectId;
+  girlId: Types.ObjectId;
+  completedMinutes: number;
+  grossCoins: number;
+  platformCommissionCoins: number;
+  girlEarningsCoins: number;
+  status: 'COMPLETED' | 'FAILED' | 'PARTIAL';
+  settledAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}

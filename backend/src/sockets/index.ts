@@ -6,6 +6,7 @@ import { socketAuthMiddleware, AuthenticatedSocket } from '@/middlewares/socketA
 import { registerChatHandlers } from './handlers/chat.handler';
 import { registerPresenceHandlers } from './handlers/presence.handler';
 import { registerChatRequestHandlers } from './handlers/chatRequest.handler';
+import { chatSessionService } from '@/services/chatSession.service';
 
 let io: SocketIOServer;
 
@@ -44,4 +45,7 @@ export const initializeSocket = (server: HttpServer): void => {
 
     // Initial join room is handled in presence handler (user:<id>)
   });
+
+  // Recover active sessions on server startup
+  chatSessionService.recoverActiveSessions(io);
 };

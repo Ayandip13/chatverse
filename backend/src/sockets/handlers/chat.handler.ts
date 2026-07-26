@@ -9,6 +9,9 @@ import { ChatStatus } from '@/constants/enums.constant';
 export const registerChatHandlers = (io: Server, socket: AuthenticatedSocket) => {
   const userId = socket.user!.userId;
 
+  // Track joined chat rooms for disconnect handling
+  const joinedRooms = new Set<string>();
+
   socket.on('chat:join', async (payload: { chatId: string }, callback) => {
     try {
       const { chatId } = payload;
@@ -25,11 +28,12 @@ export const registerChatHandlers = (io: Server, socket: AuthenticatedSocket) =>
       }
 
       socket.join(`chat:${chatId}`);
+      joinedRooms.add(chatId);
       logger.info(`User ${userId} joined chat room ${chatId}`);
 
-      // Start timer if it's an active chat (idempotent)
+      // Notify session service that participant entered room
       if (chat.status === ChatStatus.ACTIVE) {
-        chatSessionService.startChatTimer(chatId, io);
+        await chatSessionService.onParticipantJoined(chatId, userId, io);
       }
 
       if (callback) callback({ success: true });
@@ -39,7 +43,21 @@ export const registerChatHandlers = (io: Server, socket: AuthenticatedSocket) =>
   });
 
   socket.on('chat:leave', (payload: { chatId: string }) => {
-    socket.leave(`chat:${payload.chatId}`);
+    const { chatId } = payload;
+    socket.leave(`chat:${chatId}`);
+    joinedRooms.delete(chatId);
+    chatSessionService.onParticipantLeft(chatId, userId, io);
+  });
+
+  socket.on('chat:end_session', async (payload: { chatId: string }, callback) => {
+    try {
+      const { chatId } = payload;
+      logger.info(`User ${userId} requested manual end of chat ${chatId}`);
+      await chatSessionService.stopChatSession(chatId, io, 'MANUAL');
+      if (callback) callback({ success: true });
+    } catch (error: any) {
+      if (callback) callback({ error: error.message });
+    }
   });
 
   socket.on('chat:send_message', async (payload: { chatId: string; content: string; tempId?: string }, callback) => {
@@ -75,5 +93,12 @@ export const registerChatHandlers = (io: Server, socket: AuthenticatedSocket) =>
 
   socket.on('chat:read', (payload: { chatId: string; messageId: string }) => {
     socket.to(`chat:${payload.chatId}`).emit('chat:read_receipt', { chatId: payload.chatId, messageId: payload.messageId, userId });
+  });
+
+  // Handle socket disconnect for active rooms
+  socket.on('disconnect', () => {
+    joinedRooms.forEach((chatId) => {
+      chatSessionService.onParticipantLeft(chatId, userId, io);
+    });
   });
 };

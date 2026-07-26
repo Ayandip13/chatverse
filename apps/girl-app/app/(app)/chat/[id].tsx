@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, FlatList, ActivityIndicator, KeyboardAvoidingView, Platform, TouchableOpacity, TextInput, Image, Alert } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, KeyboardAvoidingView, Platform, TouchableOpacity, TextInput, Image, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, Send, User, Coins, PhoneOff } from 'lucide-react-native';
+import { ArrowLeft, Send, User, Coins, PhoneOff, CheckCircle2, Clock, Sparkles } from 'lucide-react-native';
 import { useAuthStore } from '../../../src/store/authStore';
 import { useChatDetails, useChatMessages, useEndChat } from '../../../src/hooks/useMessaging';
 import { useChatSocket } from '../../../src/hooks/useChatSocket';
 import { theme } from '../../../src/constants/theme';
+import { getAvatarUrl } from '../../../src/utils/avatarUtil';
 
 export default function GirlChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -22,24 +23,11 @@ export default function GirlChatScreen() {
     isFetchingNextPage 
   } = useChatMessages(id);
 
-  const { mutate: endChatSession, isPending: isEnding } = useEndChat();
-  const { sendMessage, emitTyping, isOtherUserTyping } = useChatSocket(id);
+  const { mutate: endChatSessionApi, isPending: isEnding } = useEndChat();
+  const { sendMessage, emitTyping, endChatSession, isOtherUserTyping, chatTick, endedSummary } = useChatSocket(id);
 
   const [inputMessage, setInputMessage] = useState('');
-  const [elapsedMinutes, setElapsedMinutes] = useState(0);
   const flatListRef = useRef<FlatList>(null);
-
-  // Earnings timer (8 coins / min)
-  useEffect(() => {
-    if (!chat || chat.status !== 'ACTIVE') return;
-    const interval = setInterval(() => {
-      const start = new Date(chat.startTime).getTime();
-      const now = new Date().getTime();
-      const mins = Math.floor((now - start) / 60000);
-      setElapsedMinutes(mins);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [chat]);
 
   if (isChatLoading || isMessagesLoading) {
     return (
@@ -81,13 +69,23 @@ export default function GirlChatScreen() {
         text: 'End Chat', 
         style: 'destructive',
         onPress: () => {
-          endChatSession(id, {
-            onSuccess: () => router.back()
-          });
+          endChatSession(id);
         }
       }
     ]);
   };
+
+  const handleCloseSummary = () => {
+    router.replace('/(app)/dashboard');
+  };
+
+  const completedMinutes = chatTick?.completedMinutes || chat.durationInMinutes || 0;
+  const currentEarnings = completedMinutes * 8;
+  const elapsedSeconds = chatTick?.elapsedSeconds || 0;
+  const minutesStr = Math.floor(elapsedSeconds / 60).toString().padStart(2, '0');
+  const secondsStr = (elapsedSeconds % 60).toString().padStart(2, '0');
+
+  const otherUser = chat.otherParticipant || chat.boyId;
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50 dark:bg-slate-900" edges={['bottom']}>
@@ -103,18 +101,14 @@ export default function GirlChatScreen() {
             </TouchableOpacity>
 
             <View className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-700 items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-600">
-              {chat.boyId?.avatar ? (
-                <Image source={{ uri: chat.boyId.avatar }} className="w-full h-full" />
-              ) : (
-                <User color={theme.colors.secondary} size={20} />
-              )}
+              <Image source={{ uri: getAvatarUrl(otherUser?.avatar, otherUser?.name, otherUser?._id) }} className="w-full h-full" />
             </View>
 
             <View>
               <Text className="text-base font-bold text-slate-900 dark:text-white">
-                {chat.boyId?.name || 'User'}
+                {otherUser?.name || 'User'}
               </Text>
-              <Text className="text-xs text-slate-400">Active Session</Text>
+              <Text className="text-xs text-slate-400">Active Chat Session</Text>
             </View>
           </View>
 
@@ -129,16 +123,19 @@ export default function GirlChatScreen() {
 
         {/* Live Earnings Banner */}
         {chat.status === 'ACTIVE' && (
-          <View className="bg-gradient-to-r from-emerald-500 to-teal-600 px-6 py-2.5 flex-row items-center justify-between shadow-sm">
+          <View className="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-2.5 flex-row items-center justify-between shadow-sm">
             <View className="flex-row items-center gap-2">
-              <Coins size={18} color="#ffffff" />
-              <Text className="text-white text-xs font-bold">
-                Earnings Accumulating: +8 Coins/min
+              <Sparkles size={16} color="#ffffff" />
+              <Text className="text-white text-xs font-mono font-bold">
+                {minutesStr}:{secondsStr} (+8 coins/min)
               </Text>
             </View>
-            <Text className="text-white text-xs font-extrabold">
-              Total: ~{elapsedMinutes * 8} Coins
-            </Text>
+            <View className="flex-row items-center bg-white/20 px-3 py-1 rounded-full border border-white/30">
+              <Coins size={14} color="#ffffff" className="mr-1" />
+              <Text className="text-white text-xs font-extrabold font-mono">
+                {currentEarnings} Coins Earned
+              </Text>
+            </View>
           </View>
         )}
 
@@ -206,6 +203,52 @@ export default function GirlChatScreen() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Session Completed Earnings Summary Modal */}
+      <Modal visible={!!endedSummary} transparent animationType="slide">
+        <View className="flex-1 bg-black/60 items-center justify-center px-6">
+          <View className="bg-white dark:bg-slate-800 w-full p-6 rounded-3xl items-center shadow-2xl border border-slate-200 dark:border-slate-700">
+            <View className="w-16 h-16 bg-emerald-50 dark:bg-emerald-900/40 rounded-full items-center justify-center mb-4">
+              <CheckCircle2 size={36} color="#10b981" />
+            </View>
+
+            <Text className="text-xl font-extrabold text-slate-900 dark:text-white text-center mb-1">
+              Session Completed!
+            </Text>
+            <Text className="text-xs text-slate-500 dark:text-slate-400 text-center mb-6">
+              Reason: {endedSummary?.reason || 'Completed'}
+            </Text>
+
+            {/* Earnings Breakdown */}
+            <View className="w-full bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl mb-6 flex-row justify-around border border-slate-100 dark:border-slate-800">
+              <View className="items-center">
+                <Clock size={20} color="#64748b" className="mb-1" />
+                <Text className="text-xs text-slate-400 font-medium">Billed Duration</Text>
+                <Text className="text-base font-bold text-slate-900 dark:text-white mt-0.5">
+                  {endedSummary?.finalDuration || 0} mins
+                </Text>
+              </View>
+
+              <View className="w-[1px] bg-slate-200 dark:bg-slate-800 h-full" />
+
+              <View className="items-center">
+                <Coins size={20} color="#10b981" className="mb-1" />
+                <Text className="text-xs text-slate-400 font-medium">Total Earned</Text>
+                <Text className="text-base font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5 font-mono">
+                  +{(endedSummary?.finalDuration || 0) * 8} Coins
+                </Text>
+              </View>
+            </View>
+
+            <TouchableOpacity 
+              onPress={handleCloseSummary}
+              className="w-full bg-pink-600 py-3.5 rounded-2xl items-center shadow-lg shadow-pink-500/30"
+            >
+              <Text className="text-white font-bold text-base">Back to Dashboard</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

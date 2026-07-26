@@ -85,6 +85,8 @@ export const updateWithdrawal = asyncHandler(async (req: Request, res: Response)
   res.status(STATUS_CODES.OK).json(new ApiResponse(updated, 'Withdrawal status updated'));
 });
 
+import { settlementService } from '@/services/settlement.service';
+
 // Reports
 export const getReports = asyncHandler(async (req: Request, res: Response) => {
   const { page = '1', limit = '20', status } = req.query as any;
@@ -94,4 +96,21 @@ export const getReports = asyncHandler(async (req: Request, res: Response) => {
     parseInt(limit as string, 10) || 20
   );
   res.status(STATUS_CODES.OK).json({ success: true, data: result.reports, meta: { total: result.total } });
+});
+
+// Financial Settlements
+export const getSettlements = asyncHandler(async (req: Request, res: Response) => {
+  const { page = '1', limit = '10', status } = req.query as any;
+  const result = await settlementService.getSettlements(
+    parseInt(page as string, 10) || 1,
+    parseInt(limit as string, 10) || 10,
+    { status }
+  );
+  const summary = await settlementService.getFinancialSummary();
+  res.status(STATUS_CODES.OK).json({ success: true, data: result.items, meta: { total: result.total, summary } });
+});
+
+export const getFinancialSummary = asyncHandler(async (req: Request, res: Response) => {
+  const summary = await settlementService.getFinancialSummary();
+  res.status(STATUS_CODES.OK).json(new ApiResponse(summary, 'Financial summary retrieved'));
 });

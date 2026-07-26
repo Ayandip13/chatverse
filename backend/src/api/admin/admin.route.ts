@@ -37,4 +37,8 @@ router.post('/withdrawals/:id/process', validate(updateWithdrawalSchema), adminC
 // Reports
 router.get('/reports', adminController.getReports);
 
+// Financial Settlements
+router.get('/settlements', adminController.getSettlements);
+router.get('/settlements/summary', adminController.getFinancialSummary);
+
 export default router;

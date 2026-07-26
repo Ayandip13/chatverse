@@ -11,3 +11,4 @@ export * from './withdrawRequest.model';
 export * from './rating.model';
 export * from './favorite.model';
 export * from './platformSetting.model';
+export * from './settlement.model';

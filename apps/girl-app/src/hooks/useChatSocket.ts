@@ -4,10 +4,27 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Message } from '../api/messagingApi';
 import { Alert } from 'react-native';
 
+export interface ChatTickData {
+  chatId: string;
+  elapsedSeconds: number;
+  completedMinutes: number;
+  remainingCoins: number;
+  estimatedMinutesLeft: number;
+}
+
+export interface ChatEndedSummary {
+  chatId: string;
+  reason: string;
+  finalDuration: number;
+  finalCost: number;
+}
+
 export const useChatSocket = (chatId?: string) => {
   const { socket, isConnected } = useSocket();
   const queryClient = useQueryClient();
   const [isOtherUserTyping, setIsOtherUserTyping] = useState(false);
+  const [chatTick, setChatTick] = useState<ChatTickData | null>(null);
+  const [endedSummary, setEndedSummary] = useState<ChatEndedSummary | null>(null);
 
   useEffect(() => {
     if (!socket || !isConnected) return;
@@ -38,10 +55,16 @@ export const useChatSocket = (chatId?: string) => {
     const onTypingStop = ({ chatId: typedChatId }: any) => {
       if (typedChatId === chatId) setIsOtherUserTyping(false);
     };
+
+    const onTick = (data: ChatTickData) => {
+      if (!chatId || data.chatId === chatId) {
+        setChatTick(data);
+      }
+    };
     
-    const onChatEnded = ({ chatId: endedChatId, reason }: any) => {
-      if (chatId === endedChatId) {
-        Alert.alert('Chat Ended', `The chat session has ended (${reason || 'Completed'}).`);
+    const onChatEnded = (data: ChatEndedSummary) => {
+      if (!chatId || data.chatId === chatId) {
+        setEndedSummary(data);
         queryClient.invalidateQueries({ queryKey: ['chat', chatId] });
         queryClient.invalidateQueries({ queryKey: ['chats'] });
       }
@@ -50,6 +73,7 @@ export const useChatSocket = (chatId?: string) => {
     socket.on('chat:receive_message', onMessage);
     socket.on('chat:typing_start', onTypingStart);
     socket.on('chat:typing_stop', onTypingStop);
+    socket.on('chat:tick', onTick);
     socket.on('chat:ended', onChatEnded);
 
     return () => {
@@ -57,6 +81,7 @@ export const useChatSocket = (chatId?: string) => {
       socket.off('chat:receive_message', onMessage);
       socket.off('chat:typing_start', onTypingStart);
       socket.off('chat:typing_stop', onTypingStop);
+      socket.off('chat:tick', onTick);
       socket.off('chat:ended', onChatEnded);
     };
   }, [socket, isConnected, chatId, queryClient]);
@@ -77,5 +102,11 @@ export const useChatSocket = (chatId?: string) => {
     }
   };
 
-  return { sendMessage, emitTyping, isOtherUserTyping };
+  const endChatSession = (chatId: string) => {
+    if (socket && isConnected) {
+      socket.emit('chat:end_session', { chatId });
+    }
+  };
+
+  return { sendMessage, emitTyping, endChatSession, isOtherUserTyping, chatTick, endedSummary };
 };

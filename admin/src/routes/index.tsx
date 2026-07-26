@@ -12,6 +12,7 @@ import { Wallet } from '../pages/wallet/Wallet';
 import { Withdrawals } from '../pages/withdrawals/Withdrawals';
 import { Settings } from '../pages/settings/Settings';
 import { Profile } from '../pages/profile/Profile';
+import { Settlements } from '../pages/settlements/Settlements';
 import { NotFound } from '../pages/errors/NotFound';
 import { Unauthorized } from '../pages/errors/Unauthorized';
 
@@ -34,6 +35,7 @@ export const router = createBrowserRouter([
       { path: 'reports', element: <Reports /> },
       { path: 'wallet', element: <Wallet /> },
       { path: 'withdrawals', element: <Withdrawals /> },
+      { path: 'settlements', element: <Settlements /> },
       { path: 'settings', element: <Settings /> },
       { path: 'profile', element: <Profile /> },
     ],

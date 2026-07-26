@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, Heart, ShieldCheck, 
   MessageSquare, AlertTriangle, Wallet, ArrowDownToLine, 
-  Settings, LogOut 
+  Settings, LogOut, DollarSign 
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { cn } from '../../utils/cn';
@@ -13,6 +13,7 @@ const navigation = [
   { name: 'Girls', to: '/girls', icon: Heart },
   { name: 'Verification', to: '/verification', icon: ShieldCheck },
   { name: 'Chats', to: '/chats', icon: MessageSquare },
+  { name: 'Settlements', to: '/settlements', icon: DollarSign },
   { name: 'Reports', to: '/reports', icon: AlertTriangle },
   { name: 'Wallet', to: '/wallet', icon: Wallet },
   { name: 'Withdrawals', to: '/withdrawals', icon: ArrowDownToLine },

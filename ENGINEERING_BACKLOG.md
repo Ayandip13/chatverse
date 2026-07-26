@@ -18,13 +18,13 @@ This document outlines the complete engineering backlog for the ChatVerse platfo
 |---|---|---|
 | Authentication & JWT | ✅ Complete | Fully implemented with refresh logic. |
 | Role-Based Access Control | ✅ Complete | Boy/Girl/Admin middlewares active. |
-| Socket.IO Core & Presence | ✅ Complete | Connection state and presence working. |
-| Chat Session & Billing | ✅ Complete | Minute-by-minute deduction working. |
+| Socket.IO Core & Presence | ✅ Complete | Connection state, presence, and disconnect grace period working. |
+| Chat Session & Billing | ✅ Complete | Atomic minute settlement, double-presence start, 30s grace, immutable Settlement ledger. |
 | Chat History & Messages | ✅ Complete | Aggregation pipelines optimized. |
 | Boys Discovery & Filters | ✅ Complete | Search, sort, and favorites functional. |
-| Chat Requests | ✅ Complete | REST endpoints built. |
+| Chat Requests | ✅ Complete | REST endpoints and socket matchmaking built. |
 | Wallet & Razorpay Verify | ✅ Complete | Signature verification complete. |
-| Admin APIs | 🟡 Partial | Dashboard, Users, Chats done. Needs Settings & Analytics. |
+| Admin APIs | ✅ Complete | Dashboard, Users, Chats, Financial Settlements, Settings & Analytics active. |
 | Notifications & Reports | ✅ Complete | Core schema and endpoints created. |
 | User Profile APIs (`/users/me`) | ✅ Complete | Router and controllers fully implemented, including Public profiles. |
 | Avatar/Image Upload | ✅ Complete | Cloudinary/Multer integration active with size/mime validation and cleanup. |
