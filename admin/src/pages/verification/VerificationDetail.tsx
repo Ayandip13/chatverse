@@ -13,7 +13,6 @@ import { Button } from '../../components/common/Button';
 import { Loading } from '../../components/common/Loading';
 import { EmptyState } from '../../components/common/EmptyState';
 import { Modal } from '../../components/common/Modal';
-import { Input } from '../../components/common/Input';
 
 const getStatusBadgeVariant = (status: string): BadgeVariant => {
   switch (status) {
@@ -35,7 +34,7 @@ export const VerificationDetail = () => {
   const [actionType, setActionType] = useState<'APPROVED' | 'REJECTED' | 'SUSPENDED' | 'BANNED' | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
 
-  const { data, isLoading, isError, refetch } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['user-details', girlId],
     queryFn: async () => {
       const response = await apiClient.get(`/admin/users/${girlId}`);

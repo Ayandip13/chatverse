@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { PageLayout } from '../../components/layout/PageLayout';
 import { Card, CardContent } from '../../components/common/Card';
-import { Table, TableHeader, TableRow, TableHead, TableCell } from '../../components/common/Table';
+import { Table, TableRow, TableCell } from '../../components/common/Table';
 import { Badge } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
-import { DollarSign, Clock, TrendingUp, Heart, Search, ArrowRight } from 'lucide-react';
+import { DollarSign, Clock, TrendingUp, Heart } from 'lucide-react';
 import apiClient from '../../api/apiClient';
 import { format } from 'date-fns';
 
@@ -134,19 +134,16 @@ export const Settlements = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Boy Participant</TableHead>
-                  <TableHead>Girl Creator</TableHead>
-                  <TableHead>Completed Minutes</TableHead>
-                  <TableHead>Gross Volume</TableHead>
-                  <TableHead>Platform Revenue (20%)</TableHead>
-                  <TableHead>Creator Payout (80%)</TableHead>
-                  <TableHead>Settled Date</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
+            <Table headers={[
+              'Boy Participant',
+              'Girl Creator',
+              'Completed Minutes',
+              'Gross Volume',
+              'Platform Revenue (20%)',
+              'Creator Payout (80%)',
+              'Settled Date',
+              'Status'
+            ]}>
 
               {settlements.map((item: any) => (
                 <TableRow key={item._id}>
