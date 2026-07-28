@@ -12,6 +12,7 @@ import { CoinTimerCard } from '../../../src/components/chat/CoinTimerCard';
 import { MessageBubble } from '../../../src/components/chat/MessageBubble';
 import { ChatInput } from '../../../src/components/chat/ChatInput';
 import { CheckCircle2, Clock, Coins, XCircle } from 'lucide-react-native';
+import { Message } from '../../../src/api/messagingApi';
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -31,6 +32,8 @@ export default function ChatScreen() {
   
   const typingUsers = useChatStore(state => state.typingUsers);
   const isOtherUserTyping = typingUsers[id];
+
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
 
   const flatListRef = useRef<FlatList>(null);
 
@@ -59,6 +62,7 @@ export default function ChatScreen() {
 
   const handleSend = (text: string) => {
     sendMessage(id, text, Date.now().toString());
+    setReplyingTo(null);
   };
 
   const handleCloseSummary = () => {
@@ -87,6 +91,7 @@ export default function ChatScreen() {
             <MessageBubble 
               message={item} 
               isOwnMessage={item.senderId === userId} 
+              onReply={(msg) => setReplyingTo(msg)}
             />
           )}
           onEndReached={() => {
@@ -110,6 +115,8 @@ export default function ChatScreen() {
         <ChatInput 
           onSend={handleSend} 
           onTyping={(isTyping) => emitTyping(id, isTyping)} 
+          replyingTo={replyingTo}
+          onCancelReply={() => setReplyingTo(null)}
         />
       </KeyboardAvoidingView>
 

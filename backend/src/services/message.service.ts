@@ -22,10 +22,13 @@ class MessageService {
       throw new ApiError(STATUS_CODES.BAD_REQUEST, 'Invalid message format');
     }
 
-    // Blocked Content Detection
-    for (const pattern of this.BLOCKED_PATTERNS) {
-      if (pattern.test(content)) {
-        throw new ApiError(STATUS_CODES.FORBIDDEN, 'Message contains blocked content', 'BLOCKED_CONTENT');
+    // Blocked Content Detection (Bypassed for image sharing and structured quote replies)
+    const isStructuredContent = content.startsWith('[IMAGE]:') || content.startsWith('[REPLY:');
+    if (!isStructuredContent) {
+      for (const pattern of this.BLOCKED_PATTERNS) {
+        if (pattern.test(content)) {
+          throw new ApiError(STATUS_CODES.FORBIDDEN, 'Message contains blocked content', 'BLOCKED_CONTENT');
+        }
       }
     }
 

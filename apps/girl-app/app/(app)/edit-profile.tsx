@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Check, Sparkles, Camera } from 'lucide-react-native';
+import { ArrowLeft, Check, Sparkles, Globe, Phone, ShieldCheck } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/store/authStore';
 import { DEFAULT_GIRL_AVATARS, getAvatarUrl } from '../../src/utils/avatarUtil';
+import { useQueryClient } from '@tanstack/react-query';
 import apiClient from '../../src/api/apiClient';
 
 export default function EditProfileScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user, updateUser } = useAuthStore();
 
   const [name, setName] = useState(user?.name || '');
   const [bio, setBio] = useState(user?.bio || '');
+  const [phone, setPhone] = useState(user?.phone || '');
+  const [languagePreference, setLanguagePreference] = useState(user?.languagePreference || 'English, Hindi');
   const [selectedAvatar, setSelectedAvatar] = useState(getAvatarUrl(user?.avatar, user?.name, user?._id));
   const [isSaving, setIsSaving] = useState(false);
 
@@ -27,16 +31,27 @@ export default function EditProfileScreen() {
       const response = await apiClient.patch('/users/me', {
         name: name.trim(),
         bio: bio.trim(),
+        phone: phone.trim(),
+        languagePreference: languagePreference.trim(),
         avatar: selectedAvatar,
       });
 
-      if (response.data?.data) {
-        updateUser(response.data.data);
+      const updatedData = response.data?.data;
+      if (updatedData) {
+        updateUser(updatedData);
       } else {
-        updateUser({ name: name.trim(), bio: bio.trim(), avatar: selectedAvatar });
+        updateUser({ 
+          name: name.trim(), 
+          bio: bio.trim(), 
+          phone: phone.trim(), 
+          languagePreference: languagePreference.trim(),
+          avatar: selectedAvatar 
+        });
       }
 
-      Alert.alert('Profile Updated', 'Your profile and avatar have been updated successfully!', [
+      queryClient.invalidateQueries({ queryKey: ['myProfile'] });
+
+      Alert.alert('Profile Updated', 'Your creator profile details have been saved!', [
         { text: 'OK', onPress: () => router.back() }
       ]);
     } catch (err: any) {
@@ -76,7 +91,7 @@ export default function EditProfileScreen() {
       <ScrollView className="flex-1 px-6 py-6" showsVerticalScrollIndicator={false}>
         
         {/* Selected Avatar Preview */}
-        <View className="items-center mb-8">
+        <View className="items-center mb-6">
           <View className="relative w-28 h-28 rounded-full border-4 border-pink-500/30 overflow-hidden shadow-lg bg-slate-200">
             <Image source={{ uri: selectedAvatar }} className="w-full h-full" />
           </View>
@@ -86,11 +101,11 @@ export default function EditProfileScreen() {
         </View>
 
         {/* Avatar Preset Selector */}
-        <View className="mb-8 bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-slate-700">
+        <View className="mb-6 bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-slate-700">
           <View className="flex-row items-center gap-2 mb-3">
             <Sparkles size={18} color="#e11d48" />
             <Text className="text-sm font-bold text-slate-900 dark:text-white">
-              Choose Profile Photo Preset
+              Choose High-Res Avatar Preset
             </Text>
           </View>
 
@@ -109,8 +124,8 @@ export default function EditProfileScreen() {
           </ScrollView>
         </View>
 
-        {/* Input Fields */}
-        <View className="space-y-4">
+        {/* Form Fields */}
+        <View className="space-y-4 mb-8">
           <View>
             <Text className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
               Creator Display Name
@@ -118,15 +133,42 @@ export default function EditProfileScreen() {
             <TextInput
               value={name}
               onChangeText={setName}
-              placeholder="Enter your name"
+              placeholder="Enter display name"
               placeholderTextColor="#94a3b8"
               className="w-full bg-white dark:bg-slate-800 rounded-2xl px-4 h-14 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 text-sm"
             />
           </View>
 
-          <View className="mt-4">
+          <View className="mt-3">
             <Text className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-              Email Address
+              Phone Number
+            </Text>
+            <TextInput
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+              placeholder="+91 98765 43210"
+              placeholderTextColor="#94a3b8"
+              className="w-full bg-white dark:bg-slate-800 rounded-2xl px-4 h-14 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 text-sm font-mono"
+            />
+          </View>
+
+          <View className="mt-3">
+            <Text className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+              Languages Spoken
+            </Text>
+            <TextInput
+              value={languagePreference}
+              onChangeText={setLanguagePreference}
+              placeholder="e.g. English, Hindi, Punjabi"
+              placeholderTextColor="#94a3b8"
+              className="w-full bg-white dark:bg-slate-800 rounded-2xl px-4 h-14 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 text-sm"
+            />
+          </View>
+
+          <View className="mt-3">
+            <Text className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+              Email Address (Read-only)
             </Text>
             <TextInput
               value={user?.email}
@@ -135,14 +177,14 @@ export default function EditProfileScreen() {
             />
           </View>
 
-          <View className="mt-4 mb-8">
+          <View className="mt-3">
             <Text className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
               Bio / About Me
             </Text>
             <TextInput
               value={bio}
               onChangeText={setBio}
-              placeholder="Tell fans about yourself..."
+              placeholder="Tell fans about your interests and availability..."
               placeholderTextColor="#94a3b8"
               multiline
               numberOfLines={4}

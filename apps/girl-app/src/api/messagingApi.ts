@@ -16,18 +16,24 @@ export interface ChatRequest {
 
 export interface Chat {
   _id: string;
-  boyId: {
+  boyId?: {
     _id: string;
     name: string;
     avatar?: string;
+  } | string;
+  girlId?: string;
+  otherParticipant?: {
+    _id: string;
+    name: string;
+    avatar?: string;
+    isOnline?: boolean;
   };
-  girlId: string;
-  chatRequestId: string;
+  chatRequestId?: string;
   status: 'ACTIVE' | 'ENDED';
   startTime: string;
   endTime?: string;
-  durationInMinutes: number;
-  totalCost: number;
+  durationInMinutes?: number;
+  totalCost?: number;
   createdAt: string;
 }
 

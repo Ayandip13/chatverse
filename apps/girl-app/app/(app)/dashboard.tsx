@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity, Modal, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, ScrollView, Image, TouchableOpacity, Modal, ActivityIndicator, Alert, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../src/store/authStore';
 import { StatusBadge } from '../../src/components/ui/StatusBadge';
-import { Button } from '../../src/components/ui/Button';
-import { Heart, Sparkles, User, LogOut, MessageCircle, Clock, Check, X, PhoneCall, Edit3, Wallet } from 'lucide-react-native';
+import { 
+  Heart, Sparkles, User, LogOut, MessageCircle, Clock, Check, X, 
+  PhoneCall, Edit3, Wallet, Coins, Lock, TrendingUp, ArrowDownToLine, 
+  ChevronRight, Activity, ShieldCheck 
+} from 'lucide-react-native';
 import { theme } from '../../src/constants/theme';
 import { useRouter } from 'expo-router';
 import { useSocket } from '../../src/providers/SocketProvider';
-import { useAcceptChatRequest, useRejectChatRequest, useChatRequests } from '../../src/hooks/useMessaging';
+import { useAcceptChatRequest, useRejectChatRequest, useChatRequests, useActiveChats } from '../../src/hooks/useMessaging';
+import { useWithdrawalSummary } from '../../src/hooks/useWithdrawals';
 import { getAvatarUrl } from '../../src/utils/avatarUtil';
 
 export default function DashboardScreen() {
@@ -16,19 +20,38 @@ export default function DashboardScreen() {
   const { user, logout } = useAuthStore();
   const { socket, isConnected } = useSocket();
 
-  const { data: pendingRequests, refetch: refetchRequests } = useChatRequests('PENDING');
+  const [isOnline, setIsOnline] = useState<boolean>(true);
+
+  // Queries
+  const { data: summaryData, isLoading: isSummaryLoading } = useWithdrawalSummary();
+  const { data: pendingRequests, refetch: refetchRequests, isLoading: isRequestsLoading } = useChatRequests('PENDING');
+  const { data: activeChats, isLoading: isChatsLoading } = useActiveChats();
+
   const { mutateAsync: acceptRequest, isPending: isAccepting } = useAcceptChatRequest();
   const { mutateAsync: rejectRequest, isPending: isRejecting } = useRejectChatRequest();
 
   const [incomingRequest, setIncomingRequest] = useState<any>(null);
   const [countdown, setCountdown] = useState<number>(60);
 
+  // Toggle Online/Offline status
+  const handleToggleOnline = (value: boolean) => {
+    setIsOnline(value);
+    if (socket && isConnected) {
+      if (value) {
+        socket.emit('presence:online');
+      } else {
+        socket.emit('presence:offline');
+      }
+    }
+  };
+
   // Socket setup & Presence/Request listeners
   useEffect(() => {
     if (!socket || !isConnected) return;
 
-    // Send presence online event
-    socket.emit('presence:online');
+    if (isOnline) {
+      socket.emit('presence:online');
+    }
 
     const onIncomingRequest = (payload: any) => {
       setIncomingRequest(payload);
@@ -62,11 +85,11 @@ export default function DashboardScreen() {
       socket.off('chat_request:cancelled', onRequestCancelled);
       socket.off('chat_request:expired', onRequestExpired);
     };
-  }, [socket, isConnected, incomingRequest]);
+  }, [socket, isConnected, incomingRequest, isOnline]);
 
   // Handle local 60s countdown for incoming request modal
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setInterval>;
     if (incomingRequest && countdown > 0) {
       timer = setInterval(() => {
         setCountdown((prev) => prev - 1);
@@ -112,97 +135,155 @@ export default function DashboardScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50 dark:bg-slate-900">
-      <ScrollView contentContainerStyle={{ padding: 24 }}>
+      <ScrollView contentContainerStyle={{ padding: 20 }}>
 
         {/* Header */}
-        <View className="flex-row items-center justify-between mb-8">
+        <View className="flex-row items-center justify-between mb-6">
           <View>
             <View className="flex-row items-center gap-2">
               <Text className="text-2xl font-extrabold text-slate-900 dark:text-white">ChatVerse</Text>
-              <Text className="text-xs font-bold uppercase tracking-wider text-pink-500 bg-pink-500/10 px-2 py-0.5 rounded-full">
+              <Text className="text-[10px] font-bold uppercase tracking-wider text-pink-500 bg-pink-500/10 px-2 py-0.5 rounded-full border border-pink-500/20">
                 Creator Portal
               </Text>
             </View>
-            <Text className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
+            <Text className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
               Welcome back, {user?.name}!
             </Text>
           </View>
 
-          <TouchableOpacity onPress={handleLogout} className="p-2 rounded-full bg-slate-200 dark:bg-slate-800">
-            <LogOut color={theme.colors.text.secondary.light} size={20} />
+          <TouchableOpacity onPress={handleLogout} className="p-2.5 rounded-full bg-slate-200 dark:bg-slate-800">
+            <LogOut color={theme.colors.text.secondary.light} size={18} />
           </TouchableOpacity>
         </View>
 
-        {/* Profile Summary Card */}
-        <View className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm mb-6">
-          <View className="flex-row items-center gap-4 mb-4">
-            <View className="w-16 h-16 rounded-full bg-pink-500/10 items-center justify-center border-2 border-pink-500/30 overflow-hidden">
-              <Image source={{ uri: getAvatarUrl(user?.avatar, user?.name, user?._id) }} className="w-full h-full" />
-            </View>
+        {/* Profile Summary & Availability Card */}
+        <View className="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm mb-6">
+          <View className="flex-row items-center justify-between mb-4">
+            <View className="flex-row items-center gap-3">
+              <View className="w-14 h-14 rounded-full bg-pink-500/10 items-center justify-center border-2 border-pink-500/30 overflow-hidden">
+                <Image source={{ uri: getAvatarUrl(user?.avatar, user?.name, user?._id) }} className="w-full h-full" />
+              </View>
 
-            <View className="flex-1">
-              <Text className="text-xl font-bold text-slate-900 dark:text-white">{user?.name}</Text>
-              <Text className="text-slate-500 dark:text-slate-400 text-sm">{user?.email}</Text>
-              <View className="flex-row items-center gap-2 mt-2">
-                <StatusBadge status="APPROVED" size="sm" />
-                <View className="bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                  <Text className="text-emerald-600 dark:text-emerald-400 text-[10px] font-bold">ONLINE</Text>
+              <View>
+                <View className="flex-row items-center gap-1.5">
+                  <Text className="text-lg font-bold text-slate-900 dark:text-white">{user?.name}</Text>
+                  <ShieldCheck size={16} color="#10b981" />
                 </View>
+                <Text className="text-slate-500 dark:text-slate-400 text-xs">{user?.email}</Text>
               </View>
             </View>
 
             <TouchableOpacity 
               onPress={() => router.push('/(app)/edit-profile')} 
-              className="p-2 rounded-full bg-pink-50 dark:bg-pink-900/30 border border-pink-200 dark:border-pink-800"
+              className="p-2.5 rounded-full bg-pink-50 dark:bg-pink-900/30 border border-pink-200 dark:border-pink-800"
             >
-              <Edit3 size={18} color="#e11d48" />
+              <Edit3 size={16} color="#e11d48" />
             </TouchableOpacity>
           </View>
 
-          {user?.bio && (
-            <Text className="text-slate-600 dark:text-slate-300 text-sm italic bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800 mb-4">
-              "{user.bio}"
-            </Text>
-          )}
+          {/* Availability Toggle */}
+          <View className="bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-2xl flex-row items-center justify-between border border-slate-100 dark:border-slate-800">
+            <View className="flex-row items-center gap-2">
+              <View className={`w-3 h-3 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+              <Text className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                Status: {isOnline ? 'ONLINE & VISIBLE' : 'OFFLINE'}
+              </Text>
+            </View>
 
-          <TouchableOpacity
-            onPress={() => router.push('/(app)/wallet')}
-            className="w-full bg-rose-500 py-3 rounded-2xl flex-row items-center justify-center gap-2 shadow-md shadow-rose-500/20"
-          >
-            <Wallet size={18} color="#ffffff" />
-            <Text className="text-white font-bold text-sm">Earnings & Wallet</Text>
-          </TouchableOpacity>
+            <Switch
+              value={isOnline}
+              onValueChange={handleToggleOnline}
+              trackColor={{ false: '#cbd5e1', true: '#f43f5e' }}
+              thumbColor="#ffffff"
+            />
+          </View>
+        </View>
+
+        {/* Financial KPI Summary Section */}
+        <View className="mb-6">
+          <View className="flex-row items-center justify-between mb-3">
+            <Text className="text-base font-bold text-slate-900 dark:text-white">Earnings Overview</Text>
+            <TouchableOpacity onPress={() => router.push('/(app)/wallet')}>
+              <Text className="text-xs font-bold text-pink-600 dark:text-pink-400">Manage Wallet</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View className="flex-row gap-3 mb-3">
+            {/* Available Balance */}
+            <View className="flex-1 bg-gradient-to-r from-rose-500 to-pink-600 p-4 rounded-2xl shadow-md border border-rose-400/30">
+              <View className="flex-row items-center justify-between mb-1">
+                <Text className="text-rose-100 text-[10px] font-bold uppercase tracking-wider">Available Balance</Text>
+                <Coins size={16} color="#ffffff" />
+              </View>
+              <Text className="text-white text-2xl font-extrabold font-mono">
+                ₹{(summaryData?.availableBalance || 0).toLocaleString()}
+              </Text>
+            </View>
+
+            {/* Total Lifetime Earnings */}
+            <View className="flex-1 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
+              <View className="flex-row items-center justify-between mb-1">
+                <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Total Earnings</Text>
+                <TrendingUp size={16} color="#10b981" />
+              </View>
+              <Text className="text-slate-900 dark:text-white text-2xl font-extrabold font-mono">
+                ₹{(summaryData?.lifetimeEarnings || 0).toLocaleString()}
+              </Text>
+            </View>
+          </View>
+
+          <View className="flex-row gap-3">
+            {/* Pending Withdrawal */}
+            <View className="flex-1 bg-white dark:bg-slate-800 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 flex-row items-center justify-between">
+              <View>
+                <Text className="text-[10px] text-slate-400 font-semibold">Locked / Pending</Text>
+                <Text className="text-base font-bold text-amber-600 font-mono">
+                  ₹{(summaryData?.lockedBalance || 0).toLocaleString()}
+                </Text>
+              </View>
+              <Lock size={16} color="#f59e0b" />
+            </View>
+
+            {/* Quick Withdraw CTA */}
+            <TouchableOpacity
+              onPress={() => router.push('/(app)/wallet/withdraw')}
+              className="flex-1 bg-rose-50 dark:bg-rose-900/30 p-3.5 rounded-2xl border border-rose-200 dark:border-rose-800 flex-row items-center justify-center gap-2"
+            >
+              <ArrowDownToLine size={16} color="#e11d48" />
+              <Text className="text-rose-600 dark:text-rose-400 font-bold text-xs">Request Payout</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Incoming Chat Requests Section */}
         <View className="mb-6">
-          <Text className="text-lg font-bold text-slate-900 dark:text-white mb-3 flex-row items-center">
+          <Text className="text-base font-bold text-slate-900 dark:text-white mb-3">
             Incoming Requests {pendingRequests && pendingRequests.length > 0 ? `(${pendingRequests.length})` : ''}
           </Text>
 
           {activeRequest ? (
-            <View className="bg-gradient-to-r from-pink-500 to-rose-500 p-6 rounded-3xl shadow-lg border border-pink-400/30">
+            <View className="bg-gradient-to-r from-pink-500 to-rose-500 p-5 rounded-3xl shadow-lg border border-pink-400/30">
               <View className="flex-row items-center justify-between mb-4">
                 <View className="flex-row items-center gap-3">
                   <View className="w-12 h-12 rounded-full bg-white/20 items-center justify-center border border-white/30 overflow-hidden">
                     <Image source={{ uri: getAvatarUrl(senderInfo?.avatar, senderInfo?.name, senderInfo?._id) }} className="w-full h-full" />
                   </View>
                   <View>
-                    <Text className="text-white text-lg font-extrabold">{senderInfo?.name || 'User'}</Text>
-                    <Text className="text-pink-100 text-xs font-medium">Wants to start a chat session</Text>
+                    <Text className="text-white text-base font-extrabold">{senderInfo?.name || 'User'}</Text>
+                    <Text className="text-pink-100 text-xs font-medium">Chat session request (+8 coins/min)</Text>
                   </View>
                 </View>
 
                 {/* Countdown timer badge */}
-                <View className="bg-white/20 px-3 py-1 rounded-full border border-white/30">
-                  <Text className="text-white font-extrabold text-sm">
+                <View className="bg-white/20 px-2.5 py-1 rounded-full border border-white/30">
+                  <Text className="text-white font-extrabold text-xs font-mono">
                     {countdown}s
                   </Text>
                 </View>
               </View>
 
               {/* Action Buttons */}
-              <View className="flex-row gap-3 pt-2">
+              <View className="flex-row gap-3 pt-1">
                 <TouchableOpacity
                   onPress={() => handleReject(activeRequestId)}
                   disabled={isRejecting || isAccepting}
@@ -212,8 +293,8 @@ export default function DashboardScreen() {
                     <ActivityIndicator color="#ffffff" size="small" />
                   ) : (
                     <>
-                      <X color="#ffffff" size={18} className="mr-1" />
-                      <Text className="text-white font-bold text-sm">Decline</Text>
+                      <X color="#ffffff" size={16} className="mr-1" />
+                      <Text className="text-white font-bold text-xs">Decline</Text>
                     </>
                   )}
                 </TouchableOpacity>
@@ -227,22 +308,74 @@ export default function DashboardScreen() {
                     <ActivityIndicator color="#e11d48" size="small" />
                   ) : (
                     <>
-                      <Check color="#e11d48" size={18} className="mr-1" />
-                      <Text className="text-rose-600 font-extrabold text-sm">Accept & Chat</Text>
+                      <Check color="#e11d48" size={16} className="mr-1" />
+                      <Text className="text-rose-600 font-extrabold text-xs">Accept & Chat</Text>
                     </>
                   )}
                 </TouchableOpacity>
               </View>
             </View>
           ) : (
-            <View className="bg-white dark:bg-slate-800 p-6 rounded-3xl border border-slate-200 dark:border-slate-700 items-center justify-center">
-              <PhoneCall color={theme.colors.text.secondary.light} size={32} className="mb-2" />
-              <Text className="text-slate-800 dark:text-slate-200 font-bold text-base">
+            <View className="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-slate-700 items-center justify-center">
+              <PhoneCall color={theme.colors.text.secondary.light} size={28} className="mb-2" />
+              <Text className="text-slate-800 dark:text-slate-200 font-bold text-sm">
                 No Pending Requests
               </Text>
-              <Text className="text-slate-400 dark:text-slate-500 text-xs text-center mt-1">
-                You are online and visible. When a boy sends a chat request, it will appear here in real time.
+              <Text className="text-slate-400 dark:text-slate-500 text-xs text-center mt-0.5">
+                When a user requests a chat session, it will appear here in real time.
               </Text>
+            </View>
+          )}
+        </View>
+
+        {/* Active Chats Section */}
+        <View className="mb-6">
+          <Text className="text-base font-bold text-slate-900 dark:text-white mb-3">
+            Active Chat Sessions
+          </Text>
+
+          {isChatsLoading ? (
+            <ActivityIndicator color="#e11d48" className="py-6" />
+          ) : !activeChats || activeChats.length === 0 ? (
+            <View className="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-slate-700 items-center justify-center">
+              <MessageCircle color="#94a3b8" size={28} className="mb-2" />
+              <Text className="text-slate-800 dark:text-slate-200 font-bold text-sm">No Active Conversations</Text>
+              <Text className="text-slate-400 text-xs text-center mt-0.5">
+                Ongoing chats will appear here with live earnings details.
+              </Text>
+            </View>
+          ) : (
+            <View className="space-y-3">
+              {activeChats.map((chat) => {
+                const otherUser = chat.otherParticipant || (typeof chat.boyId === 'object' ? chat.boyId : undefined);
+                return (
+                  <TouchableOpacity
+                    key={chat._id}
+                    onPress={() => router.push(`/chat/${chat._id}`)}
+                    className="bg-white dark:bg-slate-800 p-4 rounded-3xl border border-slate-200 dark:border-slate-700 flex-row items-center justify-between"
+                  >
+                    <View className="flex-row items-center gap-3">
+                      <View className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden border border-slate-200 dark:border-slate-600">
+                        <Image source={{ uri: getAvatarUrl(otherUser?.avatar, otherUser?.name, otherUser?._id) }} className="w-full h-full" />
+                      </View>
+
+                      <View>
+                        <Text className="text-sm font-bold text-slate-900 dark:text-white">
+                          {otherUser?.name || 'User'}
+                        </Text>
+                        <Text className="text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">
+                          Active • Rate: +8 coins/min
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View className="flex-row items-center gap-1 bg-pink-50 dark:bg-pink-900/30 px-3 py-1.5 rounded-full border border-pink-200 dark:border-pink-800">
+                      <Text className="text-pink-600 dark:text-pink-400 text-xs font-bold">Open Chat</Text>
+                      <ChevronRight size={14} color="#e11d48" />
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           )}
         </View>
@@ -255,13 +388,13 @@ export default function DashboardScreen() {
           <View className="bg-white dark:bg-slate-800 w-full p-6 rounded-t-3xl border-t border-slate-200 dark:border-slate-700 shadow-2xl">
             <View className="flex-row items-center justify-between mb-4">
               <View className="flex-row items-center gap-2">
-                <View className="w-3 h-3 rounded-full bg-pink-500 animate-ping" />
+                <View className="w-3 h-3 rounded-full bg-pink-500" />
                 <Text className="text-xs font-extrabold uppercase tracking-wider text-pink-500">
                   New Incoming Chat Request
                 </Text>
               </View>
               <View className="bg-pink-100 dark:bg-pink-900/40 px-3 py-1 rounded-full">
-                <Text className="text-pink-600 dark:text-pink-300 font-bold text-xs">
+                <Text className="text-pink-600 dark:text-pink-300 font-bold text-xs font-mono">
                   {countdown}s remaining
                 </Text>
               </View>
@@ -276,8 +409,8 @@ export default function DashboardScreen() {
                 <Text className="text-xl font-extrabold text-slate-900 dark:text-white">
                   {incomingRequest?.sender?.name || 'User'}
                 </Text>
-                <Text className="text-slate-500 dark:text-slate-400 text-sm">
-                  Requested a chat session with you
+                <Text className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
+                  Requested a live chat session (+8 coins/min)
                 </Text>
               </View>
             </View>

@@ -2,12 +2,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, FlatList, ActivityIndicator, KeyboardAvoidingView, Platform, TouchableOpacity, TextInput, Image, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, Send, User, Coins, PhoneOff, CheckCircle2, Clock, Sparkles } from 'lucide-react-native';
+import { ArrowLeft, Send, User, Coins, PhoneOff, CheckCircle2, Clock, Sparkles, Smile, Image as ImageIcon, Reply, X, CornerDownRight } from 'lucide-react-native';
 import { useAuthStore } from '../../../src/store/authStore';
 import { useChatDetails, useChatMessages, useEndChat } from '../../../src/hooks/useMessaging';
 import { useChatSocket } from '../../../src/hooks/useChatSocket';
 import { theme } from '../../../src/constants/theme';
 import { getAvatarUrl } from '../../../src/utils/avatarUtil';
+import { Message } from '../../../src/api/messagingApi';
+
+const QUICK_EMOJIS = ['❤️', '🔥', '👍', '😂', '😍', '🎉', '💯', '✨'];
 
 export default function GirlChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -27,6 +30,12 @@ export default function GirlChatScreen() {
   const { sendMessage, emitTyping, endChatSession, isOtherUserTyping, chatTick, endedSummary } = useChatSocket(id);
 
   const [inputMessage, setInputMessage] = useState('');
+  const [showEmojiBar, setShowEmojiBar] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [imageUrlInput, setImageUrlInput] = useState('');
+  const [viewingImageUrl, setViewingImageUrl] = useState<string | null>(null);
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+
   const flatListRef = useRef<FlatList>(null);
 
   if (isChatLoading || isMessagesLoading) {
@@ -52,9 +61,28 @@ export default function GirlChatScreen() {
 
   const handleSend = () => {
     if (!inputMessage.trim()) return;
-    sendMessage(id, inputMessage.trim(), Date.now().toString());
+
+    let finalContent = inputMessage.trim();
+    if (replyingTo) {
+      const quoteExcerpt = replyingTo.content.replace(/^\[(IMAGE|REPLY):.*?\]:/, '').substring(0, 50);
+      finalContent = `[REPLY:${quoteExcerpt}]:${finalContent}`;
+      setReplyingTo(null);
+    }
+
+    sendMessage(id, finalContent, Date.now().toString());
     setInputMessage('');
     emitTyping(id, false);
+    setShowEmojiBar(false);
+  };
+
+  const handleSendImage = () => {
+    if (!imageUrlInput.trim() || !imageUrlInput.startsWith('http')) {
+      Alert.alert('Invalid URL', 'Please enter a valid HTTP/HTTPS image URL.');
+      return;
+    }
+    sendMessage(id, `[IMAGE]:${imageUrlInput.trim()}`, Date.now().toString());
+    setImageUrlInput('');
+    setShowImageModal(false);
   };
 
   const handleTextChange = (text: string) => {
@@ -85,7 +113,7 @@ export default function GirlChatScreen() {
   const minutesStr = Math.floor(elapsedSeconds / 60).toString().padStart(2, '0');
   const secondsStr = (elapsedSeconds % 60).toString().padStart(2, '0');
 
-  const otherUser = chat.otherParticipant || chat.boyId;
+  const otherUser = chat.otherParticipant || (typeof chat.boyId === 'object' ? chat.boyId : undefined);
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50 dark:bg-slate-900" edges={['bottom']}>
@@ -149,17 +177,64 @@ export default function GirlChatScreen() {
           contentContainerStyle={{ padding: 16 }}
           renderItem={({ item }) => {
             const isOwn = item.senderId === userId;
+            const rawContent = item.content || '';
+            const isImage = rawContent.startsWith('[IMAGE]:');
+            const isReply = rawContent.startsWith('[REPLY:');
+
+            let imageUrl = '';
+            if (isImage) imageUrl = rawContent.replace('[IMAGE]:', '').trim();
+
+            let quotedText = '';
+            let actualBody = rawContent;
+            if (isReply) {
+              const endQuoteIdx = rawContent.indexOf(']:');
+              if (endQuoteIdx !== -1) {
+                quotedText = rawContent.substring(7, endQuoteIdx);
+                actualBody = rawContent.substring(endQuoteIdx + 2);
+              }
+            }
+
             return (
               <View className={`flex-row mb-3 ${isOwn ? 'justify-end' : 'justify-start'}`}>
                 <View 
-                  className={`max-w-[78%] px-4 py-3 rounded-2xl ${
+                  className={`max-w-[80%] p-3.5 rounded-2xl ${
                     isOwn 
                       ? 'bg-rose-500 rounded-br-none' 
                       : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-bl-none'
                   }`}
                 >
-                  <Text className={`text-sm leading-relaxed ${isOwn ? 'text-white font-medium' : 'text-slate-800 dark:text-slate-100'}`}>
-                    {item.content}
+                  {/* Reply Button for incoming message */}
+                  {!isOwn && (
+                    <TouchableOpacity onPress={() => setReplyingTo(item)} className="self-end mb-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-full opacity-60">
+                      <Reply size={12} color="#e11d48" />
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Quoted Reply Banner */}
+                  {isReply && (
+                    <View className={`p-2.5 rounded-xl mb-2 border-l-4 ${
+                      isOwn ? 'bg-rose-600/60 border-rose-200' : 'bg-slate-100 dark:bg-slate-700/60 border-rose-500'
+                    }`}>
+                      <Text className={`text-xs font-bold ${isOwn ? 'text-rose-100' : 'text-rose-600'}`}>Replying to</Text>
+                      <Text className={`text-xs italic mt-0.5 ${isOwn ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`} numberOfLines={2}>
+                        "{quotedText}"
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* Message Content */}
+                  {isImage ? (
+                    <TouchableOpacity onPress={() => setViewingImageUrl(imageUrl)} className="rounded-xl overflow-hidden mb-1">
+                      <Image source={{ uri: imageUrl }} className="w-56 h-56 rounded-xl bg-slate-200" resizeMode="cover" />
+                    </TouchableOpacity>
+                  ) : (
+                    <Text className={`text-sm leading-relaxed ${isOwn ? 'text-white font-medium' : 'text-slate-800 dark:text-slate-100'}`}>
+                      {actualBody}
+                    </Text>
+                  )}
+
+                  <Text className={`text-[10px] mt-1 text-right ${isOwn ? 'text-rose-100' : 'text-slate-400'}`}>
+                    {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </Text>
                 </View>
               </View>
@@ -183,8 +258,46 @@ export default function GirlChatScreen() {
           }
         />
 
+        {/* Quote Reply Preview Banner */}
+        {replyingTo && (
+          <View className="px-4 py-2 bg-rose-50 dark:bg-rose-900/30 flex-row items-center justify-between border-t border-rose-200 dark:border-rose-800">
+            <View className="flex-row items-center gap-2 flex-1">
+              <CornerDownRight size={16} color="#e11d48" />
+              <View className="flex-1">
+                <Text className="text-xs font-bold text-rose-600 dark:text-rose-400">Replying to Message</Text>
+                <Text className="text-xs text-slate-600 dark:text-slate-300" numberOfLines={1}>
+                  {replyingTo.content}
+                </Text>
+              </View>
+            </View>
+
+            <TouchableOpacity onPress={() => setReplyingTo(null)} className="p-1 rounded-full bg-slate-200 dark:bg-slate-700">
+              <X size={14} color="#64748b" />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Quick Emoji Bar */}
+        {showEmojiBar && (
+          <View className="px-4 py-2 bg-slate-100 dark:bg-slate-800 flex-row justify-around border-t border-slate-200 dark:border-slate-700">
+            {QUICK_EMOJIS.map((emoji, i) => (
+              <TouchableOpacity key={i} onPress={() => setInputMessage((prev) => prev + emoji)} className="p-1">
+                <Text className="text-xl">{emoji}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
         {/* Input Bar */}
         <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 gap-2">
+          <TouchableOpacity onPress={() => setShowEmojiBar((prev) => !prev)} className="p-1">
+            <Smile size={22} color={showEmojiBar ? '#e11d48' : '#94a3b8'} />
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => setShowImageModal(true)} className="p-1">
+            <ImageIcon size={22} color="#94a3b8" />
+          </TouchableOpacity>
+
           <TextInput
             value={inputMessage}
             onChangeText={handleTextChange}
@@ -203,6 +316,47 @@ export default function GirlChatScreen() {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Expandable Image Modal */}
+      <Modal visible={!!viewingImageUrl} transparent animationType="fade">
+        <View className="flex-1 bg-black/90 items-center justify-center p-4">
+          <TouchableOpacity onPress={() => setViewingImageUrl(null)} className="absolute top-12 right-6 p-3 bg-white/20 rounded-full">
+            <X size={24} color="#ffffff" />
+          </TouchableOpacity>
+          {viewingImageUrl && (
+            <Image source={{ uri: viewingImageUrl }} className="w-full h-4/5 rounded-2xl" resizeMode="contain" />
+          )}
+        </View>
+      </Modal>
+
+      {/* Share Image URL Modal */}
+      <Modal visible={showImageModal} transparent animationType="slide">
+        <View className="flex-1 bg-black/60 items-center justify-center px-6">
+          <View className="bg-white dark:bg-slate-800 w-full p-6 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700">
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-lg font-bold text-slate-900 dark:text-white">Share Image</Text>
+              <TouchableOpacity onPress={() => setShowImageModal(false)} className="p-1 rounded-full bg-slate-100 dark:bg-slate-700">
+                <X size={18} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+
+            <TextInput
+              value={imageUrlInput}
+              onChangeText={setImageUrlInput}
+              placeholder="Paste Image HTTP/HTTPS URL..."
+              placeholderTextColor="#94a3b8"
+              className="w-full bg-slate-100 dark:bg-slate-900 rounded-2xl px-4 h-12 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 text-sm mb-6 font-mono"
+            />
+
+            <TouchableOpacity 
+              onPress={handleSendImage}
+              className="w-full bg-pink-600 py-3.5 rounded-2xl items-center shadow-lg shadow-pink-500/30"
+            >
+              <Text className="text-white font-bold text-base">Send Image</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Session Completed Earnings Summary Modal */}
       <Modal visible={!!endedSummary} transparent animationType="slide">
