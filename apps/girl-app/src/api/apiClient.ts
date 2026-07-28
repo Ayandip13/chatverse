@@ -1,7 +1,8 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
-import { useAuthStore } from '../store/authStore';
+
+const getAuthStore = () => require('../store/authStore').useAuthStore;
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.0.105:5000/api/v1';
 
@@ -32,7 +33,7 @@ const processQueue = (error: AxiosError | null, token: string | null = null) => 
 
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    const token = useAuthStore.getState().accessToken;
+    const token = getAuthStore().getState().accessToken;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -79,7 +80,7 @@ apiClient.interceptors.response.use(
           ? getStorage.setItem('accessToken', accessToken)
           : (getStorage as typeof SecureStore).setItemAsync('accessToken', accessToken));
 
-        useAuthStore.setState({ accessToken });
+        getAuthStore().setState({ accessToken });
 
         processQueue(null, accessToken);
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
@@ -87,7 +88,7 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError as AxiosError, null);
-        useAuthStore.getState().logout();
+        getAuthStore().getState().logout();
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -95,11 +96,27 @@ apiClient.interceptors.response.use(
     }
 
     if (!error.response) {
-      useAuthStore.setState({ isOffline: true });
+      getAuthStore().setState({ isOffline: true });
     }
 
     return Promise.reject(error);
   }
 );
+
+export const getErrorMessage = (error: any, fallbackMessage: string = 'An unexpected error occurred'): string => {
+  if (error?.response?.data?.error?.message) {
+    return error.response.data.error.message;
+  }
+  if (error?.response?.data?.message) {
+    return error.response.data.message;
+  }
+  if (typeof error?.response?.data === 'string') {
+    return error.response.data;
+  }
+  if (error?.message && typeof error.message === 'string' && !error.message.includes('status code')) {
+    return error.message;
+  }
+  return fallbackMessage;
+};
 
 export default apiClient;

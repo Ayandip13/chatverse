@@ -3,20 +3,20 @@ import { View, Text, ScrollView, Image, TouchableOpacity, Modal, ActivityIndicat
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../src/store/authStore';
 import { StatusBadge } from '../../src/components/ui/StatusBadge';
-import { 
-  Heart, Sparkles, User, LogOut, MessageCircle, Clock, Check, X, 
-  PhoneCall, Edit3, Wallet, Coins, Lock, TrendingUp, ArrowDownToLine, 
-  ChevronRight, Activity, ShieldCheck 
+import {
+  LogOut, MessageCircle, Clock, Check, X,
+  Edit3, Coins, Lock, TrendingUp, ArrowDownToLine,
+  ChevronRight, ShieldCheck,
+  MessageCircleHeart
 } from 'lucide-react-native';
 import { theme } from '../../src/constants/theme';
-import { useRouter } from 'expo-router';
+import { router } from 'expo-router';
 import { useSocket } from '../../src/providers/SocketProvider';
 import { useAcceptChatRequest, useRejectChatRequest, useChatRequests, useActiveChats } from '../../src/hooks/useMessaging';
 import { useWithdrawalSummary } from '../../src/hooks/useWithdrawals';
 import { getAvatarUrl } from '../../src/utils/avatarUtil';
 
 export default function DashboardScreen() {
-  const router = useRouter();
   const { user, logout } = useAuthStore();
   const { socket, isConnected } = useSocket();
 
@@ -173,8 +173,8 @@ export default function DashboardScreen() {
               </View>
             </View>
 
-            <TouchableOpacity 
-              onPress={() => router.push('/(app)/edit-profile')} 
+            <TouchableOpacity
+              onPress={() => router.push('/(app)/edit-profile')}
               className="p-2.5 rounded-full bg-pink-50 dark:bg-pink-900/30 border border-pink-200 dark:border-pink-800"
             >
               <Edit3 size={16} color="#e11d48" />
@@ -317,7 +317,7 @@ export default function DashboardScreen() {
             </View>
           ) : (
             <View className="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-slate-700 items-center justify-center">
-              <PhoneCall color={theme.colors.text.secondary.light} size={28} className="mb-2" />
+              <MessageCircleHeart color={theme.colors.text.secondary.light} size={28} className="mb-2" />
               <Text className="text-slate-800 dark:text-slate-200 font-bold text-sm">
                 No Pending Requests
               </Text>

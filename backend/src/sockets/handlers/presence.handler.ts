@@ -9,9 +9,14 @@ export const registerPresenceHandlers = (io: Server, socket: AuthenticatedSocket
   // Personal room for direct updates (like wallet)
   socket.join(`user:${userId}`);
 
+  // Update user's last active / updatedAt timestamp in DB
+  User.updateOne({ _id: userId }, { updatedAt: new Date() }).catch(err => {
+    logger.error(`Failed to update presence timestamp for user ${userId}:`, err);
+  });
+
   socket.on('presence:online', async () => {
     logger.info(`User ${userId} is online`);
-    // In a real Redis setup, you'd store this in a hash map for fast global lookup.
+    await User.updateOne({ _id: userId }, { updatedAt: new Date() }).catch(() => {});
     // We emit to all since a user might be favored.
     io.emit('presence:update', { userId, status: 'ONLINE' });
   });

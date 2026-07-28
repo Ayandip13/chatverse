@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Mail, Lock, User, Phone, FileText, Camera, CheckSquare, Square, ShieldCheck, Heart } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 
-import apiClient from '../../src/api/apiClient';
+import apiClient, { getErrorMessage } from '../../src/api/apiClient';
 import { useAuthStore } from '../../src/store/authStore';
 import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
@@ -17,7 +17,7 @@ import { theme } from '../../src/constants/theme';
 const registerSchema = z.object({
   name: z.string().min(2, 'Full name must be at least 2 characters'),
   email: z.string().min(1, 'Email is required').email('Invalid email address'),
-  phone: z.string().min(10, 'Valid phone number is required for manual verification'),
+  phone: z.string().min(10, 'Valid 10-digit phone number is required'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   confirmPassword: z.string().min(1, 'Please confirm your password'),
   bio: z.string().max(500, 'Bio cannot exceed 500 characters').optional(),
@@ -34,7 +34,6 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 export default function RegisterScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const setAuth = useAuthStore((state) => state.setAuth);
 
@@ -55,7 +54,7 @@ export default function RegisterScreen() {
     try {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permissionResult.granted) {
-        Alert.alert('Permission Denied', 'Permission to access camera roll is required to select a profile picture.');
+        Alert.alert('Permission Denied', 'Permission to access gallery is required to select a profile picture.');
         return;
       }
 
@@ -75,6 +74,15 @@ export default function RegisterScreen() {
   };
 
   const onSubmit = async (data: RegisterFormData) => {
+    // 1. Mandatory Profile Picture Validation
+    if (!avatarUri) {
+      Alert.alert(
+        'Profile Picture Required', 
+        'Please upload your real profile picture to complete your creator application.'
+      );
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -87,43 +95,41 @@ export default function RegisterScreen() {
         bio: data.bio || undefined,
       };
 
-      // 1. Register Girl User
+      // 2. Register Girl User
       const response = await apiClient.post('/auth/register', payload);
       const { user, accessToken, refreshToken } = response.data.data;
 
-      // 2. Set Auth State (User status will be PENDING)
+      // 3. Set Auth State (User status will be PENDING)
       await setAuth(user, accessToken, refreshToken);
 
-      // 3. Upload Avatar if selected
-      if (avatarUri) {
-        try {
-          const formData = new FormData();
-          const filename = avatarUri.split('/').pop() || 'avatar.jpg';
-          const match = /\.(\w+)$/.exec(filename);
-          const type = match ? `image/${match[1]}` : `image/jpeg`;
+      // 4. Upload Avatar
+      try {
+        const formData = new FormData();
+        const filename = avatarUri.split('/').pop() || 'avatar.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : `image/jpeg`;
 
-          formData.append('avatar', {
-            uri: avatarUri,
-            name: filename,
-            type,
-          } as any);
+        formData.append('avatar', {
+          uri: avatarUri,
+          name: filename,
+          type,
+        } as any);
 
-          const avatarRes = await apiClient.post('/users/avatar', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          });
+        const avatarRes = await apiClient.post('/users/avatar', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
 
-          if (avatarRes.data?.data?.avatar) {
-            useAuthStore.getState().updateUser({ avatar: avatarRes.data.data.avatar });
-          }
-        } catch (uploadError) {
-          console.warn('Avatar upload failed during registration:', uploadError);
+        if (avatarRes.data?.data?.avatar) {
+          useAuthStore.getState().updateUser({ avatar: avatarRes.data.data.avatar });
         }
+      } catch (uploadError) {
+        console.warn('Avatar upload failed during registration:', uploadError);
       }
 
       // Navigation is automatically routed to Pending Verification via auth guard
     } catch (error: any) {
       console.log('Registration Error:', error.response?.data || error.message);
-      const message = error.response?.data?.error?.message || error.response?.data?.message || error.message || 'Failed to create account';
+      const message = getErrorMessage(error, 'Failed to create account');
       Alert.alert('Registration Failed', message);
     } finally {
       setLoading(false);
@@ -145,26 +151,30 @@ export default function RegisterScreen() {
             </Text>
           </View>
 
-          {/* Profile Picture Upload Section */}
+          {/* Mandatory Profile Picture Upload Section */}
           <View className="items-center mb-6">
             <TouchableOpacity
               onPress={pickImage}
               activeOpacity={0.8}
-              className="relative w-24 h-24 rounded-full bg-slate-200 dark:bg-slate-800 items-center justify-center border-2 border-pink-500/50 shadow-md"
+              className={`relative w-24 h-24 rounded-full bg-slate-200 dark:bg-slate-800 items-center justify-center border-2 shadow-md ${
+                avatarUri ? 'border-pink-500' : 'border-dashed border-pink-500'
+              }`}
             >
               {avatarUri ? (
                 <Image source={{ uri: avatarUri }} className="w-full h-full rounded-full" />
               ) : (
                 <View className="items-center justify-center">
                   <Camera color={theme.colors.secondary} size={32} />
-                  <Text className="text-[10px] font-bold text-pink-500 mt-1">ADD PHOTO</Text>
+                  <Text className="text-[10px] font-bold text-pink-500 mt-1">UPLOAD PHOTO</Text>
                 </View>
               )}
               <View className="absolute bottom-0 right-0 bg-pink-500 w-8 h-8 rounded-full items-center justify-center border-2 border-white dark:border-slate-900 shadow">
                 <Camera color="white" size={14} />
               </View>
             </TouchableOpacity>
-            <Text className="text-xs text-slate-400 dark:text-slate-500 mt-2 font-medium">Profile Photo (Optional)</Text>
+            <Text className="text-xs font-bold text-pink-600 dark:text-pink-400 mt-2">
+              Real Profile Photo (Required *)
+            </Text>
           </View>
 
           <View className="space-y-1">
@@ -210,6 +220,7 @@ export default function RegisterScreen() {
                   label="Phone Number (Required for Manual Verification)"
                   placeholder="Enter 10-digit mobile number"
                   keyboardType="phone-pad"
+                  maxLength={10}
                   onBlur={onBlur}
                   onChangeText={onChange}
                   value={value}
@@ -244,7 +255,7 @@ export default function RegisterScreen() {
                 <Input
                   label="Password"
                   placeholder="Create password (min 6 chars)"
-                  secureTextEntry={!showPassword}
+                  isPassword
                   onBlur={onBlur}
                   onChangeText={onChange}
                   value={value}
@@ -261,7 +272,7 @@ export default function RegisterScreen() {
                 <Input
                   label="Confirm Password"
                   placeholder="Re-enter password"
-                  secureTextEntry={!showPassword}
+                  isPassword
                   onBlur={onBlur}
                   onChangeText={onChange}
                   value={value}
@@ -304,7 +315,7 @@ export default function RegisterScreen() {
           <View className="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl mb-6 flex-row items-start gap-3">
             <ShieldCheck color={theme.colors.primary} size={22} className="mt-0.5" />
             <Text className="flex-1 text-xs text-indigo-900 dark:text-indigo-200 leading-relaxed font-medium">
-              After submitting, your account will enter <Text className="font-bold">Pending Verification</Text>. An administrator will contact your phone number before activating your profile.
+              After submitting, your application will enter <Text className="font-bold">Pending Verification</Text>. An administrator will review your real profile picture and phone number before activating your profile.
             </Text>
           </View>
 

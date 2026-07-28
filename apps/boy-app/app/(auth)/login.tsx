@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/store/authStore';
 import { useState } from 'react';
-import apiClient from '../../src/api/apiClient';
+import apiClient, { getErrorMessage } from '../../src/api/apiClient';
 import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
 import { z } from 'zod';
@@ -65,7 +65,7 @@ export default function LoginScreen() {
       // Navigation is handled automatically by the auth guard in _layout.tsx
     } catch (error: any) {
       console.log('Login Error:', error.response?.data || error.message);
-      const message = error.response?.data?.message || error.message || 'Failed to connect to server';
+      const message = getErrorMessage(error, 'Failed to connect to server');
       Alert.alert('Login Failed', message);
     } finally {
       setLoading(false);
@@ -128,17 +128,8 @@ export default function LoginScreen() {
                   onChangeText={onChange}
                   value={value}
                   error={errors.password?.message}
-                  secureTextEntry={!showPassword}
+                  isPassword
                   leftIcon={<Lock color={theme.colors.text.muted.light} size={20} />}
-                  rightIcon={
-                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)} className="p-1">
-                      {showPassword ? (
-                        <EyeOff color={theme.colors.text.muted.light} size={20} />
-                      ) : (
-                        <Eye color={theme.colors.text.muted.light} size={20} />
-                      )}
-                    </TouchableOpacity>
-                  }
                 />
               )}
             />

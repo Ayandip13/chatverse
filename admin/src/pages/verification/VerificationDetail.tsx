@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { getAvatarUrl } from '../../utils/avatarUtil';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, CheckCircle, XCircle, AlertTriangle, ShieldOff, Calendar, Phone, Mail } from 'lucide-react';
@@ -13,6 +13,7 @@ import { Button } from '../../components/common/Button';
 import { Loading } from '../../components/common/Loading';
 import { EmptyState } from '../../components/common/EmptyState';
 import { Modal } from '../../components/common/Modal';
+import { useState } from 'react';
 
 const getStatusBadgeVariant = (status: string): BadgeVariant => {
   switch (status) {
@@ -29,7 +30,7 @@ export const VerificationDetail = () => {
   const { girlId } = useParams<{ girlId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [actionType, setActionType] = useState<'APPROVED' | 'REJECTED' | 'SUSPENDED' | 'BANNED' | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
@@ -112,13 +113,7 @@ export const VerificationDetail = () => {
           <CardContent className="p-6">
             <div className="flex flex-col items-center text-center">
               <div className="w-32 h-32 rounded-full bg-primary/10 overflow-hidden mb-4 border-4 border-surface-light dark:border-surface-dark shadow-md">
-                {user.avatar ? (
-                  <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-primary font-bold text-4xl uppercase">
-                    {user.name.charAt(0)}
-                  </div>
-                )}
+                <img src={getAvatarUrl(user.avatar, user.name)} alt={user.name} className="w-full h-full object-cover" />
               </div>
               <h2 className="text-xl font-bold text-textMain-light dark:text-textMain-dark">{user.name}</h2>
               <Badge variant={getStatusBadgeVariant(user.status)} className="mt-2">
@@ -146,7 +141,7 @@ export const VerificationDetail = () => {
               <h3 className="text-sm font-semibold text-textMain-light dark:text-textMain-dark uppercase tracking-wider mb-4">
                 Admin Actions
               </h3>
-              
+
               {isPending && (
                 <>
                   <Button className="w-full gap-2" onClick={() => openModal('APPROVED')}>
@@ -197,7 +192,7 @@ export const VerificationDetail = () => {
                     {user.bio || 'No bio provided.'}
                   </p>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <h4 className="text-sm font-medium text-textSecondary-light dark:text-textSecondary-dark">Role</h4>
@@ -250,9 +245,9 @@ export const VerificationDetail = () => {
                   )}
                 </div>
               ) : (
-                <EmptyState 
-                  title="No Verification Notes" 
-                  description="This account has not had verification notes or status reason recorded yet." 
+                <EmptyState
+                  title="No Verification Notes"
+                  description="This account has not had verification notes or status reason recorded yet."
                   className="py-8"
                 />
               )}
@@ -270,8 +265,8 @@ export const VerificationDetail = () => {
             <Button variant="secondary" onClick={closeModal} disabled={updateStatusMutation.isPending}>
               Cancel
             </Button>
-            <Button 
-              onClick={handleConfirm} 
+            <Button
+              onClick={handleConfirm}
               isLoading={updateStatusMutation.isPending}
               className={actionType === 'REJECTED' || actionType === 'BANNED' ? 'bg-danger hover:bg-danger/90' : actionType === 'SUSPENDED' ? 'bg-warning hover:bg-warning/90' : ''}
             >

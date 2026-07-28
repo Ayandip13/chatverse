@@ -3,11 +3,14 @@ import { Bell, Search } from 'lucide-react-native';
 import { useAuthStore } from '../../store/authStore';
 import { useRouter } from 'expo-router';
 import { useUnreadCount } from '../../hooks/useUser';
+import { getAvatarUrl } from '../../utils/avatarUtil';
 
 export function HomeHeader() {
   const user = useAuthStore((state) => state.user);
   const router = useRouter();
   const { data: unreadCount = 0 } = useUnreadCount();
+
+  const avatarUri = getAvatarUrl(user?.avatar, user?.name, user?._id);
 
   return (
     <View className="flex-row items-center justify-between px-6 py-4">
@@ -16,13 +19,7 @@ export function HomeHeader() {
           onPress={() => router.push('/profile')}
           className="w-12 h-12 rounded-full bg-indigo-100 dark:bg-indigo-900 border-2 border-indigo-500 items-center justify-center overflow-hidden"
         >
-          {user?.avatar ? (
-            <Image source={{ uri: user.avatar }} className="w-full h-full" />
-          ) : (
-            <Text className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
-              {user?.name?.charAt(0).toUpperCase()}
-            </Text>
-          )}
+          <Image source={{ uri: avatarUri }} className="w-full h-full" />
         </TouchableOpacity>
         <View>
           <Text className="text-gray-500 dark:text-gray-400 text-sm font-medium">Good Evening, 👋</Text>

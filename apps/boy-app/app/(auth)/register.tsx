@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Mail, Lock, User, Phone, CheckSquare, Square } from 'lucide-react-native';
 
-import apiClient from '../../src/api/apiClient';
+import apiClient, { getErrorMessage } from '../../src/api/apiClient';
 import { useAuthStore } from '../../src/store/authStore';
 import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
@@ -51,7 +51,7 @@ export default function RegisterScreen() {
   const onSubmit = async (data: RegisterFormData) => {
     try {
       setLoading(true);
-      
+
       const payload = {
         name: data.name,
         email: data.email,
@@ -63,12 +63,12 @@ export default function RegisterScreen() {
 
       const response = await apiClient.post('/auth/register', payload);
       const { user, accessToken, refreshToken } = response.data.data;
-      
+
       await setAuth(user, accessToken, refreshToken);
       // Auth wrapper handles redirect to Home
     } catch (error: any) {
       console.log('Registration Error:', error.response?.data || error.message);
-      const message = error.response?.data?.message || error.message || 'Failed to create account';
+      const message = getErrorMessage(error, 'Failed to create account');
       Alert.alert('Registration Failed', message);
     } finally {
       setLoading(false);
@@ -79,7 +79,7 @@ export default function RegisterScreen() {
     <SafeAreaView className="flex-1 bg-white dark:bg-gray-900">
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
         <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 40 }}>
-          
+
           <View className="mb-8">
             <Text className="text-3xl font-bold text-gray-900 dark:text-white">Create Account</Text>
             <Text className="text-gray-500 dark:text-gray-400 mt-2">
@@ -131,6 +131,7 @@ export default function RegisterScreen() {
                   placeholder="Enter your phone number"
                   keyboardType="phone-pad"
                   onBlur={onBlur}
+                  maxLength={10}
                   onChangeText={onChange}
                   value={value}
                   error={errors.phone?.message}
@@ -146,7 +147,7 @@ export default function RegisterScreen() {
                 <Input
                   label="Password"
                   placeholder="Create a password"
-                  secureTextEntry={!showPassword}
+                  isPassword
                   onBlur={onBlur}
                   onChangeText={onChange}
                   value={value}
@@ -163,7 +164,7 @@ export default function RegisterScreen() {
                 <Input
                   label="Confirm Password"
                   placeholder="Confirm your password"
-                  secureTextEntry={!showPassword}
+                  isPassword
                   onBlur={onBlur}
                   onChangeText={onChange}
                   value={value}
@@ -178,7 +179,7 @@ export default function RegisterScreen() {
               name="termsAccepted"
               render={({ field: { onChange, value } }) => (
                 <View className="mb-6 mt-2">
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     className="flex-row items-center gap-3"
                     onPress={() => onChange(!value)}
                     activeOpacity={0.7}

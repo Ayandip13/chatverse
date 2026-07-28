@@ -12,6 +12,7 @@ export interface User {
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED' | 'BANNED' | string;
   avatar?: string;
   bio?: string;
+  languagePreference?: string;
   walletBalance?: number;
   averageRating?: number;
   totalRatings?: number;

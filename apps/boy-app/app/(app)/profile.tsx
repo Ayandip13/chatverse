@@ -4,6 +4,7 @@ import { Settings, Wallet, Heart, User, ArrowLeft, Edit3, Shield, Info, LifeBuoy
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/store/authStore';
 import { useProfile } from '../../src/hooks/useUser';
+import { getAvatarUrl } from '../../src/utils/avatarUtil';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function ProfileScreen() {
 
   // Prefer fetched profile over local authStore for latest stats
   const user = profile || authUser;
+  const avatarUri = getAvatarUrl(user?.avatar, user?.name, user?._id);
 
   const menuItems = [
     { title: 'My Wallet', icon: Wallet, route: '/wallet', color: '#10b981' },
@@ -37,14 +39,8 @@ export default function ProfileScreen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Profile Card */}
         <View className="items-center px-6 pt-6 pb-8 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-800">
-          <View className="relative w-28 h-28 mb-4">
-            {user?.avatar ? (
-              <Image source={{ uri: user.avatar }} className="w-full h-full rounded-full border-4 border-indigo-50 dark:border-indigo-900/30" />
-            ) : (
-              <View className="w-full h-full rounded-full bg-indigo-100 dark:bg-indigo-900 border-4 border-indigo-50 dark:border-indigo-800 items-center justify-center">
-                <User size={48} color="#4f46e5" />
-              </View>
-            )}
+          <View className="relative w-28 h-28 mb-4 rounded-full overflow-hidden border-4 border-indigo-50 dark:border-indigo-900/30">
+            <Image source={{ uri: avatarUri }} className="w-full h-full" />
           </View>
           
           {isLoading ? (

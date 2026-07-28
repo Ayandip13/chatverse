@@ -63,7 +63,7 @@ export default function GirlDetailsScreen() {
 
   // Countdown timer for pending request modal
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setInterval>;
     if (activeRequestId && countdown > 0) {
       timer = setInterval(() => {
         setCountdown((prev) => prev - 1);
@@ -100,7 +100,7 @@ export default function GirlDetailsScreen() {
 
   const handleStartChat = async () => {
     try {
-      const res = await sendChatRequest(girl._id);
+      const res: any = await sendChatRequest(girl._id);
       if (res && res.data) {
         setActiveRequestId(res.data._id || res.data.id);
         setCountdown(60);

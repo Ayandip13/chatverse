@@ -76,21 +76,12 @@ export default function ResetPasswordScreen() {
             <Input
               label="New Password"
               placeholder="Enter new password"
-              secureTextEntry={!showPassword}
+              isPassword
               onBlur={onBlur}
               onChangeText={onChange}
               value={value}
               error={errors.password?.message}
               leftIcon={<Lock color={theme.colors.text.muted.light} size={20} />}
-              rightIcon={
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} className="p-1">
-                  {showPassword ? (
-                    <EyeOff color={theme.colors.text.muted.light} size={20} />
-                  ) : (
-                    <Eye color={theme.colors.text.muted.light} size={20} />
-                  )}
-                </TouchableOpacity>
-              }
             />
           )}
         />
@@ -102,7 +93,7 @@ export default function ResetPasswordScreen() {
             <Input
               label="Confirm New Password"
               placeholder="Confirm new password"
-              secureTextEntry={!showPassword}
+              isPassword
               onBlur={onBlur}
               onChangeText={onChange}
               value={value}

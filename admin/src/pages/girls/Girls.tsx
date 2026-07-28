@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { getAvatarUrl } from '../../utils/avatarUtil';
+import { safeFormatDate } from '../../utils/dateUtils';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Search, Eye, RefreshCcw, AlertCircle, Star } from 'lucide-react';
@@ -130,13 +132,7 @@ export const Girls = () => {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-pink-500/10 overflow-hidden flex-shrink-0 border border-pink-500/30">
-                        {girl.avatar ? (
-                          <img src={girl.avatar} alt={girl.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-pink-500 font-bold text-sm uppercase">
-                            {girl.name.charAt(0)}
-                          </div>
-                        )}
+                          <img src={getAvatarUrl(girl.avatar, girl.name)} alt={girl.name} className="w-full h-full object-cover" />
                       </div>
                       <div>
                         <div className="font-semibold text-textMain-light dark:text-textMain-dark">{girl.name}</div>
@@ -164,7 +160,7 @@ export const Girls = () => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {format(new Date(girl.createdAt), 'MMM d, yyyy')}
+                    {safeFormatDate(girl.createdAt)}
                   </TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(girl.status)}>

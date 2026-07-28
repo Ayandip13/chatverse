@@ -16,7 +16,14 @@ export function getAvatarUrl(avatar?: string | null, name?: string, seedKey?: st
     !avatar.includes('via.placeholder.com') &&
     avatar !== 'undefined'
   ) {
-    return avatar;
+    let cleanUrl = avatar.trim();
+    if (cleanUrl.startsWith('/uploads') || cleanUrl.startsWith('uploads')) {
+      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.0.105:5000/api/v1';
+      const baseUrl = apiUrl.replace(/\/api\/v1\/?$/, '').replace(/\/+$/, '');
+      const relativePath = cleanUrl.startsWith('/') ? cleanUrl : `/${cleanUrl}`;
+      return `${baseUrl}${relativePath}`;
+    }
+    return cleanUrl;
   }
 
   const key = seedKey || name || 'creator';

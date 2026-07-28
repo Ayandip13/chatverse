@@ -2,6 +2,7 @@ import { User, Favorite } from '@/models';
 import { Role, GirlStatus } from '@/constants/enums.constant';
 import { ApiError } from '@/utils/ApiError.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
+import { isUserOnline } from '@/sockets/handlers/presence.handler';
 import mongoose from 'mongoose';
 
 class GirlsService {
@@ -23,7 +24,7 @@ class GirlsService {
     return girls.map(girl => ({
       ...girl,
       isFavorite: favSet.has(girl._id.toString()),
-      isOnline: new Date(girl.updatedAt).getTime() > Date.now() - 15 * 60000
+      isOnline: isUserOnline(girl._id.toString()) || (girl.updatedAt && new Date(girl.updatedAt).getTime() > Date.now() - 15 * 60000)
     }));
   }
 
@@ -137,7 +138,7 @@ class GirlsService {
     return {
       ...girl,
       isFavorite: !!isFavorite,
-      isOnline: new Date(girl.updatedAt).getTime() > Date.now() - 15 * 60000
+      isOnline: isUserOnline(girl._id.toString()) || (girl.updatedAt && new Date(girl.updatedAt).getTime() > Date.now() - 15 * 60000)
     };
   }
 

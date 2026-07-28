@@ -12,6 +12,7 @@ import { Badge, type BadgeVariant } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Loading } from '../../components/common/Loading';
+import { getAvatarUrl } from '../../utils/avatarUtil';
 import { EmptyState } from '../../components/common/EmptyState';
 
 const getStatusBadgeVariant = (status: string): BadgeVariant => {
@@ -79,11 +80,10 @@ export const VerificationList = () => {
               setStatusFilter(tab.value);
               setPage(1);
             }}
-            className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${
-              statusFilter === tab.value
+            className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${statusFilter === tab.value
                 ? 'bg-primary text-white shadow-sm'
                 : 'bg-surface-light dark:bg-surface-dark text-textSecondary-light dark:text-textSecondary-dark hover:bg-surface-light/80 border border-border-light dark:border-border-dark'
-            }`}
+              }`}
           >
             {tab.label}
           </button>
@@ -130,13 +130,7 @@ export const VerificationList = () => {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-primary/10 overflow-hidden flex-shrink-0">
-                        {user.avatar ? (
-                          <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-primary font-bold text-sm uppercase">
-                            {user.name.charAt(0)}
-                          </div>
-                        )}
+                        <img src={getAvatarUrl(user.avatar, user.name)} alt={user.name} className="w-full h-full object-cover" />
                       </div>
                       <div>
                         <div className="font-semibold text-textMain-light dark:text-textMain-dark">{user.name}</div>
@@ -173,7 +167,7 @@ export const VerificationList = () => {
             </Table>
           </div>
         )}
-        
+
         {totalPages > 1 && (
           <div className="flex items-center justify-between p-4 border-t border-border-light dark:border-border-dark">
             <span className="text-sm text-textSecondary-light dark:text-textSecondary-dark">

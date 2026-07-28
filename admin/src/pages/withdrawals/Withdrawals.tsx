@@ -11,7 +11,7 @@ import { Table, TableRow, TableCell } from '../../components/common/Table';
 import { Badge, type BadgeVariant } from '../../components/common/Badge';
 import { Button } from '../../components/common/Button';
 import { Loading } from '../../components/common/Loading';
-import { EmptyState } from '../../components/common/EmptyState';
+import { getAvatarUrl } from '../../utils/avatarUtil';
 import { Modal } from '../../components/common/Modal';
 
 const getWithdrawalBadgeVariant = (status: string): BadgeVariant => {
@@ -182,11 +182,7 @@ export const Withdrawals = () => {
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 font-bold overflow-hidden border border-rose-500/20">
-                        {req.userId?.avatar ? (
-                          <img src={req.userId.avatar} alt="" className="w-full h-full object-cover" />
-                        ) : (
-                          <User className="w-5 h-5" />
-                        )}
+                          <img src={getAvatarUrl(req.userId?.avatar, req.userId?.name)} alt="" className="w-full h-full object-cover" />
                       </div>
                       <div>
                         <div className="font-semibold text-textMain-light dark:text-textMain-dark">

@@ -3,18 +3,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/store/authStore';
 import { useState } from 'react';
-import apiClient from '../../src/api/apiClient';
+import apiClient, { getErrorMessage } from '../../src/api/apiClient';
 import { Button } from '../../src/components/ui/Button';
 import { Input } from '../../src/components/ui/Input';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
-import { Eye, EyeOff, Mail, Lock, Heart, Sparkles } from 'lucide-react-native';
+import { Mail, Lock, Heart } from 'lucide-react-native';
 import { theme } from '../../src/constants/theme';
-import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
-
-WebBrowser.maybeCompleteAuthSession();
 
 const loginSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email address'),
@@ -25,7 +21,6 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginScreen() {
   const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const setAuth = useAuthStore((state) => state.setAuth);
 
@@ -35,12 +30,6 @@ export default function LoginScreen() {
       email: '',
       password: '',
     }
-  });
-
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || 'dummy-web.apps.googleusercontent.com',
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || 'dummy-ios.apps.googleusercontent.com',
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || 'dummy-android.apps.googleusercontent.com',
   });
 
   const onSubmit = async (data: LoginFormData) => {
@@ -63,7 +52,7 @@ export default function LoginScreen() {
     } catch (error: any) {
       console.log('Login Error:', error.response?.data || error.message);
       const errorCode = error.response?.data?.error?.code;
-      const message = error.response?.data?.error?.message || error.response?.data?.message || error.message || 'Failed to connect to server';
+      const message = getErrorMessage(error, 'Failed to connect to server');
       
       if (errorCode === 'GIRL_REJECTED') {
         Alert.alert('Application Rejected', 'Your creator account application was not approved.');
@@ -75,10 +64,6 @@ export default function LoginScreen() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleGoogleLogin = () => {
-    Alert.alert('Google Creator Sign In', 'Google authentication flow is configured and ready for production Client IDs.');
   };
 
   return (
@@ -131,17 +116,8 @@ export default function LoginScreen() {
                   onChangeText={onChange}
                   value={value}
                   error={errors.password?.message}
-                  secureTextEntry={!showPassword}
+                  isPassword
                   leftIcon={<Lock color={theme.colors.text.muted.light} size={20} />}
-                  rightIcon={
-                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)} className="p-1">
-                      {showPassword ? (
-                        <EyeOff color={theme.colors.text.muted.light} size={20} />
-                      ) : (
-                        <Eye color={theme.colors.text.muted.light} size={20} />
-                      )}
-                    </TouchableOpacity>
-                  }
                 />
               )}
             />
@@ -157,23 +133,9 @@ export default function LoginScreen() {
             variant="secondary"
             onPress={handleSubmit(onSubmit)}
             isLoading={loading}
-            className="w-full mb-4"
+            className="w-full mb-8"
           >
             Sign In
-          </Button>
-
-          <View className="flex-row items-center my-5">
-            <View className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
-            <Text className="mx-4 text-slate-400 dark:text-slate-500 font-semibold text-xs tracking-wider">OR</Text>
-            <View className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
-          </View>
-
-          <Button
-            variant="outline"
-            onPress={handleGoogleLogin}
-            className="w-full mb-8 border-slate-300 dark:border-slate-700"
-          >
-            Continue with Google
           </Button>
 
           <View className="flex-row justify-center mt-auto">

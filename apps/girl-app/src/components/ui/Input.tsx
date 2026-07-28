@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, TextInput, Text, TextInputProps } from 'react-native';
+import { View, TextInput, Text, TouchableOpacity, TextInputProps } from 'react-native';
+import { Eye, EyeOff } from 'lucide-react-native';
 import { cn } from '../../utils/cn';
 import { theme } from '../../constants/theme';
 
@@ -8,12 +9,26 @@ export interface InputProps extends TextInputProps {
   error?: string;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  isPassword?: boolean;
   containerClassName?: string;
 }
 
 export const Input = React.forwardRef<TextInput, InputProps>(
-  ({ label, error, leftIcon, rightIcon, className, containerClassName, multiline, ...props }, ref) => {
+  ({ label, error, leftIcon, rightIcon, isPassword, secureTextEntry, className, containerClassName, multiline, ...props }, ref) => {
     const [isFocused, setIsFocused] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+
+    const effectiveSecureTextEntry = isPassword ? !showPassword : secureTextEntry;
+
+    const computedRightIcon = rightIcon || (isPassword ? (
+      <TouchableOpacity onPress={() => setShowPassword(!showPassword)} className="p-1" activeOpacity={0.7}>
+        {showPassword ? (
+          <EyeOff color={theme.colors.text.muted.light} size={20} />
+        ) : (
+          <Eye color={theme.colors.text.muted.light} size={20} />
+        )}
+      </TouchableOpacity>
+    ) : null);
 
     return (
       <View className={cn('w-full mb-4', containerClassName)}>
@@ -36,6 +51,7 @@ export const Input = React.forwardRef<TextInput, InputProps>(
             ref={ref}
             className="flex-1 text-base text-gray-900 dark:text-gray-100"
             placeholderTextColor={theme.colors.text.muted.light}
+            secureTextEntry={effectiveSecureTextEntry}
             multiline={multiline}
             textAlignVertical={multiline ? 'top' : 'center'}
             onFocus={(e) => {
@@ -48,7 +64,7 @@ export const Input = React.forwardRef<TextInput, InputProps>(
             }}
             {...props}
           />
-          {rightIcon && <View className={cn('ml-3', multiline && 'mt-0.5')}>{rightIcon}</View>}
+          {computedRightIcon && <View className={cn('ml-3', multiline && 'mt-0.5')}>{computedRightIcon}</View>}
         </View>
         {error && (
           <Text className="text-xs text-red-500 mt-1.5 font-medium ml-1">{error}</Text>

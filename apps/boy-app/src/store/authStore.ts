@@ -10,6 +10,7 @@ interface User {
   status: string;
   avatar?: string;
   bio?: string;
+  languagePreference?: string;
   walletBalance?: number;
 }
 

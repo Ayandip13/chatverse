@@ -4,6 +4,8 @@ import { Search, RefreshCcw, AlertCircle, ShieldAlert, ShieldCheck, UserX } from
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
+import { safeFormatDate } from '../../utils/dateUtils';
+
 import apiClient from '../../api/apiClient';
 import { PageLayout } from '../../components/layout/PageLayout';
 import { Card } from '../../components/common/Card';
@@ -189,7 +191,7 @@ export const Users = () => {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {format(new Date(user.createdAt), 'MMM d, yyyy')}
+                    {safeFormatDate(user.createdAt)}
                   </TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(user.status)}>

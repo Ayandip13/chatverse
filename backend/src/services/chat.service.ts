@@ -2,6 +2,7 @@ import { Chat, Message } from '@/models';
 import { ChatStatus } from '@/constants/enums.constant';
 import { ApiError } from '@/utils/ApiError.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
+import { isUserOnline } from '@/sockets/handlers/presence.handler';
 import mongoose from 'mongoose';
 
 class ChatService {
@@ -117,8 +118,16 @@ class ChatService {
 
     const result = await Chat.aggregate(pipeline);
     
-    const chats = result[0].data;
+    const rawChats = result[0].data;
     const total = result[0].metadata[0]?.total || 0;
+
+    const chats = rawChats.map((chat: any) => ({
+      ...chat,
+      otherParticipant: {
+        ...chat.otherParticipant,
+        isOnline: isUserOnline(chat.otherParticipant._id?.toString()) || chat.otherParticipant.isOnline
+      }
+    }));
 
     return { chats, total };
   }
@@ -187,7 +196,12 @@ class ChatService {
       throw new ApiError(STATUS_CODES.NOT_FOUND, 'Chat not found', 'CHAT_NOT_FOUND');
     }
 
-    return result[0];
+    const chat = result[0];
+    if (chat.otherParticipant) {
+      chat.otherParticipant.isOnline = isUserOnline(chat.otherParticipant._id?.toString()) || chat.otherParticipant.isOnline;
+    }
+
+    return chat;
   }
 
   async getChatMessages(userId: string, chatId: string, { page, limit }: any) {

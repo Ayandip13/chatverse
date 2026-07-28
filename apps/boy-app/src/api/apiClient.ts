@@ -100,4 +100,20 @@ apiClient.interceptors.response.use(
   }
 );
 
+export const getErrorMessage = (error: any, fallbackMessage: string = 'An unexpected error occurred'): string => {
+  if (error?.response?.data?.error?.message) {
+    return error.response.data.error.message;
+  }
+  if (error?.response?.data?.message) {
+    return error.response.data.message;
+  }
+  if (typeof error?.response?.data === 'string') {
+    return error.response.data;
+  }
+  if (error?.message && typeof error.message === 'string' && !error.message.includes('status code')) {
+    return error.message;
+  }
+  return fallbackMessage;
+};
+
 export default apiClient;
