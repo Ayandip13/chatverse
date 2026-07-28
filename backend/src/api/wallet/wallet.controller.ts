@@ -21,8 +21,14 @@ export const recharge = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const verifyRecharge = asyncHandler(async (req: Request, res: Response) => {
-  const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
-  const transaction = await walletService.verifyRecharge(req.user!.userId, razorpayOrderId, razorpayPaymentId, razorpaySignature);
+  const { razorpayOrderId, razorpayPaymentId, razorpaySignature, amountInr } = req.body;
+  const transaction = await walletService.verifyRecharge(
+    req.user!.userId, 
+    razorpayOrderId, 
+    razorpayPaymentId, 
+    razorpaySignature,
+    amountInr
+  );
   res.status(STATUS_CODES.OK).json(new ApiResponse(transaction, 'Recharge verified successfully'));
 });
 

@@ -7,6 +7,7 @@ import { ApiError } from '@/utils/ApiError.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
 import { WithdrawStatus, TransactionType } from '@/constants/enums.constant';
 import { Types } from 'mongoose';
+import { withdrawalService } from './withdrawal.service';
 
 class AdminService {
   async getDashboardMetrics() {
@@ -68,39 +69,33 @@ class AdminService {
     return await withdrawRequestRepository.getPaginatedRequests(filters, page, limit);
   }
 
-  async updateWithdrawalStatus(withdrawalId: string, status: WithdrawStatus, adminId: string, notes?: string) {
-    const withdrawal = await withdrawRequestRepository.findById(withdrawalId);
-    if (!withdrawal) {
-      throw new ApiError(STATUS_CODES.NOT_FOUND, 'Withdrawal request not found', 'NOT_FOUND');
+  async updateWithdrawalStatus(
+    withdrawalId: string,
+    status: WithdrawStatus,
+    adminId: string,
+    notes?: string,
+    rejectionReason?: string,
+    transactionReference?: string
+  ) {
+    if (status === WithdrawStatus.APPROVED) {
+      return await withdrawalService.adminApprove(withdrawalId, adminId, notes);
+    } else if (status === WithdrawStatus.REJECTED) {
+      return await withdrawalService.adminReject(
+        withdrawalId,
+        adminId,
+        rejectionReason || notes || 'Rejected by administrator',
+        notes
+      );
+    } else if (status === WithdrawStatus.COMPLETED || (status as any) === 'PAID') {
+      return await withdrawalService.adminMarkPaid(
+        withdrawalId,
+        adminId,
+        transactionReference || notes || `TXN_${Date.now()}`,
+        notes
+      );
+    } else {
+      throw new ApiError(STATUS_CODES.BAD_REQUEST, `Unsupported withdrawal status '${status}'`, 'INVALID_STATUS');
     }
-
-    if (withdrawal.status !== WithdrawStatus.PENDING && withdrawal.status !== WithdrawStatus.PROCESSING) {
-      throw new ApiError(STATUS_CODES.BAD_REQUEST, `Withdrawal already ${withdrawal.status}`, 'INVALID_TRANSITION');
-    }
-
-    const updateData: any = { status, notes };
-    if (adminId && Types.ObjectId.isValid(adminId) && /^[0-9a-fA-F]{24}$/.test(adminId)) {
-      updateData.processedById = new Types.ObjectId(adminId);
-    }
-    const updated = await withdrawRequestRepository.update(withdrawalId, updateData);
-
-    if (status === WithdrawStatus.REJECTED) {
-      // Refund the girl's wallet if rejected
-      const wallet = await walletRepository.findByUserId(withdrawal.userId.toString());
-      if (wallet) {
-        await walletRepository.incrementBalance(withdrawal.userId.toString(), withdrawal.amount, 'lifetimeEarnings');
-        await walletTransactionRepository.create({
-          walletId: wallet.id,
-          userId: withdrawal.userId,
-          type: TransactionType.REFUND,
-          amount: withdrawal.amount,
-          description: `Refund for rejected withdrawal: ${notes || 'N/A'}`,
-          referenceId: withdrawal._id,
-        });
-      }
-    }
-
-    return updated;
   }
 }
 

@@ -28,7 +28,7 @@ This document outlines the complete engineering backlog for the ChatVerse platfo
 | Notifications & Reports | ✅ Complete | Core schema and endpoints created. |
 | User Profile APIs (`/users/me`) | ✅ Complete | Router and controllers fully implemented, including Public profiles. |
 | Avatar/Image Upload | ✅ Complete | Cloudinary/Multer integration active with size/mime validation and cleanup. |
-| Girls Withdrawal APIs | ✅ Complete | Request and History endpoints active. |
+| Girls Withdrawal APIs | ✅ Complete | Complete withdrawal request, cancellation, balance escrow locking/refund, Admin Payout Queue, and status notifications. |
 | Ratings APIs | ✅ Complete | Rating and Aggregate updating active. |
 | Platform Settings (Public) | ✅ Complete | Basic configuration active. |
 

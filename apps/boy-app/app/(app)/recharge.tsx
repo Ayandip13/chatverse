@@ -52,14 +52,12 @@ export default function RechargeScreen() {
         amountInr: numAmount
       });
       const order = orderResponse.data.data;
+      const orderId = order.id || order.orderId;
 
-      // 2. Open Razorpay Web Checkout (Mocked Flow since we don't have the SDK keys here)
-      // In production, you would use react-native-razorpay SDK here
-      // For this architecture demo, we mock the Razorpay successful checkout flow
-      
+      // 2. Open Razorpay Web Checkout (Mocked Flow for development)
       Alert.alert(
-        'Razorpay Checkout',
-        `Simulating payment of ₹${numAmount} for Order ${order.id}...`,
+        'Razorpay Checkout (Simulated)',
+        `Simulating payment of ₹${numAmount} for Order ${orderId}...`,
         [
           { text: 'Cancel Payment', style: 'cancel', onPress: () => setLoading(false) },
           { 
@@ -68,19 +66,22 @@ export default function RechargeScreen() {
               try {
                 // 3. Verify Payment
                 await apiClient.post('/wallet/verify', {
-                  razorpayOrderId: order.id,
+                  razorpayOrderId: orderId,
                   razorpayPaymentId: `pay_mock_${Math.random().toString(36).substring(7)}`,
-                  razorpaySignature: 'mock_signature'
+                  razorpaySignature: 'mock_signature',
+                  amountInr: numAmount,
                 });
 
-                // 4. Invalidate Queries
+                // 4. Invalidate all wallet and profile queries across the app
+                queryClient.invalidateQueries({ queryKey: ['walletSummary'] });
                 queryClient.invalidateQueries({ queryKey: ['wallet-summary'] });
                 queryClient.invalidateQueries({ queryKey: ['wallet-recent-transactions'] });
                 queryClient.invalidateQueries({ queryKey: ['wallet-transactions'] });
+                queryClient.invalidateQueries({ queryKey: ['myProfile'] });
 
                 Alert.alert(
                   'Payment Successful!',
-                  `₹${numAmount} has been added to your wallet.`,
+                  `₹${numAmount} (${numAmount} coins) has been added to your wallet.`,
                   [{ text: 'Great', onPress: () => router.back() }]
                 );
               } catch (verifyError: any) {

@@ -79,9 +79,16 @@ export const getWithdrawals = asyncHandler(async (req: Request, res: Response) =
 });
 
 export const updateWithdrawal = asyncHandler(async (req: Request, res: Response) => {
-  const { status, notes } = req.body;
+  const { status, notes, rejectionReason, transactionReason, transactionReference } = req.body;
   const adminId = (req as any).admin?.adminId || 'mock_admin_id';
-  const updated = await adminService.updateWithdrawalStatus(req.params.id, status as WithdrawStatus, adminId, notes);
+  const updated = await adminService.updateWithdrawalStatus(
+    req.params.id,
+    status as WithdrawStatus,
+    adminId,
+    notes,
+    rejectionReason,
+    transactionReference || transactionReason
+  );
   res.status(STATUS_CODES.OK).json(new ApiResponse(updated, 'Withdrawal status updated'));
 });
 

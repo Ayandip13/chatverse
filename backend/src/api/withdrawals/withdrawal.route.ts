@@ -1,14 +1,15 @@
 import { Router } from 'express';
 import * as withdrawalController from './withdrawal.controller';
 import { requireAuth } from '@/middlewares/auth.middleware';
-import { validate } from '@/middlewares/validate.middleware';
-import { requestWithdrawalSchema, getWithdrawalsQuerySchema } from '@/validators/withdrawal.validator';
 
 const router = Router();
 
 router.use(requireAuth);
 
-router.post('/', validate(requestWithdrawalSchema), withdrawalController.requestWithdrawal);
-router.get('/', validate(getWithdrawalsQuerySchema), withdrawalController.getMyWithdrawals);
+router.post('/', withdrawalController.requestWithdrawal);
+router.get('/', withdrawalController.getMyWithdrawals);
+router.get('/summary', withdrawalController.getWithdrawalSummary);
+router.get('/:id', withdrawalController.getWithdrawalDetails);
+router.post('/:id/cancel', withdrawalController.cancelWithdrawal);
 
 export default router;

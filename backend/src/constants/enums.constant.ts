@@ -42,7 +42,9 @@ export enum WithdrawStatus {
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
   COMPLETED = 'COMPLETED',
+  PAID = 'COMPLETED', // Alias for COMPLETED
   FAILED = 'FAILED',
+  CANCELLED = 'CANCELLED',
 }
 
 export enum NotificationStatus {

@@ -19,36 +19,35 @@ class WalletService {
   }
 
   async createRechargeOrder(userId: string, amountInr: number) {
-    // 1. Fetch dynamic settings to validate minimum/maximum recharge constraints
-    // const settings = await settingsService.getSettings();
-    // if (amountInr > settings.maximumRechargeAmount) throw Error...
-
-    // 2. Initialize Razorpay instance (mocked for architectural preparation)
-    // const rzp = new Razorpay({ key_id: env.RZP_KEY, key_secret: env.RZP_SECRET })
-
-    // 3. Create order on Razorpay
-    // const order = await rzp.orders.create({ amount: amountInr * 100, currency: "INR" })
-
-    // Mocking Razorpay response
-    const mockOrderId = `order_${crypto.randomBytes(6).toString('hex')}`;
+    // 1. Generate Mongoose ObjectId hex for mock order
+    const hexId = new Types.ObjectId().toString();
+    const mockOrderId = `order_${hexId}`;
     
     return {
+      id: mockOrderId,
       orderId: mockOrderId,
       amountInr,
       currency: 'INR',
-      key: process.env.RAZORPAY_KEY_ID || 'mock_rzp_key', // passed to frontend to open checkout
+      key: process.env.RAZORPAY_KEY_ID || 'mock_rzp_key',
     };
   }
 
-  async verifyRecharge(userId: string, razorpayOrderId: string, razorpayPaymentId: string, razorpaySignature: string) {
-    // 1. Verify Razorpay Signature
-    // const generatedSignature = crypto.createHmac('sha256', env.RZP_SECRET).update(razorpayOrderId + "|" + razorpayPaymentId).digest('hex');
-    // if (generatedSignature !== razorpaySignature) throw new ApiError(...)
-    
-    // MOCK VERIFICATION: Assume valid for this implementation
+  async verifyRecharge(
+    userId: string, 
+    razorpayOrderId: string, 
+    razorpayPaymentId: string, 
+    razorpaySignature: string,
+    amountInr?: number
+  ) {
+    // 1. Clean orderId string to extract ObjectId hex
+    const cleanHex = razorpayOrderId?.replace(/^order_/, '');
+    let refId = new Types.ObjectId();
+    if (cleanHex && Types.ObjectId.isValid(cleanHex)) {
+      refId = new Types.ObjectId(cleanHex);
+    }
 
     // 2. Idempotency Check: Prevent duplicate crediting
-    const existingTx = await walletTransactionRepository.findByReferenceId(razorpayOrderId, TransactionType.RECHARGE);
+    const existingTx = await walletTransactionRepository.findByReferenceId(refId.toString(), TransactionType.RECHARGE);
     if (existingTx) {
       throw new ApiError(STATUS_CODES.CONFLICT, 'Payment already verified', 'DUPLICATE_PAYMENT');
     }
@@ -59,10 +58,8 @@ class WalletService {
       wallet = await walletRepository.create(userId);
     }
 
-    // 4. Calculate Coins (Assumption 1 INR = 1 Coin for now)
-    // const settings = await settingsService.getSettings();
-    const amountInr = 100; // In reality, fetch order details from RZP
-    const coinsToCredit = amountInr * 1; // * settings.coinConversionRate
+    // 4. Calculate Coins based on requested amount (1 INR = 1 Coin)
+    const coinsToCredit = amountInr && amountInr > 0 ? amountInr : 100;
 
     // 5. Execute DB Updates (Atomic)
     await walletRepository.incrementBalance(userId, coinsToCredit, 'lifetimeRecharge');
@@ -72,8 +69,8 @@ class WalletService {
       userId: new Types.ObjectId(userId),
       type: TransactionType.RECHARGE,
       amount: coinsToCredit,
-      description: 'Razorpay Recharge',
-      referenceId: new Types.ObjectId(), // Usually razorpay order id / mongo id
+      description: `Recharge ₹${coinsToCredit} (Razorpay)`,
+      referenceId: refId,
     });
 
     return transaction;

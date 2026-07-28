@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../src/store/authStore';
 import { StatusBadge } from '../../src/components/ui/StatusBadge';
 import { Button } from '../../src/components/ui/Button';
-import { Heart, Sparkles, User, LogOut, MessageCircle, Clock, Check, X, PhoneCall, Edit3 } from 'lucide-react-native';
+import { Heart, Sparkles, User, LogOut, MessageCircle, Clock, Check, X, PhoneCall, Edit3, Wallet } from 'lucide-react-native';
 import { theme } from '../../src/constants/theme';
 import { useRouter } from 'expo-router';
 import { useSocket } from '../../src/providers/SocketProvider';
@@ -160,10 +160,18 @@ export default function DashboardScreen() {
           </View>
 
           {user?.bio && (
-            <Text className="text-slate-600 dark:text-slate-300 text-sm italic bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+            <Text className="text-slate-600 dark:text-slate-300 text-sm italic bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800 mb-4">
               "{user.bio}"
             </Text>
           )}
+
+          <TouchableOpacity
+            onPress={() => router.push('/(app)/wallet')}
+            className="w-full bg-rose-500 py-3 rounded-2xl flex-row items-center justify-center gap-2 shadow-md shadow-rose-500/20"
+          >
+            <Wallet size={18} color="#ffffff" />
+            <Text className="text-white font-bold text-sm">Earnings & Wallet</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Incoming Chat Requests Section */}

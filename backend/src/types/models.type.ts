@@ -120,11 +120,28 @@ export interface IReport extends Document {
   updatedAt: Date;
 }
 
+export interface IBankDetails {
+  accountName: string;
+  accountNumber: string;
+  ifscCode: string;
+  bankName?: string;
+}
+
 export interface IWithdrawRequest extends Document {
   userId: Types.ObjectId;
   amount: number;
-  upiId: string;
+  platformFee: number;
+  netAmount: number;
+  paymentMethod: 'UPI' | 'BANK_TRANSFER';
+  upiId?: string;
+  bankDetails?: IBankDetails;
   status: WithdrawStatus;
+  requestedAt: Date;
+  reviewedById?: Types.ObjectId;
+  reviewedAt?: Date;
+  paidAt?: Date;
+  rejectionReason?: string;
+  transactionReference?: string;
   processedById?: Types.ObjectId;
   notes?: string;
   createdAt: Date;

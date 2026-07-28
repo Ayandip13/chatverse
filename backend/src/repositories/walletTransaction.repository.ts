@@ -8,7 +8,11 @@ class WalletTransactionRepository {
   }
 
   async findByReferenceId(referenceId: string, type: string): Promise<IWalletTransaction | null> {
-    return WalletTransaction.findOne({ referenceId, type }).exec();
+    if (!referenceId) return null;
+    if (typeof referenceId === 'string' && !Types.ObjectId.isValid(referenceId)) {
+      return null;
+    }
+    return WalletTransaction.findOne({ referenceId: new Types.ObjectId(referenceId), type }).exec();
   }
 
   async getPaginatedHistory(
