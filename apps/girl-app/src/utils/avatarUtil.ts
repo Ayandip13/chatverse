@@ -1,3 +1,11 @@
+export const DEFAULT_BOY_AVATARS = [
+  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=500&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=500&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=500&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1530268729831-4b0b9e170218?w=500&auto=format&fit=crop&q=80',
+];
+
 export const DEFAULT_GIRL_AVATARS = [
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format&fit=crop&q=80',
   'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=500&auto=format&fit=crop&q=80',
@@ -8,7 +16,7 @@ export const DEFAULT_GIRL_AVATARS = [
   'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=500&auto=format&fit=crop&q=80',
 ];
 
-export function getAvatarUrl(avatar?: string | null, name?: string, seedKey?: string): string {
+export function getAvatarUrl(avatar?: string | null, name?: string, seedKey?: string, role: 'BOY' | 'GIRL' = 'GIRL'): string {
   if (
     avatar &&
     typeof avatar === 'string' &&
@@ -32,6 +40,6 @@ export function getAvatarUrl(avatar?: string | null, name?: string, seedKey?: st
     hash = (hash << 5) - hash + key.charCodeAt(i);
     hash |= 0;
   }
-  const index = Math.abs(hash) % DEFAULT_GIRL_AVATARS.length;
-  return DEFAULT_GIRL_AVATARS[index];
+  const index = Math.abs(hash) % (role === 'BOY' ? DEFAULT_BOY_AVATARS.length : DEFAULT_GIRL_AVATARS.length);
+  return role === 'BOY' ? DEFAULT_BOY_AVATARS[index] : DEFAULT_GIRL_AVATARS[index];
 }

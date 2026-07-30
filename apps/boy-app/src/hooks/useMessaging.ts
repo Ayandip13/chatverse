@@ -9,7 +9,7 @@ export const useChatRequests = (status?: string) => {
   return useQuery({
     queryKey: ['chatRequests', status],
     queryFn: () => fetchChatRequests({ status, limit: 50 }),
-    staleTime: 10000,
+    staleTime: 0,
   });
 };
 
@@ -34,7 +34,7 @@ export const useChats = (status?: string) => {
   return useQuery({
     queryKey: ['chats', status],
     queryFn: () => fetchChats({ status, limit: 50 }),
-    staleTime: 30000,
+    staleTime: 0,
   });
 };
 

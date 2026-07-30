@@ -9,21 +9,13 @@ export class SettlementService {
    * Uses atomic findOneAndUpdate with condition { currentBalance: { $gte: 10 } }
    * to guarantee wallet balance never drops below zero.
    */
-  public async processMinuteSettlement(
+  public async processMessageSettlement(
     chatId: string,
     boyId: string,
     girlId: string
   ): Promise<{ success: boolean; boyBalance?: number; girlEarnings?: number; error?: string }> {
-    const settings = (await PlatformSetting.findOne()) || {
-      coinsPerMinute: 10,
-      commissionPercentage: 20,
-    };
-
-    const coinsToDeduct = settings.coinsPerMinute || 10;
-    const commissionPct = settings.commissionPercentage || 20;
-
-    const platformCommission = Math.round(coinsToDeduct * (commissionPct / 100));
-    const girlEarnings = coinsToDeduct - platformCommission;
+    const coinsToDeduct = 1;
+    const girlEarnings = 1;
 
     // 1. Atomic deduction from Boy's wallet (must have >= coinsToDeduct)
     const boyWallet = await Wallet.findOneAndUpdate(
@@ -54,7 +46,7 @@ export class SettlementService {
       userId: new Types.ObjectId(boyId),
       type: TransactionType.CHAT_DEBIT,
       amount: coinsToDeduct,
-      description: `Minute billing for Chat ${chatId}`,
+      description: `Message billing for Chat ${chatId}`,
       referenceId: new Types.ObjectId(chatId),
     });
 
@@ -63,7 +55,7 @@ export class SettlementService {
       userId: new Types.ObjectId(girlId),
       type: TransactionType.GIRL_EARNING,
       amount: girlEarnings,
-      description: `Minute earnings for Chat ${chatId}`,
+      description: `Message earnings for Chat ${chatId}`,
       referenceId: new Types.ObjectId(chatId),
     });
 
@@ -78,16 +70,16 @@ export class SettlementService {
           settledAt: new Date(),
         },
         $inc: {
-          completedMinutes: 1,
+          completedMessages: 1,
           grossCoins: coinsToDeduct,
-          platformCommissionCoins: platformCommission,
+          platformCommissionCoins: 0,
           girlEarningsCoins: girlEarnings,
         },
       },
       { upsert: true, new: true }
     );
 
-    logger.info(`Settled minute for Chat ${chatId}: Boy ${boyId} (-${coinsToDeduct}), Girl ${girlId} (+${girlEarnings})`);
+    logger.info(`Settled message for Chat ${chatId}: Boy ${boyId} (-${coinsToDeduct}), Girl ${girlId} (+${girlEarnings})`);
 
     return {
       success: true,
@@ -104,7 +96,7 @@ export class SettlementService {
       {
         $group: {
           _id: null,
-          totalCompletedMinutes: { $sum: '$completedMinutes' },
+          totalCompletedMessages: { $sum: '$completedMessages' },
           totalGrossRevenue: { $sum: '$grossCoins' },
           totalPlatformCommission: { $sum: '$platformCommissionCoins' },
           totalCreatorPayouts: { $sum: '$girlEarningsCoins' },
@@ -114,7 +106,7 @@ export class SettlementService {
     ]);
 
     const stats = aggregate[0] || {
-      totalCompletedMinutes: 0,
+      totalCompletedMessages: 0,
       totalGrossRevenue: 0,
       totalPlatformCommission: 0,
       totalCreatorPayouts: 0,

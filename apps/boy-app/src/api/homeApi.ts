@@ -49,7 +49,7 @@ export const fetchDiscoveryGirls = async (filters: Record<string, any>): Promise
 };
 
 export const fetchRecentChats = async (): Promise<ChatSummary[]> => {
-  const { data } = await apiClient.get('/chats?limit=5');
+  const { data } = await apiClient.get('/chats'); // Removed limit=5 so all recent chats show
   return data.data;
 };
 

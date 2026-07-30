@@ -13,7 +13,8 @@ export const useOnlineGirls = () => {
   return useQuery({
     queryKey: ['girls', 'online'],
     queryFn: () => fetchDiscoveryGirls({ online: true, limit: 10 }),
-    staleTime: 30000,
+    staleTime: 10000,
+    refetchInterval: 10000, // Automatically refresh every 10 seconds
   });
 };
 

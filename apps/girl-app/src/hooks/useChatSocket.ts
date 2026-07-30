@@ -4,12 +4,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Message } from '../api/messagingApi';
 import { Alert } from 'react-native';
 
-export interface ChatTickData {
+export interface ChatStatsData {
   chatId: string;
-  elapsedSeconds: number;
-  completedMinutes: number;
+  messagesSent: number;
   remainingCoins: number;
-  estimatedMinutesLeft: number;
 }
 
 export interface ChatEndedSummary {
@@ -29,7 +27,7 @@ export const useChatSocket = (chatId?: string) => {
   const { socket, isConnected } = useSocket();
   const queryClient = useQueryClient();
   const [isOtherUserTyping, setIsOtherUserTyping] = useState(false);
-  const [chatTick, setChatTick] = useState<ChatTickData | null>(null);
+  const [chatStats, setChatStats] = useState<ChatStatsData | null>(null);
   const [endedSummary, setEndedSummary] = useState<ChatEndedSummary | null>(null);
   const [disconnectState, setDisconnectState] = useState<DisconnectState | null>(null);
 
@@ -65,9 +63,9 @@ export const useChatSocket = (chatId?: string) => {
       if (typedChatId === chatId) setIsOtherUserTyping(false);
     };
 
-    const onTick = (data: ChatTickData) => {
+    const onStatsUpdate = (data: ChatStatsData) => {
       if (!chatId || data.chatId === chatId) {
-        setChatTick(data);
+        setChatStats(data);
       }
     };
     
@@ -124,7 +122,7 @@ export const useChatSocket = (chatId?: string) => {
     socket.on('chat:receive_message', onMessage);
     socket.on('chat:typing_start', onTypingStart);
     socket.on('chat:typing_stop', onTypingStop);
-    socket.on('chat:tick', onTick);
+    socket.on('chat:stats_update', onStatsUpdate);
     socket.on('chat:ended', onChatEnded);
     socket.on('chat:participant_disconnected', onParticipantDisconnected);
     socket.on('chat:participant_reconnected', onParticipantReconnected);
@@ -136,7 +134,7 @@ export const useChatSocket = (chatId?: string) => {
       socket.off('chat:receive_message', onMessage);
       socket.off('chat:typing_start', onTypingStart);
       socket.off('chat:typing_stop', onTypingStop);
-      socket.off('chat:tick', onTick);
+      socket.off('chat:stats_update', onStatsUpdate);
       socket.off('chat:ended', onChatEnded);
       socket.off('chat:participant_disconnected', onParticipantDisconnected);
       socket.off('chat:participant_reconnected', onParticipantReconnected);
@@ -166,5 +164,5 @@ export const useChatSocket = (chatId?: string) => {
     }
   };
 
-  return { sendMessage, emitTyping, endChatSession, isOtherUserTyping, chatTick, endedSummary, disconnectState };
+  return { sendMessage, emitTyping, endChatSession, isOtherUserTyping, chatStats, endedSummary, disconnectState };
 };

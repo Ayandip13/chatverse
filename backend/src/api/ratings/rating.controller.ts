@@ -32,15 +32,15 @@ export const rateUser = async (req: Request, res: Response, next: NextFunction) 
 
     const newRating = await Rating.create({
       reviewerId,
-      targetUserId,
+      targetId: targetUserId,
       chatId,
       score,
-      review
+      comment: review
     });
 
     // Update User Average
     const agg = await Rating.aggregate([
-      { $match: { targetUserId: new mongoose.Types.ObjectId(targetUserId) } },
+      { $match: { targetId: new mongoose.Types.ObjectId(targetUserId) } },
       { $group: { _id: null, avgScore: { $avg: '$score' }, count: { $sum: 1 } } }
     ]);
 
@@ -65,9 +65,9 @@ export const getRatings = async (req: Request, res: Response, next: NextFunction
     const targetUserId = req.query.targetUserId as string;
 
     const query: any = {};
-    if (targetUserId) query.targetUserId = targetUserId;
+    if (targetUserId) query.targetId = targetUserId;
     // If no targetUserId, maybe return caller's ratings? Or just require it for public profiles.
-    if (!targetUserId) query.targetUserId = req.user!.userId;
+    if (!targetUserId) query.targetId = req.user!.userId;
 
     const ratings = await Rating.find(query)
       .populate('reviewerId', 'name avatar')

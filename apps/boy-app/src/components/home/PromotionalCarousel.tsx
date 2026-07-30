@@ -1,15 +1,15 @@
 import { View, Text, Image, TouchableOpacity, Dimensions } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 
 export function PromotionalCarousel() {
-  const router = useRouter();
+  const navigation = useNavigation<any>();
   
   return (
     <View className="px-6 mb-8">
       <TouchableOpacity 
-        onPress={() => router.push('/premium')}
+        onPress={() => navigation.navigate('Recharge')}
         className="w-full h-36 rounded-3xl overflow-hidden relative"
       >
         <Image 

@@ -1,15 +1,15 @@
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Star } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import { GirlProfile } from '../../api/homeApi';
 import { getAvatarUrl } from '../../utils/avatarUtil';
 
 export function GirlAvatarCard({ girl }: { girl: GirlProfile }) {
-  const router = useRouter();
+  const navigation = useNavigation<any>();
   
   return (
     <TouchableOpacity 
-      onPress={() => router.push(`/girl/${girl._id}`)}
+      onPress={() => navigation.navigate('GirlDetailScreen', { id: girl._id })}
       className="mr-4 items-center"
     >
       <View className="relative w-16 h-16 rounded-full border-2 border-indigo-100 dark:border-gray-800 p-0.5">
@@ -29,11 +29,11 @@ export function GirlAvatarCard({ girl }: { girl: GirlProfile }) {
 }
 
 export function GirlDetailCard({ girl }: { girl: GirlProfile }) {
-  const router = useRouter();
+  const navigation = useNavigation<any>();
 
   return (
     <TouchableOpacity 
-      onPress={() => router.push(`/girl/${girl._id}`)}
+      onPress={() => navigation.navigate('GirlDetailScreen', { id: girl._id })}
       className="mr-4 w-40 bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm shadow-gray-200 dark:shadow-none border border-gray-100 dark:border-gray-700"
     >
       <View className="relative w-full h-48">

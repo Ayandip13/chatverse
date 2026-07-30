@@ -4,7 +4,7 @@ export interface ISettlement extends Document {
   chatId: Types.ObjectId;
   boyId: Types.ObjectId;
   girlId: Types.ObjectId;
-  completedMinutes: number;
+  completedMessages: number;
   grossCoins: number;
   platformCommissionCoins: number;
   girlEarningsCoins: number;
@@ -19,7 +19,7 @@ const settlementSchema = new Schema<ISettlement>(
     chatId: { type: Schema.Types.ObjectId, ref: 'Chat', required: true, index: true },
     boyId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     girlId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    completedMinutes: { type: Number, default: 0, required: true },
+    completedMessages: { type: Number, default: 0, required: true },
     grossCoins: { type: Number, default: 0, required: true },
     platformCommissionCoins: { type: Number, default: 0, required: true },
     girlEarningsCoins: { type: Number, default: 0, required: true },

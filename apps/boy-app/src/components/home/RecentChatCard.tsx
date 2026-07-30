@@ -1,15 +1,15 @@
 import { View, Text, TouchableOpacity, Image } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import { ChatSummary } from '../../api/homeApi';
 import { formatRelativeTime } from '../../utils/date';
 import { getAvatarUrl } from '../../utils/avatarUtil';
 
 export function RecentChatCard({ chat }: { chat: ChatSummary }) {
-  const router = useRouter();
+  const navigation = useNavigation<any>();
   
   return (
     <TouchableOpacity 
-      onPress={() => router.push(`/chat/${chat._id}`)}
+      onPress={() => navigation.navigate('ChatScreen', { id: chat._id })}
       className="mr-4 w-60 bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm shadow-gray-200 dark:shadow-none border border-gray-100 dark:border-gray-700 flex-row items-center"
     >
       <View className="relative w-12 h-12 rounded-full mr-3">

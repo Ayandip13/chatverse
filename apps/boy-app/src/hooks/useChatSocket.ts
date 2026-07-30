@@ -5,12 +5,10 @@ import { useChatStore } from '../store/chatStore';
 import { Message } from '../api/messagingApi';
 import { Alert } from 'react-native';
 
-export interface ChatTickData {
+export interface ChatStatsData {
   chatId: string;
-  elapsedSeconds: number;
-  completedMinutes: number;
+  messagesSent: number;
   remainingCoins: number;
-  estimatedMinutesLeft: number;
 }
 
 export interface ChatEndedSummary {
@@ -31,7 +29,7 @@ export const useChatSocket = (chatId?: string) => {
   const queryClient = useQueryClient();
   const setTyping = useChatStore((state) => state.setTyping);
 
-  const [chatTick, setChatTick] = useState<ChatTickData | null>(null);
+  const [chatStats, setChatStats] = useState<ChatStatsData | null>(null);
   const [lowBalanceWarning, setLowBalanceWarning] = useState<string | null>(null);
   const [endedSummary, setEndedSummary] = useState<ChatEndedSummary | null>(null);
   const [disconnectState, setDisconnectState] = useState<DisconnectState | null>(null);
@@ -39,7 +37,7 @@ export const useChatSocket = (chatId?: string) => {
   useEffect(() => {
     if (!socket || !isConnected) return;
 
-    let graceTimer: NodeJS.Timeout | null = null;
+    let graceTimer: ReturnType<typeof setTimeout> | null = null;
 
     if (chatId) {
       socket.emit('chat:join', { chatId });
@@ -63,9 +61,9 @@ export const useChatSocket = (chatId?: string) => {
     const onTypingStart = ({ chatId: typedChatId }: any) => setTyping(typedChatId, true);
     const onTypingStop = ({ chatId: typedChatId }: any) => setTyping(typedChatId, false);
 
-    const onTick = (data: ChatTickData) => {
+    const onStatsUpdate = (data: ChatStatsData) => {
       if (!chatId || data.chatId === chatId) {
-        setChatTick(data);
+        setChatStats(data);
         queryClient.setQueryData(['walletSummary'], (old: any) =>
           old ? { ...old, currentBalance: data.remainingCoins } : { currentBalance: data.remainingCoins }
         );
@@ -122,7 +120,7 @@ export const useChatSocket = (chatId?: string) => {
     socket.on('chat:receive_message', onMessage);
     socket.on('chat:typing_start', onTypingStart);
     socket.on('chat:typing_stop', onTypingStop);
-    socket.on('chat:tick', onTick);
+    socket.on('chat:stats_update', onStatsUpdate);
     socket.on('wallet:low_balance', onLowBalance);
     socket.on('chat:ended', onChatEnded);
     socket.on('chat:participant_disconnected', onParticipantDisconnected);
@@ -136,7 +134,7 @@ export const useChatSocket = (chatId?: string) => {
       socket.off('chat:receive_message', onMessage);
       socket.off('chat:typing_start', onTypingStart);
       socket.off('chat:typing_stop', onTypingStop);
-      socket.off('chat:tick', onTick);
+      socket.off('chat:stats_update', onStatsUpdate);
       socket.off('wallet:low_balance', onLowBalance);
       socket.off('chat:ended', onChatEnded);
       socket.off('chat:participant_disconnected', onParticipantDisconnected);
@@ -168,5 +166,5 @@ export const useChatSocket = (chatId?: string) => {
     }
   };
 
-  return { sendMessage, emitTyping, endChatSession, chatTick, lowBalanceWarning, endedSummary, disconnectState };
+  return { sendMessage, emitTyping, endChatSession, chatStats, lowBalanceWarning, endedSummary, disconnectState };
 };

@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Coins, Plus, TrendingUp } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import { WalletSummary } from '../../api/homeApi';
 import { Skeleton } from '../ui/Skeleton';
 
@@ -10,7 +10,7 @@ interface WalletCardProps {
 }
 
 export function WalletCard({ wallet, isLoading }: WalletCardProps) {
-  const router = useRouter();
+  const navigation = useNavigation<any>();
 
   return (
     <View className="px-6 mb-6">
@@ -30,7 +30,7 @@ export function WalletCard({ wallet, isLoading }: WalletCardProps) {
             )}
           </View>
           <TouchableOpacity
-            onPress={() => router.push('/recharge')}
+            onPress={() => navigation.navigate('Recharge')}
             className="bg-white/20 px-4 py-2 rounded-full flex-row items-center"
           >
             <Plus size={16} color="#ffffff" className="mr-1" />

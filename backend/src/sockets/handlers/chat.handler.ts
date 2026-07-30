@@ -52,6 +52,18 @@ export const registerChatHandlers = (io: Server, socket: AuthenticatedSocket) =>
   socket.on('chat:end_session', async (payload: { chatId: string }, callback) => {
     try {
       const { chatId } = payload;
+      const chat = await Chat.findById(chatId);
+      
+      if (!chat) {
+        if (callback) callback({ error: 'Chat not found' });
+        return;
+      }
+      
+      if (chat.girlId.toString() !== userId) {
+        if (callback) callback({ error: 'Unauthorized: Only girls can end chat sessions' });
+        return;
+      }
+
       logger.info(`User ${userId} requested manual end of chat ${chatId}`);
       await chatSessionService.stopChatSession(chatId, io, 'MANUAL');
       if (callback) callback({ success: true });
@@ -63,6 +75,12 @@ export const registerChatHandlers = (io: Server, socket: AuthenticatedSocket) =>
   socket.on('chat:send_message', async (payload: { chatId: string; content: string; tempId?: string }, callback) => {
     try {
       const { chatId, content, tempId } = payload;
+
+      const canSend = await chatSessionService.processMessageDeduction(chatId, userId, io);
+      if (!canSend) {
+        if (callback) callback({ error: 'Insufficient coins to send a message', tempId });
+        return;
+      }
       
       // Validates against regex and persists
       const message = await messageService.validateAndSaveMessage(chatId, userId, content);

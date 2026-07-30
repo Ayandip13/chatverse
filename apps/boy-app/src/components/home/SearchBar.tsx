@@ -1,14 +1,14 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Search, SlidersHorizontal } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 
 export function SearchBar() {
-  const router = useRouter();
+  const navigation = useNavigation<any>();
 
   return (
     <View className="px-6 mb-6">
       <TouchableOpacity 
-        onPress={() => router.push('/search')}
+        onPress={() => navigation.navigate('Search')}
         className="flex-row items-center bg-gray-100 dark:bg-gray-800 rounded-2xl p-4 border border-gray-200 dark:border-gray-700"
       >
         <Search size={20} color="#9ca3af" className="mr-3" />
