@@ -28,7 +28,7 @@ export default function ChatScreen() {
     isFetchingNextPage
   } = useChatMessages(id);
 
-  const { sendMessage, emitTyping, endChatSession, chatTick, lowBalanceWarning, endedSummary } = useChatSocket(id);
+  const { sendMessage, emitTyping, endChatSession, chatTick, lowBalanceWarning, endedSummary, disconnectState } = useChatSocket(id);
   
   const typingUsers = useChatStore(state => state.typingUsers);
   const isOtherUserTyping = typingUsers[id];
@@ -77,7 +77,7 @@ export default function ChatScreen() {
       >
         <ChatHeader chat={chat} />
         {chat.status === 'ACTIVE' && (
-          <CoinTimerCard chat={chat} chatTick={chatTick} lowBalanceWarning={lowBalanceWarning} />
+          <CoinTimerCard chat={chat} chatTick={chatTick} lowBalanceWarning={lowBalanceWarning} disconnectState={disconnectState} />
         )}
 
         <FlatList

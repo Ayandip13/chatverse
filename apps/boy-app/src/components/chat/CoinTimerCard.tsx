@@ -4,15 +4,16 @@ import { Timer, Coins, AlertTriangle } from 'lucide-react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { WalletSummary } from '../../api/homeApi';
 import { ChatDetails } from '../../api/messagingApi';
-import { ChatTickData } from '../../hooks/useChatSocket';
+import { ChatTickData, DisconnectState } from '../../hooks/useChatSocket';
 
 interface CoinTimerCardProps {
   chat: ChatDetails;
   chatTick?: ChatTickData | null;
   lowBalanceWarning?: string | null;
+  disconnectState?: DisconnectState | null;
 }
 
-export function CoinTimerCard({ chat, chatTick, lowBalanceWarning }: CoinTimerCardProps) {
+export function CoinTimerCard({ chat, chatTick, lowBalanceWarning, disconnectState }: CoinTimerCardProps) {
   const queryClient = useQueryClient();
   const wallet = queryClient.getQueryData<WalletSummary>(['walletSummary']);
 
@@ -54,8 +55,18 @@ export function CoinTimerCard({ chat, chatTick, lowBalanceWarning }: CoinTimerCa
         </View>
       </View>
 
+      {/* Disconnect Reconnection Banner */}
+      {disconnectState && (
+        <View className="flex-row items-center bg-orange-100 dark:bg-orange-900/50 px-3 py-1.5 rounded-xl mt-2 border border-orange-300 dark:border-orange-700">
+          <AlertTriangle size={14} color="#d97706" className="mr-1.5" />
+          <Text className="text-amber-900 dark:text-amber-200 text-xs font-bold flex-1" numberOfLines={1}>
+            Participant disconnected. Reconnecting ({disconnectState.graceSeconds}s)...
+          </Text>
+        </View>
+      )}
+
       {/* Low Balance Alert Banner */}
-      {lowBalanceWarning && (
+      {lowBalanceWarning && !disconnectState && (
         <View className="flex-row items-center bg-red-100 dark:bg-red-900/40 px-3 py-1.5 rounded-xl mt-2 border border-red-200 dark:border-red-800">
           <AlertTriangle size={14} color="#ef4444" className="mr-1.5" />
           <Text className="text-red-700 dark:text-red-300 text-xs font-bold flex-1" numberOfLines={1}>

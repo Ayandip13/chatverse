@@ -14,7 +14,7 @@ export function WalletCard({ wallet, isLoading }: WalletCardProps) {
 
   return (
     <View className="px-6 mb-6">
-      <View className="bg-indigo-600 rounded-3xl p-6 shadow-lg shadow-indigo-500/30">
+      <View className="bg-indigo-600 rounded-3xl p-6">
         <View className="flex-row justify-between items-start mb-4">
           <View>
             <Text className="text-indigo-200 font-medium mb-1">Available Balance</Text>
@@ -29,7 +29,7 @@ export function WalletCard({ wallet, isLoading }: WalletCardProps) {
               </View>
             )}
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => router.push('/recharge')}
             className="bg-white/20 px-4 py-2 rounded-full flex-row items-center"
           >

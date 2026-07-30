@@ -1,15 +1,14 @@
 import { View, Text, TouchableOpacity, Image } from 'react-native';
-import { ArrowLeft, MoreVertical, Clock } from 'lucide-react-native';
+import { ArrowLeft, MoreVertical } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { ChatDetails } from '../../api/messagingApi';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { getAvatarUrl } from '../../utils/avatarUtil';
 
 export function ChatHeader({ chat }: { chat: ChatDetails }) {
   const router = useRouter();
 
   return (
-    <SafeAreaView edges={['top']} className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
+    <View className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
       <View className="flex-row items-center px-4 py-3 justify-between">
         <View className="flex-row items-center">
           <TouchableOpacity onPress={() => router.back()} className="mr-3 p-1">
@@ -22,16 +21,16 @@ export function ChatHeader({ chat }: { chat: ChatDetails }) {
                 source={{ uri: getAvatarUrl(chat.otherParticipant?.avatar, chat.otherParticipant?.name, chat.otherParticipant?._id) }} 
                 className="w-full h-full rounded-full"
               />
-              {chat.otherParticipant.isOnline && (
+              {chat.otherParticipant?.isOnline && (
                 <View className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-900" />
               )}
             </View>
             <View>
               <Text className="font-bold text-gray-900 dark:text-white text-base">
-                {chat.otherParticipant.name}
+                {chat.otherParticipant?.name || 'User'}
               </Text>
               <Text className="text-xs text-green-500 font-medium">
-                {chat.otherParticipant.isOnline ? 'Online' : 'Offline'}
+                {chat.otherParticipant?.isOnline ? 'Online' : 'Offline'}
               </Text>
             </View>
           </TouchableOpacity>
@@ -41,6 +40,6 @@ export function ChatHeader({ chat }: { chat: ChatDetails }) {
           <MoreVertical size={20} color="#6b7280" />
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

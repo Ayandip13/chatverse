@@ -27,7 +27,7 @@ export default function GirlChatScreen() {
   } = useChatMessages(id);
 
   const { mutate: endChatSessionApi, isPending: isEnding } = useEndChat();
-  const { sendMessage, emitTyping, endChatSession, isOtherUserTyping, chatTick, endedSummary } = useChatSocket(id);
+  const { sendMessage, emitTyping, endChatSession, isOtherUserTyping, chatTick, endedSummary, disconnectState } = useChatSocket(id);
 
   const [inputMessage, setInputMessage] = useState('');
   const [showEmojiBar, setShowEmojiBar] = useState(false);
@@ -164,6 +164,15 @@ export default function GirlChatScreen() {
                 {currentEarnings} Coins Earned
               </Text>
             </View>
+          </View>
+        )}
+
+        {/* Disconnect Reconnection Banner */}
+        {disconnectState && (
+          <View className="bg-amber-500 px-6 py-2 flex-row items-center justify-between shadow-sm">
+            <Text className="text-white text-xs font-bold flex-1" numberOfLines={1}>
+              ⚠️ User disconnected. Waiting for reconnection ({disconnectState.graceSeconds}s)...
+            </Text>
           </View>
         )}
 

@@ -4,13 +4,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Heart, MessageCircle, Star, ShieldAlert, Clock, X } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useGirlDetails, useToggleFavorite } from '../../../src/hooks/useDiscovery';
-import { useSendChatRequest, useCancelChatRequest } from '../../../src/hooks/useMessaging';
+import { useSendChatRequest, useCancelChatRequest, useChats, useChatRequests } from '../../../src/hooks/useMessaging';
 import { useSocket } from '../../../src/providers/SocketProvider';
+import { useQueryClient } from '@tanstack/react-query';
 import { getAvatarUrl } from '../../../src/utils/avatarUtil';
 
 export default function GirlDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { socket, isConnected } = useSocket();
   
   const { data: girl, isLoading, isError } = useGirlDetails(id);
@@ -19,47 +21,55 @@ export default function GirlDetailsScreen() {
   const { mutateAsync: sendChatRequest, isPending: isSendingRequest } = useSendChatRequest();
   const { mutateAsync: cancelChatRequest, isPending: isCancelling } = useCancelChatRequest();
 
+  const { data: chats } = useChats();
+  const { data: pendingRequests } = useChatRequests('PENDING');
+
   const [activeRequestId, setActiveRequestId] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<number>(60);
+
+  // Find active chat or pending request for this creator
+  const activeChat = chats?.find(
+    (c: any) =>
+      (c.otherParticipant?._id === id || c.girlId === id || (typeof c.girlId === 'object' && c.girlId?._id === id)) &&
+      c.status === 'ACTIVE'
+  );
+
+  const existingPendingReq = pendingRequests?.find(
+    (r: any) =>
+      (r.receiverId === id || (typeof r.receiverId === 'object' && r.receiverId?._id === id)) &&
+      r.status === 'PENDING'
+  );
+
+  const pendingReqId = activeRequestId || existingPendingReq?._id;
 
   // Socket Listeners for Real-time status updates
   useEffect(() => {
     if (!socket || !isConnected) return;
 
     const onAccepted = (data: { requestId: string; chatId: string }) => {
-      if (data.requestId === activeRequestId || activeRequestId) {
-        setActiveRequestId(null);
-        Alert.alert('Request Accepted!', 'Connecting you to the chat session...', [
-          { text: 'Start Chat', onPress: () => router.push(`/chat/${data.chatId}`) }
-        ]);
-        router.push(`/chat/${data.chatId}`);
-      }
+      queryClient.invalidateQueries({ queryKey: ['chats'] });
+      queryClient.invalidateQueries({ queryKey: ['chatRequests'] });
+      setActiveRequestId(null);
+      Alert.alert('Request Accepted!', 'Connecting you to the chat session...', [
+        { text: 'Start Chat', onPress: () => router.push(`/chat/${data.chatId}`) }
+      ]);
     };
 
     const onRejected = (data: { requestId: string }) => {
-      if (data.requestId === activeRequestId) {
-        setActiveRequestId(null);
-        Alert.alert('Request Declined', 'The creator is currently unavailable or declined your request.');
-      }
-    };
-
-    const onExpired = (data: { requestId: string }) => {
-      if (data.requestId === activeRequestId) {
-        setActiveRequestId(null);
-        Alert.alert('Request Expired', 'The request expired because there was no response within 60 seconds.');
-      }
+      queryClient.invalidateQueries({ queryKey: ['chats'] });
+      queryClient.invalidateQueries({ queryKey: ['chatRequests'] });
+      setActiveRequestId(null);
+      Alert.alert('Request Declined', 'The creator is currently unavailable or declined your request.');
     };
 
     socket.on('chat_request:accepted', onAccepted);
     socket.on('chat_request:rejected', onRejected);
-    socket.on('chat_request:expired', onExpired);
 
     return () => {
       socket.off('chat_request:accepted', onAccepted);
       socket.off('chat_request:rejected', onRejected);
-      socket.off('chat_request:expired', onExpired);
     };
-  }, [socket, isConnected, activeRequestId]);
+  }, [socket, isConnected]);
 
   // Countdown timer for pending request modal
   useEffect(() => {
@@ -99,11 +109,17 @@ export default function GirlDetailsScreen() {
   };
 
   const handleStartChat = async () => {
+    if (activeChat) {
+      router.push(`/chat/${activeChat._id}`);
+      return;
+    }
+
     try {
       const res: any = await sendChatRequest(girl._id);
       if (res && res.data) {
         setActiveRequestId(res.data._id || res.data.id);
         setCountdown(60);
+        queryClient.invalidateQueries({ queryKey: ['chatRequests'] });
       }
     } catch (err: any) {
       const message = err.response?.data?.error?.message || err.response?.data?.message || err.message || 'Failed to send chat request.';
@@ -112,15 +128,31 @@ export default function GirlDetailsScreen() {
   };
 
   const handleCancelRequest = async () => {
-    if (!activeRequestId) return;
+    if (!pendingReqId) return;
     try {
-      await cancelChatRequest(activeRequestId);
+      await cancelChatRequest(pendingReqId);
       setActiveRequestId(null);
+      queryClient.invalidateQueries({ queryKey: ['chatRequests'] });
     } catch (err: any) {
       const message = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to cancel request.';
       Alert.alert('Error', message);
     }
   };
+
+  // Determine button state according to business rules
+  let buttonLabel = 'Send Chat Request';
+  let isButtonDisabled = isSendingRequest;
+  let buttonBg = 'bg-indigo-600 shadow-indigo-500/30';
+
+  if (activeChat) {
+    buttonLabel = 'Continue Chat';
+    isButtonDisabled = false;
+    buttonBg = 'bg-emerald-600 shadow-emerald-500/30';
+  } else if (pendingReqId) {
+    buttonLabel = 'Request Sent';
+    isButtonDisabled = true;
+    buttonBg = 'bg-indigo-400 opacity-90';
+  }
 
   return (
     <View className="flex-1 bg-white dark:bg-gray-900">
@@ -203,6 +235,25 @@ export default function GirlDetailsScreen() {
               <Text className="text-emerald-600 dark:text-emerald-400 text-sm font-medium">Fast Replier</Text>
             </View>
           </View>
+
+          {/* Pending Request Banner */}
+          {pendingReqId && !activeChat && (
+            <View className="bg-indigo-50 dark:bg-indigo-900/30 p-4 rounded-2xl border border-indigo-100 dark:border-indigo-800 flex-row items-center justify-between mb-4">
+              <View className="flex-row items-center gap-2 flex-1">
+                <Clock size={20} color="#6366f1" />
+                <Text className="text-xs font-bold text-indigo-700 dark:text-indigo-300 flex-1">
+                  Request Pending - Waiting for response{activeRequestId ? ` (${countdown}s)` : ''}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={handleCancelRequest}
+                disabled={isCancelling}
+                className="px-3 py-1.5 bg-indigo-200 dark:bg-indigo-800 rounded-full"
+              >
+                <Text className="text-xs font-bold text-indigo-800 dark:text-indigo-200">Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -211,10 +262,8 @@ export default function GirlDetailsScreen() {
         <SafeAreaView edges={['bottom']}>
           <TouchableOpacity 
             onPress={handleStartChat}
-            disabled={isSendingRequest || !!activeRequestId}
-            className={`w-full py-4 rounded-2xl flex-row items-center justify-center shadow-lg ${
-              isSendingRequest || activeRequestId ? 'bg-indigo-400' : 'bg-indigo-600 shadow-indigo-500/30'
-            }`}
+            disabled={isButtonDisabled}
+            className={`w-full py-4 rounded-2xl flex-row items-center justify-center shadow-lg ${buttonBg}`}
           >
             {isSendingRequest ? (
               <ActivityIndicator color="#ffffff" className="mr-2" />
@@ -222,53 +271,11 @@ export default function GirlDetailsScreen() {
               <MessageCircle size={24} color="#ffffff" className="mr-2" />
             )}
             <Text className="text-white text-lg font-bold">
-              {activeRequestId ? 'Request Pending...' : 'Send Chat Request'}
+              {buttonLabel}
             </Text>
           </TouchableOpacity>
         </SafeAreaView>
       </View>
-
-      {/* Pending Request Modal */}
-      <Modal visible={!!activeRequestId} transparent animationType="fade">
-        <View className="flex-1 bg-black/60 items-center justify-center px-6">
-          <View className="bg-white dark:bg-gray-800 w-full p-6 rounded-3xl items-center shadow-2xl">
-            <View className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/40 rounded-full items-center justify-center mb-4">
-              <Clock size={32} color="#4f46e5" />
-            </View>
-
-            <Text className="text-xl font-bold text-gray-900 dark:text-white text-center mb-2">
-              Waiting for Response
-            </Text>
-
-            <Text className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
-              Request sent to <Text className="font-bold text-gray-800 dark:text-gray-200">{girl.name}</Text>. Waiting for acceptance...
-            </Text>
-
-            {/* Countdown Badge */}
-            <View className="bg-indigo-100 dark:bg-indigo-900/60 px-6 py-2 rounded-full mb-6">
-              <Text className="text-indigo-700 dark:text-indigo-300 font-extrabold text-lg">
-                00:{countdown < 10 ? `0${countdown}` : countdown}
-              </Text>
-            </View>
-
-            {/* Cancel Button */}
-            <TouchableOpacity
-              onPress={handleCancelRequest}
-              disabled={isCancelling}
-              className="w-full bg-gray-100 dark:bg-gray-700 py-3 rounded-2xl items-center flex-row justify-center"
-            >
-              {isCancelling ? (
-                <ActivityIndicator size="small" color="#6b7280" className="mr-2" />
-              ) : (
-                <X size={18} color="#6b7280" className="mr-2" />
-              )}
-              <Text className="text-gray-700 dark:text-gray-300 font-bold text-base">
-                Cancel Request
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }

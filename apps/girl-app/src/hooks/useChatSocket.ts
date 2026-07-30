@@ -19,15 +19,24 @@ export interface ChatEndedSummary {
   finalCost: number;
 }
 
+export interface DisconnectState {
+  userId: string;
+  chatId: string;
+  graceSeconds: number;
+}
+
 export const useChatSocket = (chatId?: string) => {
   const { socket, isConnected } = useSocket();
   const queryClient = useQueryClient();
   const [isOtherUserTyping, setIsOtherUserTyping] = useState(false);
   const [chatTick, setChatTick] = useState<ChatTickData | null>(null);
   const [endedSummary, setEndedSummary] = useState<ChatEndedSummary | null>(null);
+  const [disconnectState, setDisconnectState] = useState<DisconnectState | null>(null);
 
   useEffect(() => {
     if (!socket || !isConnected) return;
+
+    let graceTimer: NodeJS.Timeout | null = null;
 
     if (chatId) {
       socket.emit('chat:join', { chatId });
@@ -64,9 +73,51 @@ export const useChatSocket = (chatId?: string) => {
     
     const onChatEnded = (data: ChatEndedSummary) => {
       if (!chatId || data.chatId === chatId) {
+        if (graceTimer) clearInterval(graceTimer);
+        setDisconnectState(null);
         setEndedSummary(data);
         queryClient.invalidateQueries({ queryKey: ['chat', chatId] });
         queryClient.invalidateQueries({ queryKey: ['chats'] });
+        queryClient.invalidateQueries({ queryKey: ['withdrawalSummary'] });
+      }
+    };
+
+    const onParticipantDisconnected = (data: { chatId: string; userId: string; graceSeconds?: number }) => {
+      if (!chatId || data.chatId === chatId) {
+        const initialSecs = data.graceSeconds !== undefined ? data.graceSeconds : 30;
+        setDisconnectState({ userId: data.userId, chatId: data.chatId, graceSeconds: initialSecs });
+
+        if (graceTimer) clearInterval(graceTimer);
+        graceTimer = setInterval(() => {
+          setDisconnectState((prev) => {
+            if (!prev) return null;
+            if (prev.graceSeconds <= 1) {
+              if (graceTimer) clearInterval(graceTimer);
+              return null;
+            }
+            return { ...prev, graceSeconds: prev.graceSeconds - 1 };
+          });
+        }, 1000);
+      }
+    };
+
+    const onParticipantReconnected = (data: { chatId: string; userId: string }) => {
+      if (!chatId || data.chatId === chatId) {
+        if (graceTimer) clearInterval(graceTimer);
+        setDisconnectState(null);
+      }
+    };
+
+    const onWalletUpdate = (payload: any) => {
+      queryClient.invalidateQueries({ queryKey: ['withdrawalSummary'] });
+      queryClient.invalidateQueries({ queryKey: ['myWithdrawals'] });
+      queryClient.invalidateQueries({ queryKey: ['walletSummary'] });
+
+      const newBal = payload?.newBalance !== undefined ? payload.newBalance : payload?.balance;
+      if (newBal !== undefined) {
+        queryClient.setQueryData(['withdrawalSummary'], (old: any) =>
+          old ? { ...old, walletBalance: newBal, totalCoins: newBal } : old
+        );
       }
     };
 
@@ -75,14 +126,21 @@ export const useChatSocket = (chatId?: string) => {
     socket.on('chat:typing_stop', onTypingStop);
     socket.on('chat:tick', onTick);
     socket.on('chat:ended', onChatEnded);
+    socket.on('chat:participant_disconnected', onParticipantDisconnected);
+    socket.on('chat:participant_reconnected', onParticipantReconnected);
+    socket.on('wallet:update', onWalletUpdate);
 
     return () => {
+      if (graceTimer) clearInterval(graceTimer);
       if (chatId) socket.emit('chat:leave', { chatId });
       socket.off('chat:receive_message', onMessage);
       socket.off('chat:typing_start', onTypingStart);
       socket.off('chat:typing_stop', onTypingStop);
       socket.off('chat:tick', onTick);
       socket.off('chat:ended', onChatEnded);
+      socket.off('chat:participant_disconnected', onParticipantDisconnected);
+      socket.off('chat:participant_reconnected', onParticipantReconnected);
+      socket.off('wallet:update', onWalletUpdate);
     };
   }, [socket, isConnected, chatId, queryClient]);
 
@@ -108,5 +166,5 @@ export const useChatSocket = (chatId?: string) => {
     }
   };
 
-  return { sendMessage, emitTyping, endChatSession, isOtherUserTyping, chatTick, endedSummary };
+  return { sendMessage, emitTyping, endChatSession, isOtherUserTyping, chatTick, endedSummary, disconnectState };
 };

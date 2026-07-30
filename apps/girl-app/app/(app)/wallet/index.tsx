@@ -24,7 +24,7 @@ export default function WalletOverviewScreen() {
           <Text className="text-xl font-bold text-slate-900 dark:text-white">Earnings & Wallet</Text>
         </View>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => router.push('/(app)/wallet/history')}
           className="flex-row items-center gap-1 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full"
         >
@@ -33,7 +33,7 @@ export default function WalletOverviewScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
+      <ScrollView
         className="flex-1 px-6 py-6"
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
@@ -43,14 +43,14 @@ export default function WalletOverviewScreen() {
         ) : (
           <>
             {/* Primary Balance Card */}
-            <View className="bg-gradient-to-r from-rose-500 to-pink-600 p-6 rounded-3xl shadow-lg mb-6 border border-rose-400/30">
+            <View className="bg-gradient-to-r from-rose-500 to-pink-600 p-6 rounded-3xl mb-6 border border-rose-400/30">
               <View className="flex-row items-center justify-between mb-2">
-                <Text className="text-rose-100 text-xs font-bold uppercase tracking-wider">Available Balance</Text>
+                <Text className="text-rose-800 text-xs font-bold uppercase tracking-wider">Available Balance</Text>
                 <View className="w-9 h-9 rounded-full bg-white/20 items-center justify-center border border-white/30">
                   <Coins size={20} color="#ffffff" />
                 </View>
               </View>
-              <Text className="text-white text-3xl font-extrabold font-mono mb-4">
+              <Text className="text-black text-3xl font-extrabold font-mono mb-4">
                 ₹{(summary?.availableBalance || 0).toLocaleString()}
               </Text>
 
@@ -119,7 +119,7 @@ export default function WalletOverviewScreen() {
                           {item.paymentMethod} • {new Date(item.createdAt).toLocaleDateString()}
                         </Text>
                       </View>
-                      
+
                       <View className="flex-row items-center gap-2">
                         <StatusBadge status={item.status} size="sm" />
                         <ChevronRight size={16} color="#94a3b8" />

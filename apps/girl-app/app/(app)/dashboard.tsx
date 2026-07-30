@@ -10,22 +10,25 @@ import {
   MessageCircleHeart
 } from 'lucide-react-native';
 import { theme } from '../../src/constants/theme';
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useSocket } from '../../src/providers/SocketProvider';
-import { useAcceptChatRequest, useRejectChatRequest, useChatRequests, useActiveChats } from '../../src/hooks/useMessaging';
+import { useAcceptChatRequest, useRejectChatRequest, useChatRequests, useRecentChats } from '../../src/hooks/useMessaging';
+import { useQueryClient } from '@tanstack/react-query';
 import { useWithdrawalSummary } from '../../src/hooks/useWithdrawals';
 import { getAvatarUrl } from '../../src/utils/avatarUtil';
 
 export default function DashboardScreen() {
+  const router = useRouter();
   const { user, logout } = useAuthStore();
   const { socket, isConnected } = useSocket();
+  const queryClient = useQueryClient();
 
   const [isOnline, setIsOnline] = useState<boolean>(true);
 
   // Queries
   const { data: summaryData, isLoading: isSummaryLoading } = useWithdrawalSummary();
   const { data: pendingRequests, refetch: refetchRequests, isLoading: isRequestsLoading } = useChatRequests('PENDING');
-  const { data: activeChats, isLoading: isChatsLoading } = useActiveChats();
+  const { data: recentChats, isLoading: isChatsLoading } = useRecentChats();
 
   const { mutateAsync: acceptRequest, isPending: isAccepting } = useAcceptChatRequest();
   const { mutateAsync: rejectRequest, isPending: isRejecting } = useRejectChatRequest();
@@ -74,18 +77,33 @@ export default function DashboardScreen() {
       refetchRequests();
     };
 
+    const onWalletUpdate = (payload: any) => {
+      queryClient.invalidateQueries({ queryKey: ['withdrawalSummary'] });
+      queryClient.invalidateQueries({ queryKey: ['myWithdrawals'] });
+      queryClient.invalidateQueries({ queryKey: ['walletSummary'] });
+
+      const newBal = payload?.newBalance !== undefined ? payload.newBalance : payload?.balance;
+      if (newBal !== undefined) {
+        queryClient.setQueryData(['withdrawalSummary'], (old: any) =>
+          old ? { ...old, walletBalance: newBal, totalCoins: newBal } : old
+        );
+      }
+    };
+
     socket.on('chat_request:receive', onIncomingRequest);
     socket.on('chat_request:new', onIncomingRequest);
     socket.on('chat_request:cancelled', onRequestCancelled);
     socket.on('chat_request:expired', onRequestExpired);
+    socket.on('wallet:update', onWalletUpdate);
 
     return () => {
       socket.off('chat_request:receive', onIncomingRequest);
       socket.off('chat_request:new', onIncomingRequest);
       socket.off('chat_request:cancelled', onRequestCancelled);
       socket.off('chat_request:expired', onRequestExpired);
+      socket.off('wallet:update', onWalletUpdate);
     };
-  }, [socket, isConnected, incomingRequest, isOnline]);
+  }, [socket, isConnected, incomingRequest, isOnline, queryClient]);
 
   // Handle local 60s countdown for incoming request modal
   useEffect(() => {
@@ -210,12 +228,12 @@ export default function DashboardScreen() {
 
           <View className="flex-row gap-3 mb-3">
             {/* Available Balance */}
-            <View className="flex-1 bg-gradient-to-r from-rose-500 to-pink-600 p-4 rounded-2xl shadow-md border border-rose-400/30">
+            <View className="flex-1 bg-gradient-to-r from-rose-500 to-pink-600 p-4 rounded-2xl border border-rose-400/30">
               <View className="flex-row items-center justify-between mb-1">
-                <Text className="text-rose-100 text-[10px] font-bold uppercase tracking-wider">Available Balance</Text>
+                <Text className="text-rose-800 text-[10px] font-bold uppercase tracking-wider">Available Balance</Text>
                 <Coins size={16} color="#ffffff" />
               </View>
-              <Text className="text-white text-2xl font-extrabold font-mono">
+              <Text className="text-black text-2xl font-extrabold font-mono">
                 ₹{(summaryData?.availableBalance || 0).toLocaleString()}
               </Text>
             </View>
@@ -328,50 +346,67 @@ export default function DashboardScreen() {
           )}
         </View>
 
-        {/* Active Chats Section */}
+        {/* Recent Conversations Section */}
         <View className="mb-6">
           <Text className="text-base font-bold text-slate-900 dark:text-white mb-3">
-            Active Chat Sessions
+            Recent Conversations
           </Text>
 
           {isChatsLoading ? (
             <ActivityIndicator color="#e11d48" className="py-6" />
-          ) : !activeChats || activeChats.length === 0 ? (
+          ) : !recentChats || recentChats.length === 0 ? (
             <View className="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-slate-700 items-center justify-center">
               <MessageCircle color="#94a3b8" size={28} className="mb-2" />
-              <Text className="text-slate-800 dark:text-slate-200 font-bold text-sm">No Active Conversations</Text>
+              <Text className="text-slate-800 dark:text-slate-200 font-bold text-sm">No Recent Conversations</Text>
               <Text className="text-slate-400 text-xs text-center mt-0.5">
-                Ongoing chats will appear here with live earnings details.
+                All your past and active conversations will remain visible here.
               </Text>
             </View>
           ) : (
             <View className="space-y-3">
-              {activeChats.map((chat) => {
+              {recentChats.map((chat: any) => {
                 const otherUser = chat.otherParticipant || (typeof chat.boyId === 'object' ? chat.boyId : undefined);
+                const isOnline = otherUser?.isOnline;
+                const isActive = chat.status === 'ACTIVE';
+                const lastMsg = chat.lastMessage?.content || 'No messages yet';
+                const timeStr = chat.updatedAt ? new Date(chat.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
                 return (
                   <TouchableOpacity
                     key={chat._id}
                     onPress={() => router.push(`/chat/${chat._id}`)}
                     className="bg-white dark:bg-slate-800 p-4 rounded-3xl border border-slate-200 dark:border-slate-700 flex-row items-center justify-between"
                   >
-                    <View className="flex-row items-center gap-3">
-                      <View className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden border border-slate-200 dark:border-slate-600">
-                        <Image source={{ uri: getAvatarUrl(otherUser?.avatar, otherUser?.name, otherUser?._id) }} className="w-full h-full" />
+                    <View className="flex-row items-center gap-3 flex-1 mr-2">
+                      <View className="relative w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600">
+                        <Image source={{ uri: getAvatarUrl(otherUser?.avatar, otherUser?.name, otherUser?._id) }} className="w-full h-full rounded-full" />
+                        {isOnline && (
+                          <View className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-800" />
+                        )}
                       </View>
 
-                      <View>
-                        <Text className="text-sm font-bold text-slate-900 dark:text-white">
-                          {otherUser?.name || 'User'}
-                        </Text>
-                        <Text className="text-xs text-emerald-600 dark:text-emerald-400 font-bold mt-0.5">
-                          Active • Rate: +8 coins/min
+                      <View className="flex-1">
+                        <View className="flex-row items-center justify-between">
+                          <Text className="text-sm font-bold text-slate-900 dark:text-white" numberOfLines={1}>
+                            {otherUser?.name || 'User'}
+                          </Text>
+                          {timeStr ? <Text className="text-[10px] text-slate-400 font-medium">{timeStr}</Text> : null}
+                        </View>
+                        
+                        <Text className="text-xs text-slate-500 dark:text-slate-400 mt-0.5" numberOfLines={1}>
+                          {lastMsg}
                         </Text>
                       </View>
                     </View>
 
-                    <View className="flex-row items-center gap-1 bg-pink-50 dark:bg-pink-900/30 px-3 py-1.5 rounded-full border border-pink-200 dark:border-pink-800">
-                      <Text className="text-pink-600 dark:text-pink-400 text-xs font-bold">Open Chat</Text>
-                      <ChevronRight size={14} color="#e11d48" />
+                    <View className={`px-2.5 py-1 rounded-full border ${
+                      isActive ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600'
+                    }`}>
+                      <Text className={`text-[10px] font-bold ${
+                        isActive ? 'text-emerald-600' : 'text-slate-500 dark:text-slate-300'
+                      }`}>
+                        {isActive ? 'ACTIVE' : 'ENDED'}
+                      </Text>
                     </View>
                   </TouchableOpacity>
                 );

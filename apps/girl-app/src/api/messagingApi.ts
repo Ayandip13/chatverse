@@ -65,6 +65,11 @@ export const fetchActiveChats = async () => {
   return response.data.data as Chat[];
 };
 
+export const fetchRecentChats = async () => {
+  const response = await apiClient.get('/chats', { params: { limit: 50 } });
+  return response.data.data as Chat[];
+};
+
 export const fetchChatDetails = async (chatId: string) => {
   const response = await apiClient.get(`/chats/${chatId}`);
   return response.data.data as Chat;

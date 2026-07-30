@@ -1,12 +1,13 @@
 import { Stack, Redirect } from 'expo-router';
 import { useAuthStore } from '../../src/store/authStore';
+import { SocketProvider } from '../../src/providers/SocketProvider';
 import { SplashScreen } from '../../src/components/ui/SplashScreen';
 
 export default function AppLayout() {
   const { isAuthenticated, user, isLoading } = useAuthStore();
 
   if (isLoading) {
-    return <SplashScreen />;
+    return null;
   }
 
   if (!isAuthenticated || !user) {
@@ -28,14 +29,16 @@ export default function AppLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="dashboard" />
-      <Stack.Screen name="edit-profile" />
-      <Stack.Screen name="chat/[id]" />
-      <Stack.Screen name="wallet/index" />
-      <Stack.Screen name="wallet/withdraw" />
-      <Stack.Screen name="wallet/history" />
-    </Stack>
+    <SocketProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="dashboard" />
+        <Stack.Screen name="edit-profile" />
+        <Stack.Screen name="chat/[id]" />
+        <Stack.Screen name="wallet/index" />
+        <Stack.Screen name="wallet/withdraw" />
+        <Stack.Screen name="wallet/history" />
+      </Stack>
+    </SocketProvider>
   );
 }
 

@@ -20,6 +20,12 @@ export interface ChatEndedSummary {
   finalCost: number;
 }
 
+export interface DisconnectState {
+  userId: string;
+  chatId: string;
+  graceSeconds: number;
+}
+
 export const useChatSocket = (chatId?: string) => {
   const { socket, isConnected } = useSocket();
   const queryClient = useQueryClient();
@@ -28,9 +34,12 @@ export const useChatSocket = (chatId?: string) => {
   const [chatTick, setChatTick] = useState<ChatTickData | null>(null);
   const [lowBalanceWarning, setLowBalanceWarning] = useState<string | null>(null);
   const [endedSummary, setEndedSummary] = useState<ChatEndedSummary | null>(null);
+  const [disconnectState, setDisconnectState] = useState<DisconnectState | null>(null);
 
   useEffect(() => {
     if (!socket || !isConnected) return;
+
+    let graceTimer: NodeJS.Timeout | null = null;
 
     if (chatId) {
       socket.emit('chat:join', { chatId });
@@ -69,9 +78,37 @@ export const useChatSocket = (chatId?: string) => {
 
     const onChatEnded = (data: ChatEndedSummary) => {
       if (!chatId || data.chatId === chatId) {
+        if (graceTimer) clearInterval(graceTimer);
+        setDisconnectState(null);
         setEndedSummary(data);
         queryClient.invalidateQueries({ queryKey: ['chat', chatId] });
         queryClient.invalidateQueries({ queryKey: ['chats'] });
+      }
+    };
+
+    const onParticipantDisconnected = (data: { chatId: string; userId: string; graceSeconds?: number }) => {
+      if (!chatId || data.chatId === chatId) {
+        const initialSecs = data.graceSeconds !== undefined ? data.graceSeconds : 30;
+        setDisconnectState({ userId: data.userId, chatId: data.chatId, graceSeconds: initialSecs });
+
+        if (graceTimer) clearInterval(graceTimer);
+        graceTimer = setInterval(() => {
+          setDisconnectState((prev) => {
+            if (!prev) return null;
+            if (prev.graceSeconds <= 1) {
+              if (graceTimer) clearInterval(graceTimer);
+              return null;
+            }
+            return { ...prev, graceSeconds: prev.graceSeconds - 1 };
+          });
+        }, 1000);
+      }
+    };
+
+    const onParticipantReconnected = (data: { chatId: string; userId: string }) => {
+      if (!chatId || data.chatId === chatId) {
+        if (graceTimer) clearInterval(graceTimer);
+        setDisconnectState(null);
       }
     };
 
@@ -88,10 +125,13 @@ export const useChatSocket = (chatId?: string) => {
     socket.on('chat:tick', onTick);
     socket.on('wallet:low_balance', onLowBalance);
     socket.on('chat:ended', onChatEnded);
+    socket.on('chat:participant_disconnected', onParticipantDisconnected);
+    socket.on('chat:participant_reconnected', onParticipantReconnected);
     socket.on('wallet:update', onWalletUpdate);
     socket.on('chat:error', (data) => Alert.alert('Notice', data.message));
 
     return () => {
+      if (graceTimer) clearInterval(graceTimer);
       if (chatId) socket.emit('chat:leave', { chatId });
       socket.off('chat:receive_message', onMessage);
       socket.off('chat:typing_start', onTypingStart);
@@ -99,6 +139,8 @@ export const useChatSocket = (chatId?: string) => {
       socket.off('chat:tick', onTick);
       socket.off('wallet:low_balance', onLowBalance);
       socket.off('chat:ended', onChatEnded);
+      socket.off('chat:participant_disconnected', onParticipantDisconnected);
+      socket.off('chat:participant_reconnected', onParticipantReconnected);
       socket.off('wallet:update', onWalletUpdate);
       socket.off('chat:error');
     };
@@ -126,5 +168,5 @@ export const useChatSocket = (chatId?: string) => {
     }
   };
 
-  return { sendMessage, emitTyping, endChatSession, chatTick, lowBalanceWarning, endedSummary };
+  return { sendMessage, emitTyping, endChatSession, chatTick, lowBalanceWarning, endedSummary, disconnectState };
 };

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { 
   fetchChatRequests, acceptChatRequest, rejectChatRequest,
-  fetchActiveChats, fetchChatDetails, fetchChatMessages, endChat 
+  fetchActiveChats, fetchRecentChats, fetchChatDetails, fetchChatMessages, endChat 
 } from '../api/messagingApi';
 
 export const useChatRequests = (status?: string) => {
@@ -38,6 +38,14 @@ export const useActiveChats = () => {
     queryKey: ['chats', 'ACTIVE'],
     queryFn: () => fetchActiveChats(),
     staleTime: 10000,
+  });
+};
+
+export const useRecentChats = () => {
+  return useQuery({
+    queryKey: ['chats', 'RECENT'],
+    queryFn: () => fetchRecentChats(),
+    staleTime: 5000,
   });
 };
 

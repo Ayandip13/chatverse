@@ -94,25 +94,6 @@ class ChatRequestService {
       io.to(`user:${receiverId}`).emit('chat_request:new', payload);
     }
 
-    // Schedule 60s Expiration Timeout
-    setTimeout(async () => {
-      try {
-        const checkReq = await chatRequestRepository.findById(request._id.toString());
-        if (checkReq && checkReq.status === ChatRequestStatus.PENDING) {
-          await chatRequestRepository.updateStatus(request._id.toString(), ChatRequestStatus.EXPIRED);
-          logger.info(`Chat request ${request._id} auto-expired after 60s`);
-          const currentIo = getSocketIO();
-          if (currentIo) {
-            const expPayload = { requestId: request._id.toString(), reason: 'TIMEOUT' };
-            currentIo.to(`user:${senderId}`).emit('chat_request:expired', expPayload);
-            currentIo.to(`user:${receiverId}`).emit('chat_request:expired', expPayload);
-          }
-        }
-      } catch (err) {
-        logger.error(`Error in chat request expiration timeout: ${(err as Error).message}`);
-      }
-    }, 60000);
-
     return request;
   }
 
