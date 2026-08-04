@@ -28,7 +28,7 @@ async function run() {
       pendingGirl._id.toString(),
       'APPROVED',
       adminId,
-      'Approved for testing'
+      'Approved for testing',
     );
 
     console.log('Success result:', result);

@@ -1,7 +1,7 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-const backendDir = path.join(__dirname, 'backend');
+const backendDir = path.join(__dirname, "backend");
 
 // Helper to create directories recursively
 const mkDir = (dir) => {
@@ -10,25 +10,25 @@ const mkDir = (dir) => {
 
 // Folders to create
 const folders = [
-  'src/api/health',
-  'src/config',
-  'src/constants',
-  'src/middlewares',
-  'src/models',
-  'src/repositories',
-  'src/routes',
-  'src/services',
-  'src/sockets',
-  'src/types',
-  'src/utils',
-  'src/validators'
-].map(p => path.join(backendDir, p));
+  "src/api/health",
+  "src/config",
+  "src/constants",
+  "src/middlewares",
+  "src/models",
+  "src/repositories",
+  "src/routes",
+  "src/services",
+  "src/sockets",
+  "src/types",
+  "src/utils",
+  "src/validators",
+].map((p) => path.join(backendDir, p));
 
 folders.forEach(mkDir);
 
 // File contents
 const files = {
-  'package.json': `{
+  "package.json": `{
   "name": "chatverse-backend",
   "version": "1.0.0",
   "description": "Backend for ChatVerse",
@@ -82,7 +82,7 @@ const files = {
   }
 }`,
 
-  'tsconfig.json': `{
+  "tsconfig.json": `{
   "compilerOptions": {
     "target": "es2022",
     "module": "commonjs",
@@ -102,14 +102,14 @@ const files = {
   "exclude": ["node_modules", "dist"]
 }`,
 
-  'nodemon.json': `{
+  "nodemon.json": `{
   "watch": ["src"],
   "ext": ".ts,.js",
   "ignore": [],
   "exec": "ts-node -r tsconfig-paths/register ./src/server.ts"
 }`,
 
-  '.eslintrc.json': `{
+  ".eslintrc.json": `{
   "parser": "@typescript-eslint/parser",
   "extends": [
     "eslint:recommended",
@@ -129,7 +129,7 @@ const files = {
   }
 }`,
 
-  '.prettierrc': `{
+  ".prettierrc": `{
   "semi": true,
   "trailingComma": "all",
   "singleQuote": true,
@@ -137,7 +137,7 @@ const files = {
   "tabWidth": 2
 }`,
 
-  '.env.example': `PORT=5000
+  ".env.example": `PORT=5000
 NODE_ENV=development
 MONGO_URI=mongodb://localhost:27017/chatverse
 JWT_SECRET=your_jwt_secret_key
@@ -146,7 +146,7 @@ JWT_REFRESH_SECRET=your_jwt_refresh_secret
 JWT_REFRESH_EXPIRES_IN=7d
 FRONTEND_URL=http://localhost:3000`,
 
-  '.gitignore': `node_modules/
+  ".gitignore": `node_modules/
 dist/
 .env
 .DS_Store
@@ -154,7 +154,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*`,
 
-  'README.md': `# ChatVerse Backend
+  "README.md": `# ChatVerse Backend
 
 ## Architecture
 Clean architecture following: Route -> Controller -> Service -> Repository -> Database.
@@ -166,7 +166,7 @@ Clean architecture following: Route -> Controller -> Service -> Repository -> Da
 - \`npm run lint\`: Run ESLint.
 - \`npm run format\`: Format code with Prettier.`,
 
-  'src/server.ts': `import 'dotenv/config';
+  "src/server.ts": `import 'dotenv/config';
 import http from 'http';
 import app from '@/app';
 import envConfig from '@/config/env.config';
@@ -207,7 +207,7 @@ const shutdown = () => {
 process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);`,
 
-  'src/app.ts': `import express, { Application } from 'express';
+  "src/app.ts": `import express, { Application } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import compression from 'compression';
@@ -259,7 +259,7 @@ app.use(errorHandler);
 
 export default app;`,
 
-  'src/config/env.config.ts': `import { z } from 'zod';
+  "src/config/env.config.ts": `import { z } from 'zod';
 
 const envSchema = z.object({
   PORT: z.string().default('5000'),
@@ -288,7 +288,7 @@ const parseEnv = () => {
 const envConfig = parseEnv();
 export default envConfig;`,
 
-  'src/config/db.config.ts': `import mongoose from 'mongoose';
+  "src/config/db.config.ts": `import mongoose from 'mongoose';
 import envConfig from './env.config';
 import logger from './logger.config';
 
@@ -304,7 +304,7 @@ const connectDB = async (): Promise<void> => {
 
 export default connectDB;`,
 
-  'src/config/logger.config.ts': `import pino from 'pino';
+  "src/config/logger.config.ts": `import pino from 'pino';
 import envConfig from './env.config';
 
 const isDev = envConfig.NODE_ENV === 'development';
@@ -324,7 +324,7 @@ const logger = pino({
 
 export default logger;`,
 
-  'src/sockets/index.ts': `import { Server as HttpServer } from 'http';
+  "src/sockets/index.ts": `import { Server as HttpServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import envConfig from '@/config/env.config';
 import logger from '@/config/logger.config';
@@ -364,7 +364,7 @@ export const getIO = (): SocketIOServer => {
   return io;
 };`,
 
-  'src/middlewares/error.middleware.ts': `import { Request, Response, NextFunction } from 'express';
+  "src/middlewares/error.middleware.ts": `import { Request, Response, NextFunction } from 'express';
 import logger from '@/config/logger.config';
 import { ApiError } from '@/utils/ApiError.util';
 import envConfig from '@/config/env.config';
@@ -409,7 +409,7 @@ export const errorHandler = (
   });
 };`,
 
-  'src/utils/asyncHandler.util.ts': `import { Request, Response, NextFunction } from 'express';
+  "src/utils/asyncHandler.util.ts": `import { Request, Response, NextFunction } from 'express';
 
 type AsyncFunction = (req: Request, res: Response, next: NextFunction) => Promise<any>;
 
@@ -419,7 +419,7 @@ export const asyncHandler = (fn: AsyncFunction) => {
   };
 };`,
 
-  'src/utils/ApiResponse.util.ts': `export class ApiResponse<T> {
+  "src/utils/ApiResponse.util.ts": `export class ApiResponse<T> {
   public success: boolean;
   public data: T | null;
   public message: string;
@@ -435,7 +435,7 @@ export const asyncHandler = (fn: AsyncFunction) => {
   }
 }`,
 
-  'src/utils/ApiError.util.ts': `export class ApiError extends Error {
+  "src/utils/ApiError.util.ts": `export class ApiError extends Error {
   public statusCode: number;
   public code?: string;
 
@@ -449,7 +449,7 @@ export const asyncHandler = (fn: AsyncFunction) => {
   }
 }`,
 
-  'src/constants/statusCodes.constant.ts': `export const STATUS_CODES = {
+  "src/constants/statusCodes.constant.ts": `export const STATUS_CODES = {
   OK: 200,
   CREATED: 201,
   BAD_REQUEST: 400,
@@ -462,7 +462,7 @@ export const asyncHandler = (fn: AsyncFunction) => {
   INTERNAL_SERVER_ERROR: 500,
 } as const;`,
 
-  'src/constants/errorMessages.constant.ts': `export const ERROR_MESSAGES = {
+  "src/constants/errorMessages.constant.ts": `export const ERROR_MESSAGES = {
   INTERNAL_SERVER_ERROR: 'An unexpected error occurred on the server.',
   NOT_FOUND: 'Resource not found.',
   UNAUTHORIZED: 'You are not authorized to perform this action.',
@@ -470,7 +470,7 @@ export const asyncHandler = (fn: AsyncFunction) => {
   BAD_REQUEST: 'Invalid request data.',
 } as const;`,
 
-  'src/routes/index.ts': `import { Router } from 'express';
+  "src/routes/index.ts": `import { Router } from 'express';
 import healthRoutes from '@/api/health/health.route';
 
 const router = Router();
@@ -480,7 +480,7 @@ router.use('/health', healthRoutes);
 
 export default router;`,
 
-  'src/api/health/health.route.ts': `import { Router } from 'express';
+  "src/api/health/health.route.ts": `import { Router } from 'express';
 import { checkHealth } from './health.controller';
 
 const router = Router();
@@ -489,7 +489,7 @@ router.get('/', checkHealth);
 
 export default router;`,
 
-  'src/api/health/health.controller.ts': `import { Request, Response } from 'express';
+  "src/api/health/health.controller.ts": `import { Request, Response } from 'express';
 import { asyncHandler } from '@/utils/asyncHandler.util';
 import { ApiResponse } from '@/utils/ApiResponse.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
@@ -505,11 +505,11 @@ export const checkHealth = asyncHandler(async (req: Request, res: Response) => {
       database: dbStatus,
     }, 'Service is running smoothly')
   );
-});`
+});`,
 };
 
 for (const [relativePath, content] of Object.entries(files)) {
   const filePath = path.join(backendDir, relativePath);
-  fs.writeFileSync(filePath, content, 'utf8');
+  fs.writeFileSync(filePath, content, "utf8");
 }
-console.log('Backend scaffolding complete.');
+console.log("Backend scaffolding complete.");

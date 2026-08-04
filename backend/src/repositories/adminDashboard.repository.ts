@@ -1,5 +1,12 @@
 import { User, Chat, WalletTransaction, WithdrawRequest } from '@/models';
-import { Role, GirlStatus, ChatStatus, TransactionType, WithdrawStatus, BoyStatus } from '@/constants/enums.constant';
+import {
+  Role,
+  GirlStatus,
+  ChatStatus,
+  TransactionType,
+  WithdrawStatus,
+  BoyStatus,
+} from '@/constants/enums.constant';
 
 class AdminDashboardRepository {
   async getMetrics() {
@@ -16,7 +23,7 @@ class AdminDashboardRepository {
       todayRevenueData,
       totalRecharges,
       onlineBoys,
-      onlineGirls
+      onlineGirls,
     ] = await Promise.all([
       User.countDocuments({ role: Role.BOY, deletedAt: null }),
       User.countDocuments({ role: Role.GIRL, deletedAt: null }),
@@ -25,15 +32,15 @@ class AdminDashboardRepository {
       WithdrawRequest.countDocuments({ status: WithdrawStatus.PENDING }),
       WalletTransaction.aggregate([
         { $match: { type: TransactionType.RECHARGE } },
-        { $group: { _id: null, total: { $sum: '$amount' } } }
+        { $group: { _id: null, total: { $sum: '$amount' } } },
       ]),
       WalletTransaction.aggregate([
         { $match: { type: TransactionType.RECHARGE, createdAt: { $gte: startOfToday } } },
-        { $group: { _id: null, total: { $sum: '$amount' } } }
+        { $group: { _id: null, total: { $sum: '$amount' } } },
       ]),
       WalletTransaction.countDocuments({ type: TransactionType.RECHARGE }),
       User.countDocuments({ role: Role.BOY, status: BoyStatus.ACTIVE, deletedAt: null }),
-      User.countDocuments({ role: Role.GIRL, status: GirlStatus.APPROVED, deletedAt: null })
+      User.countDocuments({ role: Role.GIRL, status: GirlStatus.APPROVED, deletedAt: null }),
     ]);
 
     return {

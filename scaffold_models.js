@@ -1,17 +1,18 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-const backendDir = path.join(__dirname, 'backend');
-const constantsDir = path.join(backendDir, 'src', 'constants');
-const typesDir = path.join(backendDir, 'src', 'types');
-const modelsDir = path.join(backendDir, 'src', 'models');
+const backendDir = path.join(__dirname, "backend");
+const constantsDir = path.join(backendDir, "src", "constants");
+const typesDir = path.join(backendDir, "src", "types");
+const modelsDir = path.join(backendDir, "src", "models");
 
-if (!fs.existsSync(constantsDir)) fs.mkdirSync(constantsDir, { recursive: true });
+if (!fs.existsSync(constantsDir))
+  fs.mkdirSync(constantsDir, { recursive: true });
 if (!fs.existsSync(typesDir)) fs.mkdirSync(typesDir, { recursive: true });
 if (!fs.existsSync(modelsDir)) fs.mkdirSync(modelsDir, { recursive: true });
 
 const files = {
-  'src/constants/enums.constant.ts': `export enum Role {
+  "src/constants/enums.constant.ts": `export enum Role {
   BOY = 'BOY',
   GIRL = 'GIRL',
 }
@@ -81,7 +82,7 @@ export enum TransactionType {
   BONUS = 'BONUS',
 }
 `,
-  'src/types/models.type.ts': `import { Document, Types } from 'mongoose';
+  "src/types/models.type.ts": `import { Document, Types } from 'mongoose';
 import {
   Role,
   BoyStatus,
@@ -235,7 +236,7 @@ export interface IPlatformSetting extends Document {
   updatedAt: Date;
 }
 `,
-  'src/models/user.model.ts': `import mongoose, { Schema } from 'mongoose';
+  "src/models/user.model.ts": `import mongoose, { Schema } from 'mongoose';
 import { IUser } from '@/types/models.type';
 import { Role, BoyStatus, GirlStatus } from '@/constants/enums.constant';
 
@@ -289,7 +290,7 @@ UserSchema.index({ role: 1, status: 1 });
 
 export const User = mongoose.model<IUser>('User', UserSchema);
 `,
-  'src/models/admin.model.ts': `import mongoose, { Schema } from 'mongoose';
+  "src/models/admin.model.ts": `import mongoose, { Schema } from 'mongoose';
 import { IAdmin } from '@/types/models.type';
 
 const AdminSchema = new Schema<IAdmin>(
@@ -312,7 +313,7 @@ AdminSchema.index({ email: 1 }, { unique: true });
 
 export const Admin = mongoose.model<IAdmin>('Admin', AdminSchema);
 `,
-  'src/models/wallet.model.ts': `import mongoose, { Schema } from 'mongoose';
+  "src/models/wallet.model.ts": `import mongoose, { Schema } from 'mongoose';
 import { IWallet } from '@/types/models.type';
 
 const WalletSchema = new Schema<IWallet>(
@@ -331,7 +332,7 @@ WalletSchema.index({ userId: 1 }, { unique: true });
 
 export const Wallet = mongoose.model<IWallet>('Wallet', WalletSchema);
 `,
-  'src/models/walletTransaction.model.ts': `import mongoose, { Schema } from 'mongoose';
+  "src/models/walletTransaction.model.ts": `import mongoose, { Schema } from 'mongoose';
 import { IWalletTransaction } from '@/types/models.type';
 import { TransactionType } from '@/constants/enums.constant';
 
@@ -355,7 +356,7 @@ export const WalletTransaction = mongoose.model<IWalletTransaction>(
   WalletTransactionSchema
 );
 `,
-  'src/models/chatRequest.model.ts': `import mongoose, { Schema } from 'mongoose';
+  "src/models/chatRequest.model.ts": `import mongoose, { Schema } from 'mongoose';
 import { IChatRequest } from '@/types/models.type';
 import { ChatRequestStatus } from '@/constants/enums.constant';
 
@@ -377,7 +378,7 @@ ChatRequestSchema.index({ receiverId: 1, status: 1 });
 
 export const ChatRequest = mongoose.model<IChatRequest>('ChatRequest', ChatRequestSchema);
 `,
-  'src/models/chat.model.ts': `import mongoose, { Schema } from 'mongoose';
+  "src/models/chat.model.ts": `import mongoose, { Schema } from 'mongoose';
 import { IChat } from '@/types/models.type';
 import { ChatStatus } from '@/constants/enums.constant';
 
@@ -405,7 +406,7 @@ ChatSchema.index({ girlId: 1, status: 1 });
 
 export const Chat = mongoose.model<IChat>('Chat', ChatSchema);
 `,
-  'src/models/message.model.ts': `import mongoose, { Schema } from 'mongoose';
+  "src/models/message.model.ts": `import mongoose, { Schema } from 'mongoose';
 import { IMessage } from '@/types/models.type';
 
 const MessageSchema = new Schema<IMessage>(
@@ -421,7 +422,7 @@ MessageSchema.index({ chatId: 1, createdAt: 1 });
 
 export const Message = mongoose.model<IMessage>('Message', MessageSchema);
 `,
-  'src/models/notification.model.ts': `import mongoose, { Schema } from 'mongoose';
+  "src/models/notification.model.ts": `import mongoose, { Schema } from 'mongoose';
 import { INotification } from '@/types/models.type';
 import { NotificationStatus } from '@/constants/enums.constant';
 
@@ -447,7 +448,7 @@ NotificationSchema.index({ userId: 1, status: 1 });
 
 export const Notification = mongoose.model<INotification>('Notification', NotificationSchema);
 `,
-  'src/models/report.model.ts': `import mongoose, { Schema } from 'mongoose';
+  "src/models/report.model.ts": `import mongoose, { Schema } from 'mongoose';
 import { IReport } from '@/types/models.type';
 import { ReportStatus } from '@/constants/enums.constant';
 
@@ -472,7 +473,7 @@ ReportSchema.index({ targetId: 1, status: 1 });
 
 export const Report = mongoose.model<IReport>('Report', ReportSchema);
 `,
-  'src/models/withdrawRequest.model.ts': `import mongoose, { Schema } from 'mongoose';
+  "src/models/withdrawRequest.model.ts": `import mongoose, { Schema } from 'mongoose';
 import { IWithdrawRequest } from '@/types/models.type';
 import { WithdrawStatus } from '@/constants/enums.constant';
 
@@ -500,7 +501,7 @@ export const WithdrawRequest = mongoose.model<IWithdrawRequest>(
   WithdrawRequestSchema
 );
 `,
-  'src/models/rating.model.ts': `import mongoose, { Schema } from 'mongoose';
+  "src/models/rating.model.ts": `import mongoose, { Schema } from 'mongoose';
 import { IRating } from '@/types/models.type';
 import { RatingStatus } from '@/constants/enums.constant';
 
@@ -525,7 +526,7 @@ RatingSchema.index({ targetId: 1, status: 1 });
 
 export const Rating = mongoose.model<IRating>('Rating', RatingSchema);
 `,
-  'src/models/favorite.model.ts': `import mongoose, { Schema } from 'mongoose';
+  "src/models/favorite.model.ts": `import mongoose, { Schema } from 'mongoose';
 import { IFavorite } from '@/types/models.type';
 
 const FavoriteSchema = new Schema<IFavorite>(
@@ -542,7 +543,7 @@ FavoriteSchema.index({ girlId: 1 }); // to get favorite counts
 
 export const Favorite = mongoose.model<IFavorite>('Favorite', FavoriteSchema);
 `,
-  'src/models/platformSetting.model.ts': `import mongoose, { Schema } from 'mongoose';
+  "src/models/platformSetting.model.ts": `import mongoose, { Schema } from 'mongoose';
 import { IPlatformSetting } from '@/types/models.type';
 
 const PlatformSettingSchema = new Schema<IPlatformSetting>(
@@ -560,7 +561,7 @@ export const PlatformSetting = mongoose.model<IPlatformSetting>(
   PlatformSettingSchema
 );
 `,
-  'src/models/index.ts': `export * from './user.model';
+  "src/models/index.ts": `export * from './user.model';
 export * from './admin.model';
 export * from './wallet.model';
 export * from './walletTransaction.model';
@@ -573,11 +574,11 @@ export * from './withdrawRequest.model';
 export * from './rating.model';
 export * from './favorite.model';
 export * from './platformSetting.model';
-`
+`,
 };
 
 for (const [relativePath, content] of Object.entries(files)) {
   const filePath = path.join(backendDir, relativePath);
-  fs.writeFileSync(filePath, content, 'utf8');
+  fs.writeFileSync(filePath, content, "utf8");
 }
-console.log('Database models scaffolding complete.');
+console.log("Database models scaffolding complete.");

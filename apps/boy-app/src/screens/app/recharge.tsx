@@ -1,15 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, KeyboardAvoidingView, Platform, Alert, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import { ArrowLeft, Coins, CreditCard, ShieldCheck } from 'lucide-react-native';
-import * as WebBrowser from 'expo-web-browser';
-import { useQueryClient } from '@tanstack/react-query';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+  ScrollView,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
+import { ArrowLeft, Coins, CreditCard, ShieldCheck } from "lucide-react-native";
+import * as WebBrowser from "expo-web-browser";
+import { useQueryClient } from "@tanstack/react-query";
 
-import apiClient from '../../api/apiClient';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { theme } from '../../constants/theme';
+import apiClient from "../../api/apiClient";
+import { Button } from "../../components/ui/Button";
+import { Input } from "../../components/ui/Input";
+import { theme } from "../../constants/theme";
 
 const PRESET_AMOUNTS = [10, 50, 100, 500, 1000, 5000];
 const MIN_RECHARGE = 10;
@@ -18,9 +26,9 @@ const MAX_RECHARGE = 100000;
 export default function RechargeScreen() {
   const navigation = useNavigation<any>();
   const queryClient = useQueryClient();
-  const [amount, setAmount] = useState<string>('100');
+  const [amount, setAmount] = useState<string>("100");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
 
   const numAmount = parseInt(amount, 10) || 0;
   const coinsAmount = numAmount; // Assuming 1 INR = 1 Coin for display
@@ -28,11 +36,11 @@ export default function RechargeScreen() {
   const validateAmount = (val: number) => {
     if (val < MIN_RECHARGE) return `Minimum recharge is ₹${MIN_RECHARGE}`;
     if (val > MAX_RECHARGE) return `Maximum recharge is ₹${MAX_RECHARGE}`;
-    return '';
+    return "";
   };
 
   useEffect(() => {
-    if (amount !== '') {
+    if (amount !== "") {
       setError(validateAmount(numAmount));
     }
   }, [amount]);
@@ -48,80 +56,105 @@ export default function RechargeScreen() {
       setLoading(true);
 
       // 1. Create Razorpay Order via Backend
-      const orderResponse = await apiClient.post('/wallet/recharge', {
-        amountInr: numAmount
+      const orderResponse = await apiClient.post("/wallet/recharge", {
+        amountInr: numAmount,
       });
       const order = orderResponse.data.data;
       const orderId = order.id || order.orderId;
 
       // 2. Open Razorpay Web Checkout (Mocked Flow for development)
       Alert.alert(
-        'Razorpay Checkout (Simulated)',
+        "Razorpay Checkout (Simulated)",
         `Simulating payment of ₹${numAmount} for Order ${orderId}...`,
         [
-          { text: 'Cancel Payment', style: 'cancel', onPress: () => setLoading(false) },
-          { 
-            text: 'Simulate Success', 
+          {
+            text: "Cancel Payment",
+            style: "cancel",
+            onPress: () => setLoading(false),
+          },
+          {
+            text: "Simulate Success",
             onPress: async () => {
               try {
                 // 3. Verify Payment
-                await apiClient.post('/wallet/verify', {
+                await apiClient.post("/wallet/verify", {
                   razorpayOrderId: orderId,
                   razorpayPaymentId: `pay_mock_${Math.random().toString(36).substring(7)}`,
-                  razorpaySignature: 'mock_signature',
+                  razorpaySignature: "mock_signature",
                   amountInr: numAmount,
                 });
 
                 // 4. Invalidate all wallet and profile queries across the app
-                queryClient.invalidateQueries({ queryKey: ['walletSummary'] });
-                queryClient.invalidateQueries({ queryKey: ['wallet-summary'] });
-                queryClient.invalidateQueries({ queryKey: ['wallet-recent-transactions'] });
-                queryClient.invalidateQueries({ queryKey: ['wallet-transactions'] });
-                queryClient.invalidateQueries({ queryKey: ['myProfile'] });
+                queryClient.invalidateQueries({ queryKey: ["walletSummary"] });
+                queryClient.invalidateQueries({ queryKey: ["wallet-summary"] });
+                queryClient.invalidateQueries({
+                  queryKey: ["wallet-recent-transactions"],
+                });
+                queryClient.invalidateQueries({
+                  queryKey: ["wallet-transactions"],
+                });
+                queryClient.invalidateQueries({ queryKey: ["myProfile"] });
 
                 Alert.alert(
-                  'Payment Successful!',
+                  "Payment Successful!",
                   `₹${numAmount} (${numAmount} coins) has been added to your wallet.`,
-                  [{ text: 'Great', onPress: () => navigation.goBack() }]
+                  [{ text: "Great", onPress: () => navigation.goBack() }],
                 );
               } catch (verifyError: any) {
-                Alert.alert('Verification Failed', verifyError.response?.data?.message || 'Payment verification failed');
+                Alert.alert(
+                  "Verification Failed",
+                  verifyError.response?.data?.message ||
+                    "Payment verification failed",
+                );
               } finally {
                 setLoading(false);
               }
-            }
-          }
-        ]
+            },
+          },
+        ],
       );
     } catch (apiError: any) {
-      Alert.alert('Error', apiError.response?.data?.message || 'Failed to initialize payment');
+      Alert.alert(
+        "Error",
+        apiError.response?.data?.message || "Failed to initialize payment",
+      );
       setLoading(false);
     }
   };
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-gray-900">
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
-        
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        className="flex-1"
+      >
         {/* Header */}
         <View className="px-4 py-3 flex-row items-center border-b border-gray-100 dark:border-gray-800">
-          <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 mr-2">
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            className="p-2 mr-2"
+          >
             <ArrowLeft color={theme.colors.text.main.light} size={24} />
           </TouchableOpacity>
-          <Text className="text-xl font-bold text-gray-900 dark:text-white">Add Coins</Text>
+          <Text className="text-xl font-bold text-gray-900 dark:text-white">
+            Add Coins
+          </Text>
         </View>
 
         <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 40 }}>
-          
           <View className="items-center mb-8 mt-4">
             <View className="w-20 h-20 bg-indigo-50 dark:bg-indigo-900/30 rounded-full items-center justify-center mb-4 border-4 border-indigo-100 dark:border-indigo-900/50">
               <Coins color={theme.colors.primary} size={40} />
             </View>
-            <Text className="text-gray-500 dark:text-gray-400 font-medium mb-2">You will get</Text>
-            <Text className="text-5xl font-extrabold text-gray-900 dark:text-white">
-              {coinsAmount > 0 ? coinsAmount.toLocaleString() : '0'}
+            <Text className="text-gray-500 dark:text-gray-400 font-medium mb-2">
+              You will get
             </Text>
-            <Text className="text-indigo-500 font-bold text-lg mt-1">Coins</Text>
+            <Text className="text-5xl font-extrabold text-gray-900 dark:text-white">
+              {coinsAmount > 0 ? coinsAmount.toLocaleString() : "0"}
+            </Text>
+            <Text className="text-indigo-500 font-bold text-lg mt-1">
+              Coins
+            </Text>
           </View>
 
           <Input
@@ -136,7 +169,9 @@ export default function RechargeScreen() {
               }
             }}
             error={error}
-            leftIcon={<Text className="text-gray-500 font-bold text-lg mr-1">₹</Text>}
+            leftIcon={
+              <Text className="text-gray-500 font-bold text-lg mr-1">₹</Text>
+            }
             className="text-2xl font-bold h-16"
           />
 
@@ -146,12 +181,14 @@ export default function RechargeScreen() {
                 key={preset}
                 onPress={() => setAmount(preset.toString())}
                 className={`w-[31%] py-3 mb-3 rounded-xl border items-center justify-center ${
-                  numAmount === preset 
-                    ? 'bg-indigo-50 border-indigo-500 dark:bg-indigo-900/30 dark:border-indigo-400' 
-                    : 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700'
+                  numAmount === preset
+                    ? "bg-indigo-50 border-indigo-500 dark:bg-indigo-900/30 dark:border-indigo-400"
+                    : "bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700"
                 }`}
               >
-                <Text className={`font-bold ${numAmount === preset ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                <Text
+                  className={`font-bold ${numAmount === preset ? "text-indigo-600 dark:text-indigo-400" : "text-gray-700 dark:text-gray-300"}`}
+                >
                   ₹{preset}
                 </Text>
               </TouchableOpacity>
@@ -161,8 +198,12 @@ export default function RechargeScreen() {
           <View className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 mb-8 flex-row items-center gap-3">
             <ShieldCheck color={theme.colors.success} size={24} />
             <View className="flex-1">
-              <Text className="text-sm font-semibold text-gray-900 dark:text-white">100% Secure Payments</Text>
-              <Text className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Powered by Razorpay</Text>
+              <Text className="text-sm font-semibold text-gray-900 dark:text-white">
+                100% Secure Payments
+              </Text>
+              <Text className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Powered by Razorpay
+              </Text>
             </View>
           </View>
 
@@ -173,9 +214,8 @@ export default function RechargeScreen() {
             className="w-full h-14"
             leftIcon={<CreditCard color="white" size={20} />}
           >
-            Pay ₹{numAmount > 0 ? numAmount.toLocaleString() : '0'}
+            Pay ₹{numAmount > 0 ? numAmount.toLocaleString() : "0"}
           </Button>
-
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

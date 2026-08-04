@@ -8,11 +8,11 @@ const WithdrawRequestSchema = new Schema<IWithdrawRequest>(
     amount: { type: Number, required: true, min: 1 },
     platformFee: { type: Number, default: 0 },
     netAmount: { type: Number, required: true },
-    paymentMethod: { 
-      type: String, 
-      enum: ['UPI', 'BANK_TRANSFER'], 
+    paymentMethod: {
+      type: String,
+      enum: ['UPI', 'BANK_TRANSFER'],
       default: 'UPI',
-      required: true 
+      required: true,
     },
     upiId: { type: String },
     bankDetails: {
@@ -37,7 +37,7 @@ const WithdrawRequestSchema = new Schema<IWithdrawRequest>(
     processedById: { type: Schema.Types.ObjectId, ref: 'Admin' },
     notes: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 WithdrawRequestSchema.index({ userId: 1, status: 1 });
@@ -45,5 +45,5 @@ WithdrawRequestSchema.index({ status: 1, createdAt: -1 });
 
 export const WithdrawRequest = mongoose.model<IWithdrawRequest>(
   'WithdrawRequest',
-  WithdrawRequestSchema
+  WithdrawRequestSchema,
 );

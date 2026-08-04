@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   TextInput,
@@ -6,27 +6,27 @@ import {
   Text,
   Modal,
   Alert,
-} from 'react-native';
+} from "react-native";
 import {
   SendHorizontal,
   Smile,
   Image as ImageIcon,
   X,
   CornerDownRight,
-} from 'lucide-react-native';
-import { Message } from '../../api/messagingApi';
+} from "lucide-react-native";
+import { Message } from "../../api/messagingApi";
 
 const QUICK_EMOJIS = [
-  '❤️',
-  '🔥',
-  '👍',
-  '😂',
-  '😍',
-  '🎉',
-  '💯',
-  '✨',
-  '🙏',
-  '😊',
+  "❤️",
+  "🔥",
+  "👍",
+  "😂",
+  "😍",
+  "🎉",
+  "💯",
+  "✨",
+  "🙏",
+  "😊",
 ];
 
 interface ChatInputProps {
@@ -42,10 +42,10 @@ export function ChatInput({
   replyingTo,
   onCancelReply,
 }: ChatInputProps) {
-  const [text, setText] = useState('');
+  const [text, setText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
-  const [imageUrlInput, setImageUrlInput] = useState('');
+  const [imageUrlInput, setImageUrlInput] = useState("");
 
   const handleChange = (val: string) => {
     setText(val);
@@ -59,7 +59,7 @@ export function ChatInput({
 
     if (replyingTo) {
       const quoteExcerpt = replyingTo.content
-        .replace(/^\[(IMAGE|REPLY):.*?\]:/, '')
+        .replace(/^\[(IMAGE|REPLY):.*?\]:/, "")
         .substring(0, 50);
 
       finalContent = `[REPLY:${quoteExcerpt}]:${finalContent}`;
@@ -68,27 +68,24 @@ export function ChatInput({
     }
 
     onSend(finalContent);
-    setText('');
+    setText("");
     onTyping(false);
     setShowEmojiPicker(false);
   };
 
   const handleSendImage = () => {
-    if (!imageUrlInput.trim() || !imageUrlInput.startsWith('http')) {
-      Alert.alert(
-        'Invalid URL',
-        'Please enter a valid HTTP/HTTPS image URL.'
-      );
+    if (!imageUrlInput.trim() || !imageUrlInput.startsWith("http")) {
+      Alert.alert("Invalid URL", "Please enter a valid HTTP/HTTPS image URL.");
       return;
     }
 
     onSend(`[IMAGE]:${imageUrlInput.trim()}`);
-    setImageUrlInput('');
+    setImageUrlInput("");
     setShowImageModal(false);
   };
 
   const addEmoji = (emoji: string) => {
-    setText(prev => prev + emoji);
+    setText((prev) => prev + emoji);
     onTyping(true);
   };
 
@@ -98,7 +95,7 @@ export function ChatInput({
         <View
           className="px-4 py-2 bg-indigo-50 flex-row items-center justify-between border-b border-indigo-100 dark:border-indigo-800"
           style={{
-            backgroundColor: 'rgba(49,46,129,0.3)',
+            backgroundColor: "rgba(49,46,129,0.3)",
           }}
         >
           <View className="flex-row items-center gap-2 flex-1">
@@ -145,13 +142,10 @@ export function ChatInput({
 
       <View className="px-4 py-3 flex-row items-end">
         <TouchableOpacity
-          onPress={() => setShowEmojiPicker(prev => !prev)}
+          onPress={() => setShowEmojiPicker((prev) => !prev)}
           className="p-2 mr-1"
         >
-          <Smile
-            size={24}
-            color={showEmojiPicker ? '#6366f1' : '#6b7280'}
-          />
+          <Smile size={24} color={showEmojiPicker ? "#6366f1" : "#6b7280"} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -177,13 +171,13 @@ export function ChatInput({
           disabled={text.trim().length === 0}
           className={`ml-3 w-11 h-11 rounded-full items-center justify-center ${
             text.trim().length > 0
-              ? 'bg-indigo-600'
-              : 'bg-gray-200 dark:bg-gray-800'
+              ? "bg-indigo-600"
+              : "bg-gray-200 dark:bg-gray-800"
           }`}
           style={
             text.trim().length > 0
               ? {
-                  shadowColor: '#6366f1',
+                  shadowColor: "#6366f1",
                   shadowOffset: {
                     width: 0,
                     height: 4,
@@ -197,26 +191,22 @@ export function ChatInput({
         >
           <SendHorizontal
             size={20}
-            color={text.trim().length > 0 ? '#ffffff' : '#9ca3af'}
+            color={text.trim().length > 0 ? "#ffffff" : "#9ca3af"}
           />
         </TouchableOpacity>
       </View>
 
-      <Modal
-        visible={showImageModal}
-        transparent
-        animationType="slide"
-      >
+      <Modal visible={showImageModal} transparent animationType="slide">
         <View
           className="flex-1 items-center justify-center px-6"
           style={{
-            backgroundColor: 'rgba(0,0,0,0.6)',
+            backgroundColor: "rgba(0,0,0,0.6)",
           }}
         >
           <View
             className="bg-white dark:bg-gray-800 w-full p-6 rounded-3xl border border-gray-100 dark:border-gray-700"
             style={{
-              shadowColor: '#000',
+              shadowColor: "#000",
               shadowOffset: {
                 width: 0,
                 height: 8,
@@ -251,7 +241,7 @@ export function ChatInput({
               onPress={handleSendImage}
               className="w-full bg-indigo-600 py-3.5 rounded-2xl items-center"
               style={{
-                shadowColor: '#6366f1',
+                shadowColor: "#6366f1",
                 shadowOffset: {
                   width: 0,
                   height: 4,
@@ -261,9 +251,7 @@ export function ChatInput({
                 elevation: 5,
               }}
             >
-              <Text className="text-white font-bold text-base">
-                Send Image
-              </Text>
+              <Text className="text-white font-bold text-base">Send Image</Text>
             </TouchableOpacity>
           </View>
         </View>

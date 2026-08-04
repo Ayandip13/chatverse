@@ -25,7 +25,7 @@ async function testRechargeE2E() {
         name: 'Test E2E Boy',
         role: 'BOY',
         status: 'ACTIVE',
-        authProvider: 'LOCAL'
+        authProvider: 'LOCAL',
       });
     }
 
@@ -35,7 +35,7 @@ async function testRechargeE2E() {
     await Wallet.findOneAndUpdate(
       { userId: boy._id },
       { currentBalance: 100, lifetimeRecharge: 100 },
-      { upsert: true, new: true }
+      { upsert: true, new: true },
     );
     console.log('[INITIAL STATE] Initial Wallet Balance: ₹100 | Lifetime Recharge: ₹100\n');
 
@@ -44,7 +44,10 @@ async function testRechargeE2E() {
     // -------------------------------------------------------------
     console.log('--- TEST 1: Create Recharge Order ("Pay ₹1000") ---');
     const rechargeAmount = 1000;
-    const orderPayload = await walletService.createRechargeOrder(boy._id.toString(), rechargeAmount);
+    const orderPayload = await walletService.createRechargeOrder(
+      boy._id.toString(),
+      rechargeAmount,
+    );
     console.log('Order Payload Returned:', orderPayload);
 
     const orderId = orderPayload.id || orderPayload.orderId;
@@ -63,14 +66,14 @@ async function testRechargeE2E() {
       orderId,
       mockPaymentId,
       'mock_signature',
-      rechargeAmount
+      rechargeAmount,
     );
 
     console.log('Verify Result Transaction:', {
       _id: verifyResult._id,
       amount: verifyResult.amount,
       type: verifyResult.type,
-      description: verifyResult.description
+      description: verifyResult.description,
     });
 
     if (!verifyResult || verifyResult.amount !== rechargeAmount) {
@@ -99,7 +102,7 @@ async function testRechargeE2E() {
     const transactions = historyResult.transactions || [];
     console.log(`Fetched ${transactions.length} transactions from history.`);
 
-    const foundTx = transactions.find(t => t._id.toString() === verifyResult._id.toString());
+    const foundTx = transactions.find((t) => t._id.toString() === verifyResult._id.toString());
     if (!foundTx) {
       throw new Error('TEST 4 FAILED: Created transaction did not appear in transaction history!');
     }
@@ -108,7 +111,7 @@ async function testRechargeE2E() {
       type: foundTx.type,
       amount: foundTx.amount,
       description: foundTx.description,
-      createdAt: foundTx.createdAt
+      createdAt: foundTx.createdAt,
     });
     console.log('✅ TEST 4 PASSED: Recharge transaction correctly appears in user history.\n');
 
@@ -122,13 +125,15 @@ async function testRechargeE2E() {
         orderId, // Same order ID again!
         `pay_mock_dup_${Date.now()}`,
         'mock_signature',
-        rechargeAmount
+        rechargeAmount,
       );
       throw new Error('TEST 5 FAILED: Duplicate payment verification was allowed!');
     } catch (err) {
       if (err.code === 'DUPLICATE_PAYMENT' || err.statusCode === 409) {
         console.log('Duplicate Prevention Output:', err.message, '| Code:', err.code);
-        console.log('✅ TEST 5 PASSED: Duplicate recharge was correctly blocked (HTTP 409 Conflict).\n');
+        console.log(
+          '✅ TEST 5 PASSED: Duplicate recharge was correctly blocked (HTTP 409 Conflict).\n',
+        );
       } else {
         throw err;
       }
@@ -143,7 +148,6 @@ async function testRechargeE2E() {
     console.log('=================================================================');
     console.log('🏆 ALL 5 END-TO-END RECHARGE FLOW VERIFICATION TESTS PASSED!');
     console.log('=================================================================');
-
   } catch (error) {
     console.error('\n❌ TEST SUITE FAILED:', error);
   } finally {

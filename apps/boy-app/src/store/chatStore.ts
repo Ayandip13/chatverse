@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
 interface ChatUIState {
   activeChatId: string | null;
@@ -11,15 +11,16 @@ interface ChatUIState {
 export const useChatStore = create<ChatUIState>((set) => ({
   activeChatId: null,
   typingUsers: {},
-  
+
   setActiveChatId: (id) => set({ activeChatId: id }),
-  
-  setTyping: (chatId, isTyping) => set((state) => ({
-    typingUsers: {
-      ...state.typingUsers,
-      [chatId]: isTyping
-    }
-  })),
+
+  setTyping: (chatId, isTyping) =>
+    set((state) => ({
+      typingUsers: {
+        ...state.typingUsers,
+        [chatId]: isTyping,
+      },
+    })),
 
   clearTyping: () => set({ typingUsers: {} }),
 }));

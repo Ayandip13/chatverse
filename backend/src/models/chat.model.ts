@@ -18,7 +18,7 @@ const ChatSchema = new Schema<IChat>(
     totalCost: { type: Number, default: 0 },
     deletedAt: { type: Date, default: null },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 ChatSchema.index({ boyId: 1, status: 1 });

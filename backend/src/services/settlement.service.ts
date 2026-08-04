@@ -12,7 +12,7 @@ export class SettlementService {
   public async processMessageSettlement(
     chatId: string,
     boyId: string,
-    girlId: string
+    girlId: string,
   ): Promise<{ success: boolean; boyBalance?: number; girlBalance?: number; error?: string }> {
     const coinsToDeduct = 1;
     const girlEarnings = 1;
@@ -20,10 +20,10 @@ export class SettlementService {
     // 1. Atomic deduction from Boy's wallet (must have >= coinsToDeduct)
     const boyWallet = await Wallet.findOneAndUpdate(
       { userId: new Types.ObjectId(boyId), currentBalance: { $gte: coinsToDeduct } },
-      { 
-        $inc: { currentBalance: -coinsToDeduct, lifetimeSpent: coinsToDeduct } 
+      {
+        $inc: { currentBalance: -coinsToDeduct, lifetimeSpent: coinsToDeduct },
       },
-      { new: true }
+      { new: true },
     );
 
     if (!boyWallet) {
@@ -34,10 +34,10 @@ export class SettlementService {
     // 2. Credit Girl's wallet
     const girlWallet = await Wallet.findOneAndUpdate(
       { userId: new Types.ObjectId(girlId) },
-      { 
-        $inc: { currentBalance: girlEarnings, lifetimeEarnings: girlEarnings } 
+      {
+        $inc: { currentBalance: girlEarnings, lifetimeEarnings: girlEarnings },
       },
-      { upsert: true, new: true }
+      { upsert: true, new: true },
     );
 
     // 3 & 4. Create immutable Wallet Transactions and update Settlement Ledger.
@@ -75,11 +75,13 @@ export class SettlementService {
             girlEarningsCoins: girlEarnings,
           },
         },
-        { upsert: true, new: true }
+        { upsert: true, new: true },
       ),
     ]);
 
-    logger.info(`Settled message for Chat ${chatId}: Boy ${boyId} (-${coinsToDeduct}), Girl ${girlId} (+${girlEarnings})`);
+    logger.info(
+      `Settled message for Chat ${chatId}: Boy ${boyId} (-${coinsToDeduct}), Girl ${girlId} (+${girlEarnings})`,
+    );
 
     return {
       success: true,

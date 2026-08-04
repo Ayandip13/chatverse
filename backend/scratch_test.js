@@ -3,10 +3,11 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/chatting-platform')
+mongoose
+  .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/chatting-platform')
   .then(async () => {
     console.log('Connected to MongoDB');
-    
+
     // Find a pending girl
     const User = mongoose.model('User', new mongoose.Schema({}, { strict: false }));
     const girl = await User.findOne({ role: 'GIRL', status: 'PENDING' });
@@ -17,9 +18,9 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/chatting-
       const anyGirl = await User.findOne({ role: 'GIRL' });
       console.log('Any Girl:', anyGirl);
     }
-    
+
     mongoose.disconnect();
   })
-  .catch(err => {
+  .catch((err) => {
     console.error('DB Error:', err);
   });

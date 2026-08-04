@@ -53,7 +53,7 @@ const UserSchema = new Schema<IUser>(
     statusReason: { type: String, default: null },
     deletedAt: { type: Date, default: null },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 UserSchema.index({ email: 1 }, { unique: true });

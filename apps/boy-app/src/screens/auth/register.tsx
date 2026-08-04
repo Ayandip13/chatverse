@@ -1,32 +1,49 @@
-import { View, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Mail, Lock, User, Phone, CheckSquare, Square } from 'lucide-react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
+import { useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Mail,
+  Lock,
+  User,
+  Phone,
+  CheckSquare,
+  Square,
+} from "lucide-react-native";
 
-import apiClient, { getErrorMessage } from '../../api/apiClient';
-import { useAuthStore } from '../../store/authStore';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { theme } from '../../constants/theme';
-import { cn } from '../../utils/cn';
+import apiClient, { getErrorMessage } from "../../api/apiClient";
+import { useAuthStore } from "../../store/authStore";
+import { Button } from "../../components/ui/Button";
+import { Input } from "../../components/ui/Input";
+import { theme } from "../../constants/theme";
+import { cn } from "../../utils/cn";
 
-const registerSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
-  phone: z.string().optional(),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string(),
-  termsAccepted: z.boolean().refine((val) => val === true, {
-    message: 'You must accept the Terms of Service'
+const registerSchema = z
+  .object({
+    name: z.string().min(2, "Name must be at least 2 characters"),
+    email: z.string().email("Invalid email address"),
+    phone: z.string().optional(),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string(),
+    termsAccepted: z.boolean().refine((val) => val === true, {
+      message: "You must accept the Terms of Service",
+    }),
   })
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
@@ -36,16 +53,20 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const setAuth = useAuthStore((state) => state.setAuth);
 
-  const { control, handleSubmit, formState: { errors } } = useForm<RegisterFormData>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      name: '',
-      email: '',
-      phone: '',
-      password: '',
-      confirmPassword: '',
-      termsAccepted: false
-    }
+      name: "",
+      email: "",
+      phone: "",
+      password: "",
+      confirmPassword: "",
+      termsAccepted: false,
+    },
   });
 
   const onSubmit = async (data: RegisterFormData) => {
@@ -57,19 +78,19 @@ export default function RegisterScreen() {
         email: data.email,
         phone: data.phone || undefined,
         password: data.password,
-        role: 'BOY',
-        gender: 'MALE', // Default gender for Boy App
+        role: "BOY",
+        gender: "MALE", // Default gender for Boy App
       };
 
-      const response = await apiClient.post('/auth/register', payload);
+      const response = await apiClient.post("/auth/register", payload);
       const { user, accessToken, refreshToken } = response.data.data;
 
       await setAuth(user, accessToken, refreshToken);
       // Auth wrapper handles redirect to Home
     } catch (error: any) {
-      console.log('Registration Error:', error.response?.data || error.message);
-      const message = getErrorMessage(error, 'Failed to create account');
-      Alert.alert('Registration Failed', message);
+      console.log("Registration Error:", error.response?.data || error.message);
+      const message = getErrorMessage(error, "Failed to create account");
+      Alert.alert("Registration Failed", message);
     } finally {
       setLoading(false);
     }
@@ -77,11 +98,15 @@ export default function RegisterScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-gray-900">
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        className="flex-1"
+      >
         <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 40 }}>
-
           <View className="mb-8">
-            <Text className="text-3xl font-bold text-gray-900 dark:text-white">Create Account</Text>
+            <Text className="text-3xl font-bold text-gray-900 dark:text-white">
+              Create Account
+            </Text>
             <Text className="text-gray-500 dark:text-gray-400 mt-2">
               Join ChatVerse to connect and chat
             </Text>
@@ -99,7 +124,9 @@ export default function RegisterScreen() {
                   onChangeText={onChange}
                   value={value}
                   error={errors.name?.message}
-                  leftIcon={<User color={theme.colors.text.muted.light} size={20} />}
+                  leftIcon={
+                    <User color={theme.colors.text.muted.light} size={20} />
+                  }
                 />
               )}
             />
@@ -117,7 +144,9 @@ export default function RegisterScreen() {
                   onChangeText={onChange}
                   value={value}
                   error={errors.email?.message}
-                  leftIcon={<Mail color={theme.colors.text.muted.light} size={20} />}
+                  leftIcon={
+                    <Mail color={theme.colors.text.muted.light} size={20} />
+                  }
                 />
               )}
             />
@@ -135,7 +164,9 @@ export default function RegisterScreen() {
                   onChangeText={onChange}
                   value={value}
                   error={errors.phone?.message}
-                  leftIcon={<Phone color={theme.colors.text.muted.light} size={20} />}
+                  leftIcon={
+                    <Phone color={theme.colors.text.muted.light} size={20} />
+                  }
                 />
               )}
             />
@@ -152,7 +183,9 @@ export default function RegisterScreen() {
                   onChangeText={onChange}
                   value={value}
                   error={errors.password?.message}
-                  leftIcon={<Lock color={theme.colors.text.muted.light} size={20} />}
+                  leftIcon={
+                    <Lock color={theme.colors.text.muted.light} size={20} />
+                  }
                 />
               )}
             />
@@ -169,7 +202,9 @@ export default function RegisterScreen() {
                   onChangeText={onChange}
                   value={value}
                   error={errors.confirmPassword?.message}
-                  leftIcon={<Lock color={theme.colors.text.muted.light} size={20} />}
+                  leftIcon={
+                    <Lock color={theme.colors.text.muted.light} size={20} />
+                  }
                 />
               )}
             />
@@ -212,12 +247,13 @@ export default function RegisterScreen() {
           </Button>
 
           <View className="flex-row justify-center mt-auto">
-            <Text className="text-gray-600 dark:text-gray-400">Already have an account? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <Text className="text-gray-600 dark:text-gray-400">
+              Already have an account?{" "}
+            </Text>
+            <TouchableOpacity onPress={() => navigation.navigate("Login")}>
               <Text className="text-indigo-500 font-bold">Sign In</Text>
             </TouchableOpacity>
           </View>
-
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

@@ -1,4 +1,4 @@
-import apiClient from './apiClient';
+import apiClient from "./apiClient";
 
 export interface WalletSummary {
   currentBalance: number;
@@ -35,11 +35,13 @@ export interface ChatSummary {
 }
 
 export const fetchWalletSummary = async (): Promise<WalletSummary> => {
-  const { data } = await apiClient.get('/wallet');
+  const { data } = await apiClient.get("/wallet");
   return data.data;
 };
 
-export const fetchDiscoveryGirls = async (filters: Record<string, any>): Promise<GirlProfile[]> => {
+export const fetchDiscoveryGirls = async (
+  filters: Record<string, any>,
+): Promise<GirlProfile[]> => {
   const params = new URLSearchParams();
   Object.entries(filters).forEach(([key, value]) => {
     if (value !== undefined) params.append(key, String(value));
@@ -49,7 +51,7 @@ export const fetchDiscoveryGirls = async (filters: Record<string, any>): Promise
 };
 
 export const fetchRecentChats = async (): Promise<ChatSummary[]> => {
-  const { data } = await apiClient.get('/chats'); // Removed limit=5 so all recent chats show
+  const { data } = await apiClient.get("/chats"); // Removed limit=5 so all recent chats show
   return data.data;
 };
 
@@ -58,7 +60,10 @@ export const fetchGirlDetails = async (id: string): Promise<GirlProfile> => {
   return data.data;
 };
 
-export const toggleFavorite = async (id: string, isFavorite: boolean): Promise<void> => {
+export const toggleFavorite = async (
+  id: string,
+  isFavorite: boolean,
+): Promise<void> => {
   if (isFavorite) {
     await apiClient.post(`/girls/${id}/favorite`);
   } else {

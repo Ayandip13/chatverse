@@ -1,4 +1,4 @@
-import apiClient from './apiClient';
+import apiClient from "./apiClient";
 
 export interface UserProfile {
   _id: string;
@@ -22,27 +22,34 @@ export interface Notification {
 
 // User Profile
 export const fetchMyProfile = async (): Promise<UserProfile> => {
-  const { data } = await apiClient.get('/users/me');
+  const { data } = await apiClient.get("/users/me");
   return data.data;
 };
 
-export const updateMyProfile = async (updates: Partial<UserProfile>): Promise<UserProfile> => {
-  const { data } = await apiClient.patch('/users/me', updates);
+export const updateMyProfile = async (
+  updates: Partial<UserProfile>,
+): Promise<UserProfile> => {
+  const { data } = await apiClient.patch("/users/me", updates);
   return data.data;
 };
 
 export const deleteMyAccount = async (): Promise<void> => {
-  await apiClient.delete('/users/me');
+  await apiClient.delete("/users/me");
 };
 
 // Notifications
-export const fetchNotifications = async (page = 1, limit = 20): Promise<{ items: Notification[], total: number }> => {
-  const { data } = await apiClient.get(`/notifications?page=${page}&limit=${limit}`);
+export const fetchNotifications = async (
+  page = 1,
+  limit = 20,
+): Promise<{ items: Notification[]; total: number }> => {
+  const { data } = await apiClient.get(
+    `/notifications?page=${page}&limit=${limit}`,
+  );
   return { items: data.data, total: data.meta.total };
 };
 
 export const fetchUnreadCount = async (): Promise<number> => {
-  const { data } = await apiClient.get('/notifications/unread-count');
+  const { data } = await apiClient.get("/notifications/unread-count");
   return data.data.count;
 };
 
@@ -51,5 +58,5 @@ export const markNotificationRead = async (id: string): Promise<void> => {
 };
 
 export const markAllNotificationsRead = async (): Promise<void> => {
-  await apiClient.post('/notifications/read-all');
+  await apiClient.post("/notifications/read-all");
 };

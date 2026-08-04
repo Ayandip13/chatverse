@@ -1,4 +1,4 @@
-import apiClient from './apiClient';
+import apiClient from "./apiClient";
 
 export interface WalletSummaryData {
   currentBalance: number;
@@ -21,10 +21,16 @@ export interface WithdrawalRecord {
   amount: number;
   platformFee: number;
   netAmount: number;
-  paymentMethod: 'UPI' | 'BANK_TRANSFER';
+  paymentMethod: "UPI" | "BANK_TRANSFER";
   upiId?: string;
   bankDetails?: BankDetailsData;
-  status: 'PENDING' | 'APPROVED' | 'PROCESSING' | 'COMPLETED' | 'REJECTED' | 'CANCELLED';
+  status:
+    | "PENDING"
+    | "APPROVED"
+    | "PROCESSING"
+    | "COMPLETED"
+    | "REJECTED"
+    | "CANCELLED";
   requestedAt: string;
   createdAt: string;
   reviewedAt?: string;
@@ -36,27 +42,38 @@ export interface WithdrawalRecord {
 
 export interface RequestWithdrawalPayload {
   amount: number;
-  paymentMethod: 'UPI' | 'BANK_TRANSFER';
+  paymentMethod: "UPI" | "BANK_TRANSFER";
   upiId?: string;
   bankDetails?: BankDetailsData;
 }
 
 export const withdrawalApi = {
   getSummary: async (): Promise<WalletSummaryData> => {
-    const res = await apiClient.get('/withdrawals/summary');
+    const res = await apiClient.get("/withdrawals/summary");
     return res.data?.data;
   },
 
-  getWithdrawals: async (params?: { page?: number; limit?: number; status?: string }): Promise<{
+  getWithdrawals: async (params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+  }): Promise<{
     data: WithdrawalRecord[];
-    meta: { total: number; page: number; limit: number; summary?: WalletSummaryData };
+    meta: {
+      total: number;
+      page: number;
+      limit: number;
+      summary?: WalletSummaryData;
+    };
   }> => {
-    const res = await apiClient.get('/withdrawals', { params });
+    const res = await apiClient.get("/withdrawals", { params });
     return res.data;
   },
 
-  requestWithdrawal: async (payload: RequestWithdrawalPayload): Promise<WithdrawalRecord> => {
-    const res = await apiClient.post('/withdrawals', payload);
+  requestWithdrawal: async (
+    payload: RequestWithdrawalPayload,
+  ): Promise<WithdrawalRecord> => {
+    const res = await apiClient.post("/withdrawals", payload);
     return res.data?.data;
   },
 

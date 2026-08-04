@@ -7,7 +7,7 @@ import { chatRequestService } from './src/services/chatRequest.service';
 
 async function testSendRequest() {
   await mongoose.connect(process.env.MONGO_URI!);
-  
+
   const boy = await User.findOne({ role: 'BOY', status: 'ACTIVE' });
   const girl = await User.findOne({ role: 'GIRL', status: 'APPROVED' });
 
@@ -18,7 +18,7 @@ async function testSendRequest() {
     await Wallet.findOneAndUpdate(
       { userId: boy._id },
       { currentBalance: 100 },
-      { upsert: true, new: true }
+      { upsert: true, new: true },
     );
 
     // Clear old pending requests
@@ -28,7 +28,14 @@ async function testSendRequest() {
       const res = await chatRequestService.sendRequest(boy._id.toString(), girl._id.toString());
       console.log('Successfully sent chat request! Result:', res);
     } catch (err: any) {
-      console.log('Send request result message:', err.message, '| Code:', err.code, '| Status:', err.statusCode);
+      console.log(
+        'Send request result message:',
+        err.message,
+        '| Code:',
+        err.code,
+        '| Status:',
+        err.statusCode,
+      );
     }
   }
 

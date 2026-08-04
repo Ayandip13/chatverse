@@ -1,18 +1,18 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-const backendDir = path.join(__dirname, 'backend');
+const backendDir = path.join(__dirname, "backend");
 const mkDir = (dir) => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 };
 
-mkDir(path.join(backendDir, 'src/api/admin'));
-mkDir(path.join(backendDir, 'src/validators'));
-mkDir(path.join(backendDir, 'src/services'));
-mkDir(path.join(backendDir, 'src/repositories'));
+mkDir(path.join(backendDir, "src/api/admin"));
+mkDir(path.join(backendDir, "src/validators"));
+mkDir(path.join(backendDir, "src/services"));
+mkDir(path.join(backendDir, "src/repositories"));
 
 const files = {
-  'src/validators/admin.validator.ts': `import { z } from 'zod';
+  "src/validators/admin.validator.ts": `import { z } from 'zod';
 import { BoyStatus, GirlStatus, Role } from '@/constants/enums.constant';
 
 export const updateStatusSchema = z.object({
@@ -35,7 +35,7 @@ export const getUsersQuerySchema = z.object({
   }),
 });
 `,
-  'src/repositories/adminUser.repository.ts': `import { User } from '@/models';
+  "src/repositories/adminUser.repository.ts": `import { User } from '@/models';
 import { FilterQuery } from 'mongoose';
 import { IUser } from '@/types/models.type';
 
@@ -76,7 +76,7 @@ class AdminUserRepository {
 
 export const adminUserRepository = new AdminUserRepository();
 `,
-  'src/services/verification.service.ts': `import { userRepository } from '@/repositories/user.repository';
+  "src/services/verification.service.ts": `import { userRepository } from '@/repositories/user.repository';
 import { adminUserRepository } from '@/repositories/adminUser.repository';
 import { ApiError } from '@/utils/ApiError.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
@@ -128,7 +128,7 @@ class VerificationService {
 
 export const verificationService = new VerificationService();
 `,
-  'src/api/admin/admin.controller.ts': `import { Request, Response } from 'express';
+  "src/api/admin/admin.controller.ts": `import { Request, Response } from 'express';
 import { asyncHandler } from '@/utils/asyncHandler.util';
 import { ApiResponse } from '@/utils/ApiResponse.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
@@ -168,7 +168,7 @@ export const updateUserStatus = asyncHandler(async (req: Request, res: Response)
   res.status(STATUS_CODES.OK).json(new ApiResponse(updatedUser, \`User status updated to \${status}\`));
 });
 `,
-  'src/api/admin/admin.route.ts': `import { Router } from 'express';
+  "src/api/admin/admin.route.ts": `import { Router } from 'express';
 import * as adminController from './admin.controller';
 import { validate } from '@/middlewares/validate.middleware';
 import { requireAdminAuth } from '@/middlewares/adminAuth.middleware';
@@ -185,11 +185,11 @@ router.get('/users/:id', adminController.getUserDetails);
 router.patch('/users/:id/status', validate(updateStatusSchema), adminController.updateUserStatus);
 
 export default router;
-`
+`,
 };
 
 for (const [relativePath, content] of Object.entries(files)) {
   const filePath = path.join(backendDir, relativePath);
-  fs.writeFileSync(filePath, content, 'utf8');
+  fs.writeFileSync(filePath, content, "utf8");
 }
-console.log('Admin Verification scaffolding complete.');
+console.log("Admin Verification scaffolding complete.");

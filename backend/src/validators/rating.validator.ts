@@ -13,6 +13,9 @@ export const getRatingsQuerySchema = z.object({
   query: z.object({
     page: z.string().optional(),
     limit: z.string().optional(),
-    targetUserId: z.string().regex(/^[0-9a-fA-F]{24}$/, 'Invalid user ID').optional(),
+    targetUserId: z
+      .string()
+      .regex(/^[0-9a-fA-F]{24}$/, 'Invalid user ID')
+      .optional(),
   }),
 });

@@ -1,8 +1,8 @@
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useAuthStore } from '../store/authStore';
-import { AuthNavigator } from './AuthStack';
-import { AppNavigator } from './AppStack';
-import { SplashScreen } from '../components/ui/SplashScreen'; // Or an ActivityIndicator
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { useAuthStore } from "../store/authStore";
+import { AuthNavigator } from "./AuthStack";
+import { AppNavigator } from "./AppStack";
+import { SplashScreen } from "../components/ui/SplashScreen"; // Or an ActivityIndicator
 
 const Stack = createNativeStackNavigator();
 

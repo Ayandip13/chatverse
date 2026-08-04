@@ -9,7 +9,12 @@ const router = Router();
 
 router.use(requireAuth);
 
-router.post('/', requireRole([Role.BOY]), validate(sendChatRequestSchema), chatRequestController.sendRequest);
+router.post(
+  '/',
+  requireRole([Role.BOY]),
+  validate(sendChatRequestSchema),
+  chatRequestController.sendRequest,
+);
 router.post('/:id/accept', requireRole([Role.GIRL]), chatRequestController.acceptRequest);
 router.post('/:id/reject', requireRole([Role.GIRL]), chatRequestController.rejectRequest);
 router.post('/:id/cancel', requireRole([Role.BOY]), chatRequestController.cancelRequest);

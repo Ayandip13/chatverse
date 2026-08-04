@@ -1,8 +1,8 @@
-import { RouterProvider } from 'react-router-dom';
-import { AppProvider } from './providers/AppProvider';
-import { router } from './routes';
-import { useAuthStore } from './store/authStore';
-import { useEffect } from 'react';
+import { RouterProvider } from "react-router-dom";
+import { AppProvider } from "./providers/AppProvider";
+import { router } from "./routes";
+import { useAuthStore } from "./store/authStore";
+import { useEffect } from "react";
 
 function App() {
   const { isAuthenticated } = useAuthStore();

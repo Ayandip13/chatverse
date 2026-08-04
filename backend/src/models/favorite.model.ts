@@ -6,7 +6,7 @@ const FavoriteSchema = new Schema<IFavorite>(
     boyId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     girlId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // A Boy can only favorite a specific Girl once

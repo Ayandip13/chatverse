@@ -19,14 +19,14 @@ class WalletTransactionRepository {
     userId: string,
     filters: { type?: string; startDate?: string; endDate?: string },
     page: number,
-    limit: number
+    limit: number,
   ) {
     const query: FilterQuery<IWalletTransaction> = { userId: new Types.ObjectId(userId) };
 
     if (filters.type) {
       query.type = filters.type;
     }
-    
+
     if (filters.startDate || filters.endDate) {
       query.createdAt = {};
       if (filters.startDate) query.createdAt.$gte = new Date(filters.startDate);

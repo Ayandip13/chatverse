@@ -1,5 +1,11 @@
-import React from 'react';
-import { View, Text, Modal, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React from "react";
+import {
+  View,
+  Text,
+  Modal,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 
 interface CustomModalProps {
   visible: boolean;
@@ -10,29 +16,29 @@ interface CustomModalProps {
   onConfirm: () => void;
   onCancel: () => void;
   isLoading?: boolean;
-  type?: 'danger' | 'info' | 'success';
+  type?: "danger" | "info" | "success";
 }
 
 export const CustomModal: React.FC<CustomModalProps> = ({
   visible,
   title,
   message,
-  confirmText = 'Confirm',
-  cancelText = 'Cancel',
+  confirmText = "Confirm",
+  cancelText = "Cancel",
   onConfirm,
   onCancel,
   isLoading = false,
-  type = 'danger',
+  type = "danger",
 }) => {
   const getConfirmButtonColor = () => {
     switch (type) {
-      case 'danger':
-        return 'bg-red-500 shadow-red-500/30';
-      case 'success':
-        return 'bg-green-500 shadow-green-500/30';
-      case 'info':
+      case "danger":
+        return "bg-red-500 shadow-red-500/30";
+      case "success":
+        return "bg-green-500 shadow-green-500/30";
+      case "info":
       default:
-        return 'bg-indigo-600 shadow-indigo-500/30';
+        return "bg-indigo-600 shadow-indigo-500/30";
     }
   };
 
@@ -43,7 +49,7 @@ export const CustomModal: React.FC<CustomModalProps> = ({
           <Text className="text-2xl font-extrabold text-slate-900 dark:text-white mb-2 text-center">
             {title}
           </Text>
-          
+
           <Text className="text-slate-500 dark:text-slate-400 text-center mb-8 leading-relaxed text-base">
             {message}
           </Text>
@@ -54,7 +60,9 @@ export const CustomModal: React.FC<CustomModalProps> = ({
               disabled={isLoading}
               className="flex-1 bg-slate-100 dark:bg-slate-700 py-4 rounded-2xl items-center flex-row justify-center"
             >
-              <Text className="text-slate-700 dark:text-slate-300 font-bold text-base">{cancelText}</Text>
+              <Text className="text-slate-700 dark:text-slate-300 font-bold text-base">
+                {cancelText}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -65,7 +73,9 @@ export const CustomModal: React.FC<CustomModalProps> = ({
               {isLoading ? (
                 <ActivityIndicator color="#ffffff" />
               ) : (
-                <Text className="text-white font-bold text-base">{confirmText}</Text>
+                <Text className="text-white font-bold text-base">
+                  {confirmText}
+                </Text>
               )}
             </TouchableOpacity>
           </View>

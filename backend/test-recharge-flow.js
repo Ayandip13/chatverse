@@ -22,7 +22,7 @@ async function testRechargeFlow() {
         name: 'Test Recharge Boy',
         role: 'BOY',
         status: 'ACTIVE',
-        authProvider: 'LOCAL'
+        authProvider: 'LOCAL',
       });
     }
 
@@ -32,7 +32,7 @@ async function testRechargeFlow() {
     let initialWallet = await Wallet.findOneAndUpdate(
       { userId: boy._id },
       { currentBalance: 100, lifetimeRecharge: 100 },
-      { upsert: true, new: true }
+      { upsert: true, new: true },
     );
     console.log(`Initial Wallet Balance: ₹${initialWallet.currentBalance}`);
 
@@ -53,13 +53,13 @@ async function testRechargeFlow() {
       orderId,
       `pay_mock_${Date.now()}`,
       'mock_signature',
-      rechargeAmount
+      rechargeAmount,
     );
     console.log('Verification Transaction Created:', {
       _id: verifyRes._id,
       amount: verifyRes.amount,
       type: verifyRes.type,
-      description: verifyRes.description
+      description: verifyRes.description,
     });
 
     // 4. Verify Wallet Balance Updated Correctly

@@ -31,12 +31,14 @@ class NotificationService {
       // 2. Emit to recipient's personal room. If they are online, they get it instantly.
       // If offline, Socket.IO ignores it, but it's already persisted in the DB.
       io.to(`user:${params.userId}`).emit('notification:new', notification);
-      
+
       // Update unread count strictly
       const unreadCount = await notificationRepository.getUnreadCount(params.userId);
       io.to(`user:${params.userId}`).emit('notification:unread_count', { count: unreadCount });
     } catch (error) {
-      logger.warn(`Could not emit socket notification (Socket might not be initialized): ${(error as Error).message}`);
+      logger.warn(
+        `Could not emit socket notification (Socket might not be initialized): ${(error as Error).message}`,
+      );
     }
 
     return notification;
@@ -63,7 +65,7 @@ class NotificationService {
       return notification;
     }
     const updated = await notificationRepository.markAsRead(notificationId);
-    
+
     this.broadcastUnreadCount(userId);
     return updated;
   }
@@ -78,7 +80,7 @@ class NotificationService {
     // Validation ensures ownership
     await this.getNotificationDetails(userId, notificationId);
     const deleted = await notificationRepository.delete(notificationId);
-    
+
     this.broadcastUnreadCount(userId);
     return deleted;
   }

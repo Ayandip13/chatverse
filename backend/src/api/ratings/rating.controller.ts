@@ -20,10 +20,11 @@ export const rateUser = async (req: Request, res: Response, next: NextFunction) 
     // Verify chat existed between these users
     const chat = await Chat.findById(chatId);
     if (!chat) throw new ApiError(404, 'Chat not found');
-    
-    const isParticipant = (chat.boyId.toString() === reviewerId && chat.girlId.toString() === targetUserId) ||
-                          (chat.girlId.toString() === reviewerId && chat.boyId.toString() === targetUserId);
-                          
+
+    const isParticipant =
+      (chat.boyId.toString() === reviewerId && chat.girlId.toString() === targetUserId) ||
+      (chat.girlId.toString() === reviewerId && chat.boyId.toString() === targetUserId);
+
     if (!isParticipant) throw new ApiError(403, 'You can only rate participants of your chats');
 
     // Prevent duplicate rating for same chat
@@ -35,19 +36,19 @@ export const rateUser = async (req: Request, res: Response, next: NextFunction) 
       targetId: targetUserId,
       chatId,
       score,
-      comment: review
+      comment: review,
     });
 
     // Update User Average
     const agg = await Rating.aggregate([
       { $match: { targetId: new mongoose.Types.ObjectId(targetUserId) } },
-      { $group: { _id: null, avgScore: { $avg: '$score' }, count: { $sum: 1 } } }
+      { $group: { _id: null, avgScore: { $avg: '$score' }, count: { $sum: 1 } } },
     ]);
 
     if (agg.length > 0) {
       await User.findByIdAndUpdate(targetUserId, {
         averageRating: parseFloat(agg[0].avgScore.toFixed(1)),
-        totalRatings: agg[0].count
+        totalRatings: agg[0].count,
       });
     }
 
@@ -96,19 +97,19 @@ export const updateRating = async (req: Request, res: Response, next: NextFuncti
 
     if (score !== undefined) rating.score = score;
     if (comment !== undefined) rating.comment = comment;
-    
+
     await rating.save();
 
     // Update aggregate logic here if score changed...
     const agg = await Rating.aggregate([
       { $match: { targetId: rating.targetId } },
-      { $group: { _id: null, avgScore: { $avg: '$score' }, count: { $sum: 1 } } }
+      { $group: { _id: null, avgScore: { $avg: '$score' }, count: { $sum: 1 } } },
     ]);
 
     if (agg.length > 0) {
       await User.findByIdAndUpdate(rating.targetId, {
         averageRating: parseFloat(agg[0].avgScore.toFixed(1)),
-        totalRatings: agg[0].count
+        totalRatings: agg[0].count,
       });
     }
 

@@ -16,7 +16,9 @@ export const requestWithdrawal = asyncHandler(async (req: Request, res: Response
     bankDetails,
   });
 
-  res.status(STATUS_CODES.CREATED).json(new ApiResponse(withdrawal, 'Withdrawal request submitted successfully'));
+  res
+    .status(STATUS_CODES.CREATED)
+    .json(new ApiResponse(withdrawal, 'Withdrawal request submitted successfully'));
 });
 
 export const cancelWithdrawal = asyncHandler(async (req: Request, res: Response) => {
@@ -24,7 +26,9 @@ export const cancelWithdrawal = asyncHandler(async (req: Request, res: Response)
   const requestId = req.params.id;
 
   const cancelled = await withdrawalService.cancelWithdrawalRequest(userId, requestId);
-  res.status(STATUS_CODES.OK).json(new ApiResponse(cancelled, 'Withdrawal request cancelled successfully'));
+  res
+    .status(STATUS_CODES.OK)
+    .json(new ApiResponse(cancelled, 'Withdrawal request cancelled successfully'));
 });
 
 export const getMyWithdrawals = asyncHandler(async (req: Request, res: Response) => {

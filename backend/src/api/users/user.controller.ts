@@ -25,7 +25,7 @@ export const updateMyProfile = async (req: Request, res: Response, next: NextFun
   try {
     const userId = req.user!.userId;
     const updates = req.body;
-    
+
     // Prevent modification of restricted fields just in case they bypass validator
     delete updates.role;
     delete updates.status;
@@ -50,7 +50,7 @@ export const updateMyProfile = async (req: Request, res: Response, next: NextFun
 export const uploadMyAvatar = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.userId;
-    
+
     if (!req.file) {
       throw new ApiError(400, 'No file uploaded or invalid file type');
     }
@@ -90,7 +90,7 @@ export const deleteMyAvatar = async (req: Request, res: Response, next: NextFunc
   try {
     const userId = req.user!.userId;
     const currentUser = await userRepository.findById(userId);
-    
+
     if (!currentUser || !currentUser.avatar) {
       throw new ApiError(400, 'No avatar to delete');
     }
@@ -100,7 +100,7 @@ export const deleteMyAvatar = async (req: Request, res: Response, next: NextFunc
     }
 
     const user = await userRepository.update(userId, { avatar: '' });
-    
+
     logger.info(`User ${userId} deleted their avatar`);
     res.status(200).json(new ApiResponse(user, 'Avatar deleted successfully'));
   } catch (error) {
@@ -126,7 +126,7 @@ export const getPublicProfile = async (req: Request, res: Response, next: NextFu
       averageRating: user.averageRating,
       totalRatings: user.totalRatings,
       role: user.role,
-      status: user.status
+      status: user.status,
     };
 
     res.status(200).json(new ApiResponse(publicData, 'Public profile retrieved'));
@@ -138,11 +138,11 @@ export const getPublicProfile = async (req: Request, res: Response, next: NextFu
 export const deleteMyAccount = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user!.userId;
-    
+
     const user = await userRepository.update(userId, {
       deletedAt: new Date(),
       status: 'REJECTED' as any, // Mapped to generic rejected state
-      email: `${userId}@deleted.chatverse.com`
+      email: `${userId}@deleted.chatverse.com`,
     });
 
     if (!user) {

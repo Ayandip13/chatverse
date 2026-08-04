@@ -3,7 +3,11 @@ import * as reportController from './report.controller';
 import { validate } from '@/middlewares/validate.middleware';
 import { requireAuth } from '@/middlewares/auth.middleware';
 import { requireAdminAuth } from '@/middlewares/adminAuth.middleware';
-import { createReportSchema, getReportsQuerySchema, updateReportStatusSchema } from '@/validators/report.validator';
+import {
+  createReportSchema,
+  getReportsQuerySchema,
+  updateReportStatusSchema,
+} from '@/validators/report.validator';
 
 const router = Router();
 
@@ -23,7 +27,11 @@ const adminRouter = Router();
 adminRouter.use(requireAdminAuth);
 adminRouter.get('/', validate(getReportsQuerySchema), reportController.getAdminReports);
 adminRouter.get('/:id', reportController.getReportDetails);
-adminRouter.patch('/:id/status', validate(updateReportStatusSchema), reportController.updateReportStatus);
+adminRouter.patch(
+  '/:id/status',
+  validate(updateReportStatusSchema),
+  reportController.updateReportStatus,
+);
 
 // Mount them
 router.use('/', userRouter);

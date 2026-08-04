@@ -25,13 +25,17 @@ class NotificationRepository {
   }
 
   async markAsRead(id: string): Promise<INotification | null> {
-    return Notification.findByIdAndUpdate(id, { status: NotificationStatus.READ }, { new: true }).exec();
+    return Notification.findByIdAndUpdate(
+      id,
+      { status: NotificationStatus.READ },
+      { new: true },
+    ).exec();
   }
 
   async markAllAsRead(userId: string): Promise<number> {
     const result = await Notification.updateMany(
       { userId: new Types.ObjectId(userId), status: NotificationStatus.UNREAD },
-      { status: NotificationStatus.READ }
+      { status: NotificationStatus.READ },
     ).exec();
     return result.modifiedCount;
   }
@@ -41,7 +45,10 @@ class NotificationRepository {
   }
 
   async getUnreadCount(userId: string): Promise<number> {
-    return Notification.countDocuments({ userId: new Types.ObjectId(userId), status: NotificationStatus.UNREAD }).exec();
+    return Notification.countDocuments({
+      userId: new Types.ObjectId(userId),
+      status: NotificationStatus.UNREAD,
+    }).exec();
   }
 }
 

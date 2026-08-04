@@ -13,7 +13,8 @@ export const registerChatRequestHandlers = (io: Server, socket: AuthenticatedSoc
       if (callback) callback({ success: true, requestId: request._id.toString() });
     } catch (error: any) {
       logger.error(`Socket chat_request:send error: ${error.message}`);
-      if (callback) callback({ success: false, error: error.message, code: error.code || 'REQUEST_FAILED' });
+      if (callback)
+        callback({ success: false, error: error.message, code: error.code || 'REQUEST_FAILED' });
     }
   });
 
@@ -24,7 +25,8 @@ export const registerChatRequestHandlers = (io: Server, socket: AuthenticatedSoc
       if (callback) callback({ success: true, chatId: result.chat._id.toString() });
     } catch (error: any) {
       logger.error(`Socket chat_request:accept error: ${error.message}`);
-      if (callback) callback({ success: false, error: error.message, code: error.code || 'ACCEPT_FAILED' });
+      if (callback)
+        callback({ success: false, error: error.message, code: error.code || 'ACCEPT_FAILED' });
     }
   });
 

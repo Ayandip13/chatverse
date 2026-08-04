@@ -10,7 +10,13 @@ async function testWithdrawalSuite() {
   await mongoose.connect(MONGO_URI);
   console.log('Connected to MongoDB Atlas successfully.');
 
-  const { User, Wallet, WithdrawRequest, WalletTransaction, Notification } = require('./src/models');
+  const {
+    User,
+    Wallet,
+    WithdrawRequest,
+    WalletTransaction,
+    Notification,
+  } = require('./src/models');
   const { withdrawalService } = require('./src/services/withdrawal.service');
 
   try {
@@ -22,7 +28,7 @@ async function testWithdrawalSuite() {
         name: 'Test Payout Girl',
         role: 'GIRL',
         status: 'APPROVED',
-        authProvider: 'LOCAL'
+        authProvider: 'LOCAL',
       });
     }
 
@@ -35,7 +41,7 @@ async function testWithdrawalSuite() {
     await Wallet.findOneAndUpdate(
       { userId: girl._id },
       { currentBalance: 2000, lifetimeEarnings: 5000, lifetimeWithdraw: 0 },
-      { upsert: true, new: true }
+      { upsert: true, new: true },
     );
     console.log('Initial Girl Wallet Balance: ₹2,000');
 
@@ -48,7 +54,7 @@ async function testWithdrawalSuite() {
       await withdrawalService.createWithdrawalRequest(girl._id.toString(), {
         amount: 300,
         paymentMethod: 'UPI',
-        upiId: 'girl@upi'
+        upiId: 'girl@upi',
       });
       console.error('FAILED: Below minimum amount request was not rejected!');
     } catch (err) {
@@ -60,9 +66,11 @@ async function testWithdrawalSuite() {
     const req1 = await withdrawalService.createWithdrawalRequest(girl._id.toString(), {
       amount: 600,
       paymentMethod: 'UPI',
-      upiId: 'girl@upi'
+      upiId: 'girl@upi',
     });
-    console.log(`Created Request ID: ${req1._id} | Status: ${req1.status} | Net Amount: ₹${req1.netAmount}`);
+    console.log(
+      `Created Request ID: ${req1._id} | Status: ${req1.status} | Net Amount: ₹${req1.netAmount}`,
+    );
 
     let walletAfterReq1 = await Wallet.findOne({ userId: girl._id });
     let summaryAfterReq1 = await withdrawalService.getUserWithdrawalSummary(girl._id.toString());
@@ -75,7 +83,7 @@ async function testWithdrawalSuite() {
       await withdrawalService.createWithdrawalRequest(girl._id.toString(), {
         amount: 500,
         paymentMethod: 'UPI',
-        upiId: 'girl@upi'
+        upiId: 'girl@upi',
       });
       console.error('FAILED: Duplicate request was not blocked!');
     } catch (err) {
@@ -84,11 +92,18 @@ async function testWithdrawalSuite() {
 
     // 5. Test Cancel Pending Request (Refund balance)
     console.log('\n--- Test 4: Cancel Pending Request & Wallet Refund ---');
-    const cancelRes = await withdrawalService.cancelWithdrawalRequest(girl._id.toString(), req1._id.toString());
+    const cancelRes = await withdrawalService.cancelWithdrawalRequest(
+      girl._id.toString(),
+      req1._id.toString(),
+    );
     console.log(`Cancelled Request Status: ${cancelRes.status}`);
 
     let walletAfterCancel = await Wallet.findOne({ userId: girl._id });
-    console.log('Wallet Balance after Cancel:', walletAfterCancel.currentBalance, '(Expected: 2000 refunded!)');
+    console.log(
+      'Wallet Balance after Cancel:',
+      walletAfterCancel.currentBalance,
+      '(Expected: 2000 refunded!)',
+    );
 
     // 6. Test Admin Approval & Mark Paid Lifecycle
     console.log('\n--- Test 5: Admin Approve & Mark Paid Lifecycle ---');
@@ -99,18 +114,29 @@ async function testWithdrawalSuite() {
         accountName: 'Test Payout Girl',
         accountNumber: '918273645019',
         ifscCode: 'SBIN0009999',
-        bankName: 'State Bank of India'
-      }
+        bankName: 'State Bank of India',
+      },
     });
     console.log(`Created Request 2 ID: ${req2._id} | Status: ${req2.status}`);
 
     // Admin Approve
-    const approvedRes = await withdrawalService.adminApprove(req2._id.toString(), adminId, 'Verified details');
+    const approvedRes = await withdrawalService.adminApprove(
+      req2._id.toString(),
+      adminId,
+      'Verified details',
+    );
     console.log(`Admin Approved Request Status: ${approvedRes.status}`);
 
     // Admin Mark Paid
-    const paidRes = await withdrawalService.adminMarkPaid(req2._id.toString(), adminId, 'UPI/81928491829', 'Transferred to bank');
-    console.log(`Admin Mark Paid Status: ${paidRes.status} | Ref: ${paidRes.transactionReference} | PaidAt: ${paidRes.paidAt}`);
+    const paidRes = await withdrawalService.adminMarkPaid(
+      req2._id.toString(),
+      adminId,
+      'UPI/81928491829',
+      'Transferred to bank',
+    );
+    console.log(
+      `Admin Mark Paid Status: ${paidRes.status} | Ref: ${paidRes.transactionReference} | PaidAt: ${paidRes.paidAt}`,
+    );
 
     let walletAfterPaid = await Wallet.findOne({ userId: girl._id });
     console.log('Wallet Lifetime Withdraw:', walletAfterPaid.lifetimeWithdraw, '(Expected: 1000)');
@@ -120,7 +146,7 @@ async function testWithdrawalSuite() {
     const req3 = await withdrawalService.createWithdrawalRequest(girl._id.toString(), {
       amount: 500,
       paymentMethod: 'UPI',
-      upiId: 'invalid_vpa@upi'
+      upiId: 'invalid_vpa@upi',
     });
     console.log(`Created Request 3 ID: ${req3._id} | Status: ${req3.status}`);
 
@@ -128,12 +154,18 @@ async function testWithdrawalSuite() {
       req3._id.toString(),
       adminId,
       'Invalid UPI VPA address',
-      'Name mismatch on VPA'
+      'Name mismatch on VPA',
     );
-    console.log(`Admin Rejected Status: ${rejectedRes.status} | Reason: ${rejectedRes.rejectionReason}`);
+    console.log(
+      `Admin Rejected Status: ${rejectedRes.status} | Reason: ${rejectedRes.rejectionReason}`,
+    );
 
     let walletAfterReject = await Wallet.findOne({ userId: girl._id });
-    console.log('Wallet Balance after Rejection:', walletAfterReject.currentBalance, '(Expected: 1000 refunded!)');
+    console.log(
+      'Wallet Balance after Rejection:',
+      walletAfterReject.currentBalance,
+      '(Expected: 1000 refunded!)',
+    );
 
     console.log('\n==================================================');
     console.log('✅ ALL WITHDRAWAL & PAYOUT INTEGRATION TESTS PASSED!');

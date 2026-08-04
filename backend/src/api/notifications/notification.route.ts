@@ -6,7 +6,7 @@ import { getNotificationsQuerySchema } from '@/validators/notification.validator
 
 const router = Router();
 
-// Notice: In the future, if you want Admin notifications (which are tied to Admin accounts), 
+// Notice: In the future, if you want Admin notifications (which are tied to Admin accounts),
 // you can apply requireAdminAuth. For now, this handles all standard Users (Boy/Girl).
 router.use(requireAuth);
 

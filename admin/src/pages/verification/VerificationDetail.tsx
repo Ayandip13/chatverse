@@ -1,28 +1,47 @@
-import { getAvatarUrl } from '../../utils/avatarUtil';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, CheckCircle, XCircle, AlertTriangle, ShieldOff, Calendar, Phone, Mail } from 'lucide-react';
-import { format } from 'date-fns';
-import toast from 'react-hot-toast';
+import { getAvatarUrl } from "../../utils/avatarUtil";
+import { useParams, useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  ArrowLeft,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  ShieldOff,
+  Calendar,
+  Phone,
+  Mail,
+} from "lucide-react";
+import { format } from "date-fns";
+import toast from "react-hot-toast";
 
-import apiClient from '../../api/apiClient';
-import { PageLayout } from '../../components/layout/PageLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/common/Card';
-import { Badge, type BadgeVariant } from '../../components/common/Badge';
-import { Button } from '../../components/common/Button';
-import { Loading } from '../../components/common/Loading';
-import { EmptyState } from '../../components/common/EmptyState';
-import { Modal } from '../../components/common/Modal';
-import { useState } from 'react';
+import apiClient from "../../api/apiClient";
+import { PageLayout } from "../../components/layout/PageLayout";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../../components/common/Card";
+import { Badge, type BadgeVariant } from "../../components/common/Badge";
+import { Button } from "../../components/common/Button";
+import { Loading } from "../../components/common/Loading";
+import { EmptyState } from "../../components/common/EmptyState";
+import { Modal } from "../../components/common/Modal";
+import { useState } from "react";
 
 const getStatusBadgeVariant = (status: string): BadgeVariant => {
   switch (status) {
-    case 'APPROVED': return 'success';
-    case 'PENDING': return 'warning';
-    case 'REJECTED':
-    case 'BANNED': return 'danger';
-    case 'SUSPENDED': return 'warning';
-    default: return 'default';
+    case "APPROVED":
+      return "success";
+    case "PENDING":
+      return "warning";
+    case "REJECTED":
+    case "BANNED":
+      return "danger";
+    case "SUSPENDED":
+      return "warning";
+    default:
+      return "default";
   }
 };
 
@@ -32,11 +51,13 @@ export const VerificationDetail = () => {
   const queryClient = useQueryClient();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [actionType, setActionType] = useState<'APPROVED' | 'REJECTED' | 'SUSPENDED' | 'BANNED' | null>(null);
-  const [adminNotes, setAdminNotes] = useState('');
+  const [actionType, setActionType] = useState<
+    "APPROVED" | "REJECTED" | "SUSPENDED" | "BANNED" | null
+  >(null);
+  const [adminNotes, setAdminNotes] = useState("");
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['user-details', girlId],
+    queryKey: ["user-details", girlId],
     queryFn: async () => {
       const response = await apiClient.get(`/admin/users/${girlId}`);
       return response.data.data;
@@ -46,36 +67,46 @@ export const VerificationDetail = () => {
 
   const updateStatusMutation = useMutation({
     mutationFn: async (payload: { status: string; reason: string }) => {
-      const response = await apiClient.patch(`/admin/users/${girlId}/status`, payload);
+      const response = await apiClient.patch(
+        `/admin/users/${girlId}/status`,
+        payload,
+      );
       return response.data;
     },
     onSuccess: () => {
       toast.success(`User status updated to ${actionType}`);
-      queryClient.invalidateQueries({ queryKey: ['user-details', girlId] });
-      queryClient.invalidateQueries({ queryKey: ['verification-girls'] });
+      queryClient.invalidateQueries({ queryKey: ["user-details", girlId] });
+      queryClient.invalidateQueries({ queryKey: ["verification-girls"] });
       closeModal();
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update status');
+      toast.error(error.response?.data?.message || "Failed to update status");
     },
   });
 
-  const openModal = (type: 'APPROVED' | 'REJECTED' | 'SUSPENDED' | 'BANNED') => {
+  const openModal = (
+    type: "APPROVED" | "REJECTED" | "SUSPENDED" | "BANNED",
+  ) => {
     setActionType(type);
-    setAdminNotes('');
+    setAdminNotes("");
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
     setActionType(null);
-    setAdminNotes('');
+    setAdminNotes("");
   };
 
   const handleConfirm = () => {
     if (!actionType) return;
-    if ((actionType === 'REJECTED' || actionType === 'SUSPENDED' || actionType === 'BANNED') && !adminNotes.trim()) {
-      toast.error('Admin notes are required for this action.');
+    if (
+      (actionType === "REJECTED" ||
+        actionType === "SUSPENDED" ||
+        actionType === "BANNED") &&
+      !adminNotes.trim()
+    ) {
+      toast.error("Admin notes are required for this action.");
       return;
     }
     updateStatusMutation.mutate({ status: actionType, reason: adminNotes });
@@ -87,21 +118,29 @@ export const VerificationDetail = () => {
       <EmptyState
         title="Girl Not Found"
         description="The verification profile you are looking for does not exist or failed to load."
-        action={<Button onClick={() => navigate('/verification')}>Back to List</Button>}
+        action={
+          <Button onClick={() => navigate("/verification")}>
+            Back to List
+          </Button>
+        }
       />
     );
   }
 
   const user = data;
-  const isPending = user.status === 'PENDING';
-  const isApproved = user.status === 'APPROVED';
+  const isPending = user.status === "PENDING";
+  const isApproved = user.status === "APPROVED";
 
   return (
     <PageLayout
       title="Verification Details"
       description="Review profile information and take verification action."
       action={
-        <Button variant="secondary" onClick={() => navigate('/verification')} className="gap-2">
+        <Button
+          variant="secondary"
+          onClick={() => navigate("/verification")}
+          className="gap-2"
+        >
           <ArrowLeft className="w-4 h-4" />
           Back to List
         </Button>
@@ -113,10 +152,19 @@ export const VerificationDetail = () => {
           <CardContent className="p-6">
             <div className="flex flex-col items-center text-center">
               <div className="w-32 h-32 rounded-full bg-primary/10 overflow-hidden mb-4 border-4 border-surface-light dark:border-surface-dark shadow-md">
-                <img src={getAvatarUrl(user.avatar, user.name)} alt={user.name} className="w-full h-full object-cover" />
+                <img
+                  src={getAvatarUrl(user.avatar, user.name)}
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                />
               </div>
-              <h2 className="text-xl font-bold text-textMain-light dark:text-textMain-dark">{user.name}</h2>
-              <Badge variant={getStatusBadgeVariant(user.status)} className="mt-2">
+              <h2 className="text-xl font-bold text-textMain-light dark:text-textMain-dark">
+                {user.name}
+              </h2>
+              <Badge
+                variant={getStatusBadgeVariant(user.status)}
+                className="mt-2"
+              >
                 {user.status}
               </Badge>
             </div>
@@ -128,11 +176,13 @@ export const VerificationDetail = () => {
               </div>
               <div className="flex items-center gap-3 text-textSecondary-light dark:text-textSecondary-dark">
                 <Phone className="w-5 h-5 text-primary" />
-                <span>{user.phone || 'Not provided'}</span>
+                <span>{user.phone || "Not provided"}</span>
               </div>
               <div className="flex items-center gap-3 text-textSecondary-light dark:text-textSecondary-dark">
                 <Calendar className="w-5 h-5 text-primary" />
-                <span>Joined {format(new Date(user.createdAt), 'MMMM d, yyyy')}</span>
+                <span>
+                  Joined {format(new Date(user.createdAt), "MMMM d, yyyy")}
+                </span>
               </div>
             </div>
 
@@ -144,11 +194,18 @@ export const VerificationDetail = () => {
 
               {isPending && (
                 <>
-                  <Button className="w-full gap-2" onClick={() => openModal('APPROVED')}>
+                  <Button
+                    className="w-full gap-2"
+                    onClick={() => openModal("APPROVED")}
+                  >
                     <CheckCircle className="w-4 h-4" />
                     Approve Verification
                   </Button>
-                  <Button variant="secondary" className="w-full gap-2 text-danger border-danger/50 hover:bg-danger/10" onClick={() => openModal('REJECTED')}>
+                  <Button
+                    variant="secondary"
+                    className="w-full gap-2 text-danger border-danger/50 hover:bg-danger/10"
+                    onClick={() => openModal("REJECTED")}
+                  >
                     <XCircle className="w-4 h-4" />
                     Reject Application
                   </Button>
@@ -157,19 +214,32 @@ export const VerificationDetail = () => {
 
               {isApproved && (
                 <>
-                  <Button variant="secondary" className="w-full gap-2 text-warning border-warning/50 hover:bg-warning/10" onClick={() => openModal('SUSPENDED')}>
+                  <Button
+                    variant="secondary"
+                    className="w-full gap-2 text-warning border-warning/50 hover:bg-warning/10"
+                    onClick={() => openModal("SUSPENDED")}
+                  >
                     <AlertTriangle className="w-4 h-4" />
                     Suspend Account
                   </Button>
-                  <Button variant="secondary" className="w-full gap-2 text-danger border-danger/50 hover:bg-danger/10" onClick={() => openModal('BANNED')}>
+                  <Button
+                    variant="secondary"
+                    className="w-full gap-2 text-danger border-danger/50 hover:bg-danger/10"
+                    onClick={() => openModal("BANNED")}
+                  >
                     <ShieldOff className="w-4 h-4" />
                     Ban Permanently
                   </Button>
                 </>
               )}
 
-              {(user.status === 'SUSPENDED' || user.status === 'REJECTED' || user.status === 'BANNED') && (
-                <Button className="w-full gap-2" onClick={() => openModal('APPROVED')}>
+              {(user.status === "SUSPENDED" ||
+                user.status === "REJECTED" ||
+                user.status === "BANNED") && (
+                <Button
+                  className="w-full gap-2"
+                  onClick={() => openModal("APPROVED")}
+                >
                   <CheckCircle className="w-4 h-4" />
                   Restore / Approve
                 </Button>
@@ -187,21 +257,31 @@ export const VerificationDetail = () => {
             <CardContent>
               <div className="space-y-6">
                 <div>
-                  <h4 className="text-sm font-medium text-textSecondary-light dark:text-textSecondary-dark">Bio</h4>
+                  <h4 className="text-sm font-medium text-textSecondary-light dark:text-textSecondary-dark">
+                    Bio
+                  </h4>
                   <p className="mt-2 text-textMain-light dark:text-textMain-dark whitespace-pre-wrap">
-                    {user.bio || 'No bio provided.'}
+                    {user.bio || "No bio provided."}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <h4 className="text-sm font-medium text-textSecondary-light dark:text-textSecondary-dark">Role</h4>
-                    <p className="mt-1 font-medium text-textMain-light dark:text-textMain-dark">{user.role}</p>
+                    <h4 className="text-sm font-medium text-textSecondary-light dark:text-textSecondary-dark">
+                      Role
+                    </h4>
+                    <p className="mt-1 font-medium text-textMain-light dark:text-textMain-dark">
+                      {user.role}
+                    </p>
                   </div>
                   <div>
-                    <h4 className="text-sm font-medium text-textSecondary-light dark:text-textSecondary-dark">Platform Rating</h4>
+                    <h4 className="text-sm font-medium text-textSecondary-light dark:text-textSecondary-dark">
+                      Platform Rating
+                    </h4>
                     <p className="mt-1 font-medium text-textMain-light dark:text-textMain-dark">
-                      {user.averageRating ? `${user.averageRating.toFixed(1)} ⭐ (${user.totalRatings} ratings)` : 'No ratings yet'}
+                      {user.averageRating
+                        ? `${user.averageRating.toFixed(1)} ⭐ (${user.totalRatings} ratings)`
+                        : "No ratings yet"}
                     </p>
                   </div>
                 </div>
@@ -219,15 +299,19 @@ export const VerificationDetail = () => {
                 <div className="space-y-4 text-sm">
                   {user.verifiedAt && (
                     <div className="flex justify-between py-2 border-b border-border-light dark:border-border-dark">
-                      <span className="text-textSecondary-light dark:text-textSecondary-dark font-medium">Last Verification Action</span>
+                      <span className="text-textSecondary-light dark:text-textSecondary-dark font-medium">
+                        Last Verification Action
+                      </span>
                       <span className="text-textMain-light dark:text-textMain-dark font-semibold">
-                        {format(new Date(user.verifiedAt), 'PPP p')}
+                        {format(new Date(user.verifiedAt), "PPP p")}
                       </span>
                     </div>
                   )}
                   {user.verifiedByAdminId && (
                     <div className="flex justify-between py-2 border-b border-border-light dark:border-border-dark">
-                      <span className="text-textSecondary-light dark:text-textSecondary-dark font-medium">Verified By Admin</span>
+                      <span className="text-textSecondary-light dark:text-textSecondary-dark font-medium">
+                        Verified By Admin
+                      </span>
                       <span className="text-textMain-light dark:text-textMain-dark font-mono font-semibold">
                         {user.verifiedByAdminId}
                       </span>
@@ -262,13 +346,23 @@ export const VerificationDetail = () => {
         title={`Confirm Action: ${actionType}`}
         footer={
           <>
-            <Button variant="secondary" onClick={closeModal} disabled={updateStatusMutation.isPending}>
+            <Button
+              variant="secondary"
+              onClick={closeModal}
+              disabled={updateStatusMutation.isPending}
+            >
               Cancel
             </Button>
             <Button
               onClick={handleConfirm}
               isLoading={updateStatusMutation.isPending}
-              className={actionType === 'REJECTED' || actionType === 'BANNED' ? 'bg-danger hover:bg-danger/90' : actionType === 'SUSPENDED' ? 'bg-warning hover:bg-warning/90' : ''}
+              className={
+                actionType === "REJECTED" || actionType === "BANNED"
+                  ? "bg-danger hover:bg-danger/90"
+                  : actionType === "SUSPENDED"
+                    ? "bg-warning hover:bg-warning/90"
+                    : ""
+              }
             >
               Confirm {actionType}
             </Button>
@@ -277,11 +371,23 @@ export const VerificationDetail = () => {
       >
         <div className="space-y-4 pt-4">
           <p className="text-textSecondary-light dark:text-textSecondary-dark">
-            You are about to change the status of <strong>{user.name}</strong> to <Badge variant={actionType ? getStatusBadgeVariant(actionType) : 'default'}>{actionType}</Badge>.
+            You are about to change the status of <strong>{user.name}</strong>{" "}
+            to{" "}
+            <Badge
+              variant={
+                actionType ? getStatusBadgeVariant(actionType) : "default"
+              }
+            >
+              {actionType}
+            </Badge>
+            .
           </p>
           <div className="pt-2">
             <label className="text-sm font-medium text-textMain-light dark:text-textMain-dark block mb-2">
-              Admin Notes {actionType !== 'APPROVED' && <span className="text-danger">*</span>}
+              Admin Notes{" "}
+              {actionType !== "APPROVED" && (
+                <span className="text-danger">*</span>
+              )}
             </label>
             <textarea
               className="w-full rounded-md border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-3 py-2 text-sm text-textMain-light dark:text-textMain-dark focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent min-h-[100px] resize-none"

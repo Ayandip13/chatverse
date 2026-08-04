@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, Text } from 'react-native';
-import { cn } from '../../utils/cn';
-import { Button } from './Button';
+import React from "react";
+import { View, Text } from "react-native";
+import { cn } from "../../utils/cn";
+import { Button } from "./Button";
 
 interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -21,8 +21,12 @@ export const EmptyState = ({
   className,
 }: EmptyStateProps) => {
   return (
-    <View className={cn('items-center justify-center p-6 my-8', className)}>
-      {icon && <View className="mb-4 p-4 rounded-full bg-slate-100 dark:bg-slate-800">{icon}</View>}
+    <View className={cn("items-center justify-center p-6 my-8", className)}>
+      {icon && (
+        <View className="mb-4 p-4 rounded-full bg-slate-100 dark:bg-slate-800">
+          {icon}
+        </View>
+      )}
       <Text className="text-xl font-bold text-slate-900 dark:text-white text-center mb-2">
         {title}
       </Text>

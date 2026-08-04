@@ -1,5 +1,18 @@
-import { WithdrawRequest, Wallet, WalletTransaction, PlatformSetting, User, Notification } from '@/models';
-import { WithdrawStatus, TransactionType, Role, GirlStatus, NotificationStatus } from '@/constants/enums.constant';
+import {
+  WithdrawRequest,
+  Wallet,
+  WalletTransaction,
+  PlatformSetting,
+  User,
+  Notification,
+} from '@/models';
+import {
+  WithdrawStatus,
+  TransactionType,
+  Role,
+  GirlStatus,
+  NotificationStatus,
+} from '@/constants/enums.constant';
 import { ApiError } from '@/utils/ApiError.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
 import { Types } from 'mongoose';
@@ -15,15 +28,20 @@ export class WithdrawalService {
       amount: number;
       paymentMethod?: 'UPI' | 'BANK_TRANSFER';
       upiId?: string;
-      bankDetails?: { accountName: string; accountNumber: string; ifscCode: string; bankName?: string };
-    }
+      bankDetails?: {
+        accountName: string;
+        accountNumber: string;
+        ifscCode: string;
+        bankName?: string;
+      };
+    },
   ) {
     const user = await User.findById(userId);
     if (!user || user.role !== Role.GIRL || user.status !== GirlStatus.APPROVED) {
       throw new ApiError(
         STATUS_CODES.FORBIDDEN,
         'Only approved female creators can request withdrawals.',
-        'CREATOR_NOT_APPROVED'
+        'CREATOR_NOT_APPROVED',
       );
     }
 
@@ -34,7 +52,7 @@ export class WithdrawalService {
       throw new ApiError(
         STATUS_CODES.BAD_REQUEST,
         `Minimum withdrawal amount is ₹${minAmount} (${minAmount} coins).`,
-        'BELOW_MINIMUM_WITHDRAWAL'
+        'BELOW_MINIMUM_WITHDRAWAL',
       );
     }
 
@@ -48,7 +66,7 @@ export class WithdrawalService {
       throw new ApiError(
         STATUS_CODES.BAD_REQUEST,
         'You already have an active pending or approved withdrawal request in queue.',
-        'DUPLICATE_PENDING_REQUEST'
+        'DUPLICATE_PENDING_REQUEST',
       );
     }
 
@@ -56,14 +74,14 @@ export class WithdrawalService {
     const wallet = await Wallet.findOneAndUpdate(
       { userId: new Types.ObjectId(userId), currentBalance: { $gte: data.amount } },
       { $inc: { currentBalance: -data.amount } },
-      { new: true }
+      { new: true },
     );
 
     if (!wallet) {
       throw new ApiError(
         STATUS_CODES.BAD_REQUEST,
         'Insufficient available wallet balance for this withdrawal amount.',
-        'INSUFFICIENT_FUNDS'
+        'INSUFFICIENT_FUNDS',
       );
     }
 
@@ -124,7 +142,7 @@ export class WithdrawalService {
       throw new ApiError(
         STATUS_CODES.BAD_REQUEST,
         `Cannot cancel a withdrawal that is already ${withdrawal.status}.`,
-        'INVALID_TRANSITION'
+        'INVALID_TRANSITION',
       );
     }
 
@@ -135,7 +153,7 @@ export class WithdrawalService {
     const wallet = await Wallet.findOneAndUpdate(
       { userId: new Types.ObjectId(userId) },
       { $inc: { currentBalance: withdrawal.amount } },
-      { new: true }
+      { new: true },
     );
 
     if (wallet) {
@@ -168,7 +186,9 @@ export class WithdrawalService {
       {
         $match: {
           userId: new Types.ObjectId(userId),
-          status: { $in: [WithdrawStatus.PENDING, WithdrawStatus.APPROVED, WithdrawStatus.PROCESSING] },
+          status: {
+            $in: [WithdrawStatus.PENDING, WithdrawStatus.APPROVED, WithdrawStatus.PROCESSING],
+          },
         },
       },
       {
@@ -203,7 +223,7 @@ export class WithdrawalService {
       throw new ApiError(
         STATUS_CODES.BAD_REQUEST,
         `Withdrawal request is already ${withdrawal.status}.`,
-        'INVALID_TRANSITION'
+        'INVALID_TRANSITION',
       );
     }
 
@@ -242,7 +262,7 @@ export class WithdrawalService {
       throw new ApiError(
         STATUS_CODES.BAD_REQUEST,
         `Cannot reject a withdrawal that is already ${withdrawal.status}.`,
-        'INVALID_TRANSITION'
+        'INVALID_TRANSITION',
       );
     }
 
@@ -257,7 +277,7 @@ export class WithdrawalService {
     const wallet = await Wallet.findOneAndUpdate(
       { userId: withdrawal.userId },
       { $inc: { currentBalance: withdrawal.amount } },
-      { new: true }
+      { new: true },
     );
 
     if (wallet) {
@@ -290,7 +310,7 @@ export class WithdrawalService {
     requestId: string,
     adminId: string,
     transactionReference: string,
-    notes?: string
+    notes?: string,
   ) {
     const withdrawal = await WithdrawRequest.findById(requestId);
     if (!withdrawal) {
@@ -305,7 +325,7 @@ export class WithdrawalService {
       throw new ApiError(
         STATUS_CODES.BAD_REQUEST,
         `Cannot mark paid for a withdrawal that is ${withdrawal.status}.`,
-        'INVALID_TRANSITION'
+        'INVALID_TRANSITION',
       );
     }
 
@@ -319,7 +339,7 @@ export class WithdrawalService {
     // Increment lifetimeWithdraw on wallet
     await Wallet.findOneAndUpdate(
       { userId: withdrawal.userId },
-      { $inc: { lifetimeWithdraw: withdrawal.amount } }
+      { $inc: { lifetimeWithdraw: withdrawal.amount } },
     );
 
     await Notification.create({
@@ -330,7 +350,9 @@ export class WithdrawalService {
       status: NotificationStatus.UNREAD,
     });
 
-    logger.info(`Admin ${adminId} marked withdrawal ${requestId} paid with ref ${withdrawal.transactionReference}`);
+    logger.info(
+      `Admin ${adminId} marked withdrawal ${requestId} paid with ref ${withdrawal.transactionReference}`,
+    );
     return withdrawal;
   }
 }

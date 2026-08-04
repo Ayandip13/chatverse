@@ -1,12 +1,23 @@
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
-import { 
-  fetchChatRequests, acceptChatRequest, rejectChatRequest,
-  fetchActiveChats, fetchRecentChats, fetchChatDetails, fetchChatMessages, endChat 
-} from '../api/messagingApi';
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
+import {
+  fetchChatRequests,
+  acceptChatRequest,
+  rejectChatRequest,
+  fetchActiveChats,
+  fetchRecentChats,
+  fetchChatDetails,
+  fetchChatMessages,
+  endChat,
+} from "../api/messagingApi";
 
 export const useChatRequests = (status?: string) => {
   return useQuery({
-    queryKey: ['chatRequests', status],
+    queryKey: ["chatRequests", status],
     queryFn: () => fetchChatRequests({ status, limit: 50 }),
     staleTime: 5000,
   });
@@ -17,8 +28,8 @@ export const useAcceptChatRequest = () => {
   return useMutation({
     mutationFn: (requestId: string) => acceptChatRequest(requestId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['chatRequests'] });
-      queryClient.invalidateQueries({ queryKey: ['chats'] });
+      queryClient.invalidateQueries({ queryKey: ["chatRequests"] });
+      queryClient.invalidateQueries({ queryKey: ["chats"] });
     },
   });
 };
@@ -28,14 +39,14 @@ export const useRejectChatRequest = () => {
   return useMutation({
     mutationFn: (requestId: string) => rejectChatRequest(requestId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['chatRequests'] });
+      queryClient.invalidateQueries({ queryKey: ["chatRequests"] });
     },
   });
 };
 
 export const useActiveChats = () => {
   return useQuery({
-    queryKey: ['chats', 'ACTIVE'],
+    queryKey: ["chats", "ACTIVE"],
     queryFn: () => fetchActiveChats(),
     staleTime: 10000,
   });
@@ -43,7 +54,7 @@ export const useActiveChats = () => {
 
 export const useRecentChats = () => {
   return useQuery({
-    queryKey: ['chats', 'RECENT'],
+    queryKey: ["chats", "RECENT"],
     queryFn: () => fetchRecentChats(),
     staleTime: 5000,
   });
@@ -51,7 +62,7 @@ export const useRecentChats = () => {
 
 export const useChatDetails = (chatId: string) => {
   return useQuery({
-    queryKey: ['chat', chatId],
+    queryKey: ["chat", chatId],
     queryFn: () => fetchChatDetails(chatId),
     staleTime: 60000,
   });
@@ -59,7 +70,7 @@ export const useChatDetails = (chatId: string) => {
 
 export const useChatMessages = (chatId: string) => {
   return useInfiniteQuery({
-    queryKey: ['messages', chatId],
+    queryKey: ["messages", chatId],
     queryFn: ({ pageParam = 1 }) => fetchChatMessages(chatId, pageParam),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
@@ -74,8 +85,8 @@ export const useEndChat = () => {
   return useMutation({
     mutationFn: (chatId: string) => endChat(chatId),
     onSuccess: (_, chatId) => {
-      queryClient.invalidateQueries({ queryKey: ['chats'] });
-      queryClient.invalidateQueries({ queryKey: ['chat', chatId] });
+      queryClient.invalidateQueries({ queryKey: ["chats"] });
+      queryClient.invalidateQueries({ queryKey: ["chat", chatId] });
     },
   });
 };

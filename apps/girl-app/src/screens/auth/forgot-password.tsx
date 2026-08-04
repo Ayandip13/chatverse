@@ -1,19 +1,27 @@
-import { View, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Mail, ArrowLeft, KeyRound } from 'lucide-react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
+import { useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Mail, ArrowLeft, KeyRound } from "lucide-react-native";
 
-import apiClient from '../../api/apiClient';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { theme } from '../../constants/theme';
+import apiClient from "../../api/apiClient";
+import { Button } from "../../components/ui/Button";
+import { Input } from "../../components/ui/Input";
+import { theme } from "../../constants/theme";
 
 const forgotPasswordSchema = z.object({
-  email: z.string().min(1, 'Email is required').email('Invalid email address'),
+  email: z.string().min(1, "Email is required").email("Invalid email address"),
 });
 
 type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
@@ -23,19 +31,29 @@ export default function ForgotPasswordScreen() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const { control, handleSubmit, formState: { errors } } = useForm<ForgotPasswordFormData>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ForgotPasswordFormData>({
     resolver: zodResolver(forgotPasswordSchema),
-    defaultValues: { email: '' }
+    defaultValues: { email: "" },
   });
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
     try {
       setLoading(true);
-      await apiClient.post('/auth/forgot-password', { email: data.email });
+      await apiClient.post("/auth/forgot-password", { email: data.email });
       setSubmitted(true);
     } catch (error: any) {
-      console.log('Forgot Password Error:', error.response?.data || error.message);
-      Alert.alert('Error', error.response?.data?.message || 'Failed to send reset email');
+      console.log(
+        "Forgot Password Error:",
+        error.response?.data || error.message,
+      );
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Failed to send reset email",
+      );
     } finally {
       setLoading(false);
     }
@@ -43,11 +61,13 @@ export default function ForgotPasswordScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50 dark:bg-slate-900">
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        className="flex-1"
+      >
         <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24 }}>
-
-          <TouchableOpacity 
-            onPress={() => navigation.goBack()} 
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
             className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 items-center justify-center mb-6"
           >
             <ArrowLeft color={theme.colors.text.main.light} size={20} />
@@ -61,7 +81,8 @@ export default function ForgotPasswordScreen() {
               Forgot Password
             </Text>
             <Text className="text-slate-500 dark:text-slate-400 mt-2 text-center text-base font-medium">
-              Enter your email address and we'll send instructions to reset your password.
+              Enter your email address and we'll send instructions to reset your
+              password.
             </Text>
           </View>
 
@@ -71,11 +92,12 @@ export default function ForgotPasswordScreen() {
                 Reset Link Sent!
               </Text>
               <Text className="text-slate-600 dark:text-slate-300 text-center text-sm">
-                If an account exists for that email, password recovery instructions have been sent.
+                If an account exists for that email, password recovery
+                instructions have been sent.
               </Text>
-              <Button 
+              <Button
                 variant="outline"
-                onPress={() => navigation.navigate('Login')} 
+                onPress={() => navigation.navigate("Login")}
                 className="mt-6 border-emerald-500 text-emerald-500 w-full"
               >
                 Back to Sign In
@@ -96,7 +118,9 @@ export default function ForgotPasswordScreen() {
                     error={errors.email?.message}
                     autoCapitalize="none"
                     keyboardType="email-address"
-                    leftIcon={<Mail color={theme.colors.text.muted.light} size={20} />}
+                    leftIcon={
+                      <Mail color={theme.colors.text.muted.light} size={20} />
+                    }
                   />
                 )}
               />
@@ -111,7 +135,6 @@ export default function ForgotPasswordScreen() {
               </Button>
             </View>
           )}
-
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

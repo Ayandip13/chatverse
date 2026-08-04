@@ -7,19 +7,25 @@ class ReportRepository {
     return Report.create(data);
   }
 
-  async findDuplicate(reporterId: string, targetId: string, reason: string): Promise<IReport | null> {
+  async findDuplicate(
+    reporterId: string,
+    targetId: string,
+    reason: string,
+  ): Promise<IReport | null> {
     // A duplicate is considered the same reporter reporting the same target for the same reason
     // while the previous report is still PENDING or UNDER_REVIEW
     return Report.findOne({
       reporterId: new Types.ObjectId(reporterId),
       targetId: new Types.ObjectId(targetId),
       reason,
-      status: { $in: ['PENDING', 'UNDER_REVIEW'] }
+      status: { $in: ['PENDING', 'UNDER_REVIEW'] },
     }).exec();
   }
 
   async findById(id: string): Promise<IReport | null> {
-    return Report.findById(id).populate('reporterId targetId resolvedById', 'name email role').exec();
+    return Report.findById(id)
+      .populate('reporterId targetId resolvedById', 'name email role')
+      .exec();
   }
 
   async getPaginatedReports(filters: FilterQuery<IReport>, page: number, limit: number) {

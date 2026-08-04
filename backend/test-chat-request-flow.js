@@ -25,7 +25,7 @@ async function testSuite() {
         name: 'Test Boy',
         role: 'BOY',
         status: 'ACTIVE',
-        authProvider: 'LOCAL'
+        authProvider: 'LOCAL',
       });
     }
 
@@ -36,7 +36,7 @@ async function testSuite() {
         name: 'Test Girl',
         role: 'GIRL',
         status: 'APPROVED',
-        authProvider: 'LOCAL'
+        authProvider: 'LOCAL',
       });
     }
 
@@ -55,12 +55,12 @@ async function testSuite() {
     console.log('\n--- 1. Admin Status Update Test ---');
     const adminUser = await User.findOne({ role: 'ADMIN' });
     const adminId = adminUser ? adminUser._id.toString() : '698305fbc3585f8653922719';
-    
+
     const approvedGirl = await verificationService.updateUserStatus(
       girl._id.toString(),
       'APPROVED',
       adminId,
-      'Verified by Admin'
+      'Verified by Admin',
     );
     console.log('Approve Girl Result Status:', approvedGirl.status);
     console.log('Verified At:', approvedGirl.verifiedAt);
@@ -82,16 +82,30 @@ async function testSuite() {
     console.log('Created Chat Request ID:', newReq._id, '| Status:', newReq.status);
 
     // Duplicate check test
-    const dupCheck = await chatRequestRepository.findPendingRequest(boy._id.toString(), girl._id.toString());
+    const dupCheck = await chatRequestRepository.findPendingRequest(
+      boy._id.toString(),
+      girl._id.toString(),
+    );
     console.log('Duplicate Pending Check Found:', dupCheck ? dupCheck._id : 'None');
 
     // Accept Request test
-    const acceptRes = await chatRequestService.acceptRequest(girl._id.toString(), newReq._id.toString());
+    const acceptRes = await chatRequestService.acceptRequest(
+      girl._id.toString(),
+      newReq._id.toString(),
+    );
     console.log('Accept Request Status:', acceptRes.request.status);
-    console.log('Created Active Chat ID:', acceptRes.chat._id, '| Chat Status:', acceptRes.chat.status);
+    console.log(
+      'Created Active Chat ID:',
+      acceptRes.chat._id,
+      '| Chat Status:',
+      acceptRes.chat.status,
+    );
 
     // Active Chat check test
-    const activeChatCheck = await chatRepository.findActiveChat(boy._id.toString(), girl._id.toString());
+    const activeChatCheck = await chatRepository.findActiveChat(
+      boy._id.toString(),
+      girl._id.toString(),
+    );
     console.log('Find Active Chat Found:', activeChatCheck ? activeChatCheck._id : 'None');
 
     console.log('\n==================================================');

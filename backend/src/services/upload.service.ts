@@ -47,7 +47,7 @@ if (isCloudinaryConfigured) {
   });
 }
 
-export const uploadAvatar = multer({ 
+export const uploadAvatar = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req, file, cb) => {
@@ -56,7 +56,7 @@ export const uploadAvatar = multer({
     } else {
       cb(new Error('Invalid image type. Only image files are allowed.'));
     }
-  }
+  },
 });
 
 export const deleteFromCloudinary = async (avatarUrl: string) => {

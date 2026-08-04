@@ -1,11 +1,11 @@
-import axios from 'axios';
-import { useAuthStore } from '../store/authStore';
-import toast from 'react-hot-toast';
+import axios from "axios";
+import { useAuthStore } from "../store/authStore";
+import toast from "react-hot-toast";
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1',
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1",
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
@@ -16,7 +16,7 @@ let failedQueue: Array<{
 }> = [];
 
 const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach(prom => {
+  failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
@@ -41,58 +41,67 @@ apiClient.interceptors.response.use(
 
     // Network error
     if (!error.response) {
-      toast.error('Network error. Please check your connection.');
+      toast.error("Network error. Please check your connection.");
       return Promise.reject(error);
     }
 
     if (error.response.status === 401 && !originalRequest._retry) {
-      if (originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/refresh')) {
+      if (
+        originalRequest.url?.includes("/auth/login") ||
+        originalRequest.url?.includes("/auth/refresh")
+      ) {
         return Promise.reject(error);
       }
 
       if (isRefreshing) {
-        return new Promise(function(resolve, reject) {
+        return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });
-        }).then(token => {
-          originalRequest.headers.Authorization = 'Bearer ' + token;
-          return apiClient(originalRequest);
-        }).catch(err => {
-          return Promise.reject(err);
-        });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = "Bearer " + token;
+            return apiClient(originalRequest);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
 
       const refreshToken = useAuthStore.getState().refreshToken;
-      
+
       if (!refreshToken) {
         useAuthStore.getState().logout();
-        toast.error('Session expired. Please log in again.');
-        window.location.href = '/login';
+        toast.error("Session expired. Please log in again.");
+        window.location.href = "/login";
         return Promise.reject(error);
       }
 
       try {
-        const response = await axios.post(`${apiClient.defaults.baseURL}/auth/refresh`, {
-          refreshToken,
-        });
+        const response = await axios.post(
+          `${apiClient.defaults.baseURL}/auth/refresh`,
+          {
+            refreshToken,
+          },
+        );
 
         const newAccessToken = response.data.data.accessToken;
-        
+
         useAuthStore.getState().setAccessToken(newAccessToken);
-        
-        apiClient.defaults.headers.common['Authorization'] = 'Bearer ' + newAccessToken;
-        originalRequest.headers.Authorization = 'Bearer ' + newAccessToken;
-        
+
+        apiClient.defaults.headers.common["Authorization"] =
+          "Bearer " + newAccessToken;
+        originalRequest.headers.Authorization = "Bearer " + newAccessToken;
+
         processQueue(null, newAccessToken);
-        
+
         return apiClient(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
         useAuthStore.getState().logout();
-        toast.error('Session expired. Please log in again.');
-        window.location.href = '/login';
+        toast.error("Session expired. Please log in again.");
+        window.location.href = "/login";
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -101,13 +110,13 @@ apiClient.interceptors.response.use(
 
     // Handle generic errors (e.g. 403 Forbidden, 500)
     if (error.response.status === 403) {
-      toast.error('You do not have permission to perform this action.');
+      toast.error("You do not have permission to perform this action.");
     } else if (error.response.status >= 500) {
-      toast.error('An unexpected server error occurred.');
+      toast.error("An unexpected server error occurred.");
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default apiClient;

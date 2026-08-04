@@ -1,15 +1,39 @@
-import { View, Text, TouchableOpacity } from 'react-native';
-import { Wallet, MessageCircle, Heart, Star } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, Text, TouchableOpacity } from "react-native";
+import { Wallet, MessageCircle, Heart, Star } from "lucide-react-native";
+import { useNavigation } from "@react-navigation/native";
 
 export function QuickActions() {
   const navigation = useNavigation<any>();
 
   const actions = [
-    { id: 'wallet', title: 'Wallet', icon: Wallet, color: 'bg-emerald-500', route: 'Wallet' },
-    { id: 'chats', title: 'Chats', icon: MessageCircle, color: 'bg-blue-500', route: 'Chats' },
-    { id: 'favorites', title: 'Favorites', icon: Heart, color: 'bg-rose-500', route: 'Favorites' },
-    { id: 'premium', title: 'Premium', icon: Star, color: 'bg-amber-500', route: 'Recharge' },
+    {
+      id: "wallet",
+      title: "Wallet",
+      icon: Wallet,
+      color: "bg-emerald-500",
+      route: "Wallet",
+    },
+    {
+      id: "chats",
+      title: "Chats",
+      icon: MessageCircle,
+      color: "bg-blue-500",
+      route: "Chats",
+    },
+    {
+      id: "favorites",
+      title: "Favorites",
+      icon: Heart,
+      color: "bg-rose-500",
+      route: "Favorites",
+    },
+    {
+      id: "premium",
+      title: "Premium",
+      icon: Star,
+      color: "bg-amber-500",
+      route: "Recharge",
+    },
   ];
 
   return (
@@ -17,15 +41,19 @@ export function QuickActions() {
       {actions.map((action) => {
         const Icon = action.icon;
         return (
-          <TouchableOpacity 
+          <TouchableOpacity
             key={action.id}
             onPress={() => navigation.navigate(action.route as any)}
             className="items-center"
           >
-            <View className={`w-14 h-14 rounded-2xl ${action.color} items-center justify-center shadow-sm mb-2`}>
+            <View
+              className={`w-14 h-14 rounded-2xl ${action.color} items-center justify-center shadow-sm mb-2`}
+            >
               <Icon size={24} color="#ffffff" />
             </View>
-            <Text className="text-xs font-medium text-gray-700 dark:text-gray-300">{action.title}</Text>
+            <Text className="text-xs font-medium text-gray-700 dark:text-gray-300">
+              {action.title}
+            </Text>
           </TouchableOpacity>
         );
       })}

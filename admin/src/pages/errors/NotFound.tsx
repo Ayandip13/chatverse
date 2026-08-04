@@ -1,7 +1,7 @@
-import { EmptyState } from '../../components/common/EmptyState';
-import { Button } from '../../components/common/Button';
-import { Link } from 'react-router-dom';
-import { AlertCircle } from 'lucide-react';
+import { EmptyState } from "../../components/common/EmptyState";
+import { Button } from "../../components/common/Button";
+import { Link } from "react-router-dom";
+import { AlertCircle } from "lucide-react";
 
 export const NotFound = () => {
   return (

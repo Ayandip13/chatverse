@@ -1,9 +1,9 @@
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { AuthStackParamList } from './types';
-import LoginScreen from '../screens/auth/login';
-import RegisterScreen from '../screens/auth/register';
-import ForgotPasswordScreen from '../screens/auth/forgot-password';
-import ResetPasswordScreen from '../screens/auth/reset-password';
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { AuthStackParamList } from "./types";
+import LoginScreen from "../screens/auth/login";
+import RegisterScreen from "../screens/auth/register";
+import ForgotPasswordScreen from "../screens/auth/forgot-password";
+import ResetPasswordScreen from "../screens/auth/reset-password";
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 

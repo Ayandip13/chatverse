@@ -1,19 +1,19 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-const backendDir = path.join(__dirname, 'backend');
+const backendDir = path.join(__dirname, "backend");
 const mkDir = (dir) => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 };
 
-mkDir(path.join(backendDir, 'src/sockets'));
-mkDir(path.join(backendDir, 'src/sockets/handlers'));
-mkDir(path.join(backendDir, 'src/middlewares'));
-mkDir(path.join(backendDir, 'src/services'));
-mkDir(path.join(backendDir, 'src/repositories'));
+mkDir(path.join(backendDir, "src/sockets"));
+mkDir(path.join(backendDir, "src/sockets/handlers"));
+mkDir(path.join(backendDir, "src/middlewares"));
+mkDir(path.join(backendDir, "src/services"));
+mkDir(path.join(backendDir, "src/repositories"));
 
 const files = {
-  'src/middlewares/socketAuth.middleware.ts': `import { Socket } from 'socket.io';
+  "src/middlewares/socketAuth.middleware.ts": `import { Socket } from 'socket.io';
 import { verifyAccessToken, JwtPayload } from '@/utils/jwt.util';
 import { userRepository } from '@/repositories/user.repository';
 import logger from '@/config/logger.config';
@@ -45,7 +45,7 @@ export const socketAuthMiddleware = async (socket: AuthenticatedSocket, next: (e
   }
 };
 `,
-  'src/repositories/message.repository.ts': `import { Message } from '@/models';
+  "src/repositories/message.repository.ts": `import { Message } from '@/models';
 import { IMessage } from '@/types/models.type';
 import { Types } from 'mongoose';
 
@@ -69,7 +69,7 @@ class MessageRepository {
 
 export const messageRepository = new MessageRepository();
 `,
-  'src/services/message.service.ts': `import { messageRepository } from '@/repositories/message.repository';
+  "src/services/message.service.ts": `import { messageRepository } from '@/repositories/message.repository';
 import { chatRepository } from '@/repositories/chat.repository'; // Assume this has a findById method
 import { Chat } from '@/models'; // fallback
 import { ApiError } from '@/utils/ApiError.util';
@@ -114,7 +114,7 @@ class MessageService {
 
 export const messageService = new MessageService();
 `,
-  'src/services/chatSession.service.ts': `import { Chat } from '@/models';
+  "src/services/chatSession.service.ts": `import { Chat } from '@/models';
 import { walletRepository } from '@/repositories/wallet.repository';
 import { walletTransactionRepository } from '@/repositories/walletTransaction.repository';
 import { PlatformSetting } from '@/models';
@@ -225,7 +225,7 @@ class ChatSessionService {
 
 export const chatSessionService = new ChatSessionService();
 `,
-  'src/sockets/handlers/chat.handler.ts': `import { Server } from 'socket.io';
+  "src/sockets/handlers/chat.handler.ts": `import { Server } from 'socket.io';
 import { AuthenticatedSocket } from '@/middlewares/socketAuth.middleware';
 import { messageService } from '@/services/message.service';
 import { chatSessionService } from '@/services/chatSession.service';
@@ -305,7 +305,7 @@ export const registerChatHandlers = (io: Server, socket: AuthenticatedSocket) =>
   });
 };
 `,
-  'src/sockets/handlers/presence.handler.ts': `import { Server } from 'socket.io';
+  "src/sockets/handlers/presence.handler.ts": `import { Server } from 'socket.io';
 import { AuthenticatedSocket } from '@/middlewares/socketAuth.middleware';
 import { User } from '@/models';
 import logger from '@/config/logger.config';
@@ -335,7 +335,7 @@ export const registerPresenceHandlers = (io: Server, socket: AuthenticatedSocket
   });
 };
 `,
-  'src/sockets/index.ts': `import { Server as HttpServer } from 'http';
+  "src/sockets/index.ts": `import { Server as HttpServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import envConfig from '@/config/env.config';
 import logger from '@/config/logger.config';
@@ -373,11 +373,11 @@ export const initializeSocket = (server: HttpServer): void => {
     // Initial join room is handled in presence handler (user:<id>)
   });
 };
-`
+`,
 };
 
 for (const [relativePath, content] of Object.entries(files)) {
   const filePath = path.join(backendDir, relativePath);
-  fs.writeFileSync(filePath, content, 'utf8');
+  fs.writeFileSync(filePath, content, "utf8");
 }
-console.log('Socket Engine scaffolding complete.');
+console.log("Socket Engine scaffolding complete.");

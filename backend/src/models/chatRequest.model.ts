@@ -12,7 +12,7 @@ const ChatRequestSchema = new Schema<IChatRequest>(
       default: ChatRequestStatus.PENDING,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 ChatRequestSchema.index({ senderId: 1, status: 1 });

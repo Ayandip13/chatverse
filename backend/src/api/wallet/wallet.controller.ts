@@ -11,7 +11,9 @@ export const getSummary = asyncHandler(async (req: Request, res: Response) => {
 
 export const getCoinBalance = asyncHandler(async (req: Request, res: Response) => {
   const wallet = await walletService.getWalletSummary(req.user!.userId);
-  res.status(STATUS_CODES.OK).json(new ApiResponse({ currentBalance: wallet.currentBalance }, 'Coin balance retrieved'));
+  res
+    .status(STATUS_CODES.OK)
+    .json(new ApiResponse({ currentBalance: wallet.currentBalance }, 'Coin balance retrieved'));
 });
 
 export const recharge = asyncHandler(async (req: Request, res: Response) => {
@@ -23,23 +25,23 @@ export const recharge = asyncHandler(async (req: Request, res: Response) => {
 export const verifyRecharge = asyncHandler(async (req: Request, res: Response) => {
   const { razorpayOrderId, razorpayPaymentId, razorpaySignature, amountInr } = req.body;
   const transaction = await walletService.verifyRecharge(
-    req.user!.userId, 
-    razorpayOrderId, 
-    razorpayPaymentId, 
+    req.user!.userId,
+    razorpayOrderId,
+    razorpayPaymentId,
     razorpaySignature,
-    amountInr
+    amountInr,
   );
   res.status(STATUS_CODES.OK).json(new ApiResponse(transaction, 'Recharge verified successfully'));
 });
 
 export const getTransactions = asyncHandler(async (req: Request, res: Response) => {
   const { page, limit, type, startDate, endDate } = req.query as any;
-  
+
   const result = await walletService.getTransactionHistory(
     req.user!.userId,
     { type, startDate, endDate },
     parseInt(page, 10),
-    parseInt(limit, 10)
+    parseInt(limit, 10),
   );
 
   res.status(STATUS_CODES.OK).json({

@@ -7,7 +7,13 @@ import { Types, FilterQuery } from 'mongoose';
 import { IReport } from '@/types/models.type';
 
 class ReportService {
-  async createReport(reporterId: string, targetId: string, reason: string, notes?: string, evidence?: string) {
+  async createReport(
+    reporterId: string,
+    targetId: string,
+    reason: string,
+    notes?: string,
+    evidence?: string,
+  ) {
     if (reporterId === targetId) {
       throw new ApiError(STATUS_CODES.BAD_REQUEST, 'You cannot report yourself');
     }
@@ -20,7 +26,11 @@ class ReportService {
     // Duplicate Prevention Strategy
     const duplicate = await reportRepository.findDuplicate(reporterId, targetId, reason);
     if (duplicate) {
-      throw new ApiError(STATUS_CODES.CONFLICT, 'You have already reported this user for this reason. It is under review.', 'DUPLICATE_REPORT');
+      throw new ApiError(
+        STATUS_CODES.CONFLICT,
+        'You have already reported this user for this reason. It is under review.',
+        'DUPLICATE_REPORT',
+      );
     }
 
     const report = await reportRepository.create({
@@ -64,7 +74,12 @@ class ReportService {
     return report;
   }
 
-  async updateReportStatus(adminId: string, reportId: string, status: ReportStatus, notes?: string) {
+  async updateReportStatus(
+    adminId: string,
+    reportId: string,
+    status: ReportStatus,
+    notes?: string,
+  ) {
     const report = await reportRepository.findById(reportId);
     if (!report) {
       throw new ApiError(STATUS_CODES.NOT_FOUND, 'Report not found', 'NOT_FOUND');
@@ -79,7 +94,7 @@ class ReportService {
     }
     const updated = await reportRepository.updateStatus(reportId, updateData);
 
-    // In the future, if a user is BANNED as a result of a report, 
+    // In the future, if a user is BANNED as a result of a report,
     // the verificationService.updateUserStatus would be called here.
     return updated;
   }

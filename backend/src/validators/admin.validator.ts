@@ -3,10 +3,7 @@ import { BoyStatus, GirlStatus, Role } from '@/constants/enums.constant';
 
 export const updateStatusSchema = z.object({
   body: z.object({
-    status: z.union([
-      z.nativeEnum(BoyStatus),
-      z.nativeEnum(GirlStatus)
-    ]),
+    status: z.union([z.nativeEnum(BoyStatus), z.nativeEnum(GirlStatus)]),
     reason: z.string().optional(),
   }),
 });

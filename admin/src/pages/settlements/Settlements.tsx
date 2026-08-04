@@ -1,28 +1,30 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { PageLayout } from '../../components/layout/PageLayout';
-import { Card, CardContent } from '../../components/common/Card';
-import { Table, TableRow, TableCell } from '../../components/common/Table';
-import { Badge } from '../../components/common/Badge';
-import { Button } from '../../components/common/Button';
-import { DollarSign, Clock, TrendingUp, Heart } from 'lucide-react';
-import apiClient from '../../api/apiClient';
-import { format } from 'date-fns';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { PageLayout } from "../../components/layout/PageLayout";
+import { Card, CardContent } from "../../components/common/Card";
+import { Table, TableRow, TableCell } from "../../components/common/Table";
+import { Badge } from "../../components/common/Badge";
+import { Button } from "../../components/common/Button";
+import { DollarSign, Clock, TrendingUp, Heart } from "lucide-react";
+import apiClient from "../../api/apiClient";
+import { format } from "date-fns";
 
 export const Settlements = () => {
   const [page, setPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState("");
 
   const { data, isLoading } = useQuery({
-    queryKey: ['settlements', page, statusFilter],
+    queryKey: ["settlements", page, statusFilter],
     queryFn: async () => {
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '10',
+        limit: "10",
       });
-      if (statusFilter) params.append('status', statusFilter);
+      if (statusFilter) params.append("status", statusFilter);
 
-      const res = await apiClient.get(`/admin/settlements?${params.toString()}`);
+      const res = await apiClient.get(
+        `/admin/settlements?${params.toString()}`,
+      );
       return res.data;
     },
   });
@@ -134,22 +136,23 @@ export const Settlements = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <Table headers={[
-              'Boy Participant',
-              'Girl Creator',
-              'Completed Minutes',
-              'Gross Volume',
-              'Platform Revenue (20%)',
-              'Creator Payout (80%)',
-              'Settled Date',
-              'Status'
-            ]}>
-
+            <Table
+              headers={[
+                "Boy Participant",
+                "Girl Creator",
+                "Completed Minutes",
+                "Gross Volume",
+                "Platform Revenue (20%)",
+                "Creator Payout (80%)",
+                "Settled Date",
+                "Status",
+              ]}
+            >
               {settlements.map((item: any) => (
                 <TableRow key={item._id}>
                   <TableCell>
                     <div className="font-semibold text-textMain-light dark:text-textMain-dark">
-                      {item.boyId?.name || 'Boy'}
+                      {item.boyId?.name || "Boy"}
                     </div>
                     <div className="text-xs text-textSecondary-light dark:text-textSecondary-dark">
                       {item.boyId?.email}
@@ -157,7 +160,7 @@ export const Settlements = () => {
                   </TableCell>
                   <TableCell>
                     <div className="font-semibold text-rose-500">
-                      {item.girlId?.name || 'Creator'}
+                      {item.girlId?.name || "Creator"}
                     </div>
                     <div className="text-xs text-textSecondary-light dark:text-textSecondary-dark">
                       {item.girlId?.email}
@@ -185,11 +188,18 @@ export const Settlements = () => {
                   </TableCell>
                   <TableCell>
                     <span className="text-xs text-textSecondary-light dark:text-textSecondary-dark">
-                      {format(new Date(item.settledAt || item.createdAt), 'MMM d, yyyy HH:mm')}
+                      {format(
+                        new Date(item.settledAt || item.createdAt),
+                        "MMM d, yyyy HH:mm",
+                      )}
                     </span>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={item.status === 'COMPLETED' ? 'success' : 'danger'}>
+                    <Badge
+                      variant={
+                        item.status === "COMPLETED" ? "success" : "danger"
+                      }
+                    >
                       {item.status}
                     </Badge>
                   </TableCell>

@@ -10,7 +10,7 @@ const WalletSchema = new Schema<IWallet>(
     lifetimeSpent: { type: Number, default: 0 },
     lifetimeWithdraw: { type: Number, default: 0 },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 WalletSchema.index({ userId: 1 }, { unique: true });

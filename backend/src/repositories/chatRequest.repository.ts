@@ -25,7 +25,7 @@ class ChatRequestRepository {
     role: 'BOY' | 'GIRL',
     filters: { status?: string },
     page: number,
-    limit: number
+    limit: number,
   ) {
     const query: FilterQuery<IChatRequest> = {};
     if (role === 'BOY') {
@@ -41,7 +41,12 @@ class ChatRequestRepository {
     const skip = (page - 1) * limit;
 
     const [requests, total] = await Promise.all([
-      ChatRequest.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).populate('senderId receiverId', 'name avatar role status').exec(),
+      ChatRequest.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('senderId receiverId', 'name avatar role status')
+        .exec(),
       ChatRequest.countDocuments(query).exec(),
     ]);
 

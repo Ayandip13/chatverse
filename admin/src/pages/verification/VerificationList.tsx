@@ -1,44 +1,49 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
-import { Search, Eye, RefreshCcw, AlertCircle } from 'lucide-react';
-import { format } from 'date-fns';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { Search, Eye, RefreshCcw, AlertCircle } from "lucide-react";
+import { format } from "date-fns";
 
-import apiClient from '../../api/apiClient';
-import { PageLayout } from '../../components/layout/PageLayout';
-import { Card } from '../../components/common/Card';
-import { Table, TableRow, TableCell } from '../../components/common/Table';
-import { Badge, type BadgeVariant } from '../../components/common/Badge';
-import { Button } from '../../components/common/Button';
-import { Input } from '../../components/common/Input';
-import { Loading } from '../../components/common/Loading';
-import { getAvatarUrl } from '../../utils/avatarUtil';
-import { EmptyState } from '../../components/common/EmptyState';
+import apiClient from "../../api/apiClient";
+import { PageLayout } from "../../components/layout/PageLayout";
+import { Card } from "../../components/common/Card";
+import { Table, TableRow, TableCell } from "../../components/common/Table";
+import { Badge, type BadgeVariant } from "../../components/common/Badge";
+import { Button } from "../../components/common/Button";
+import { Input } from "../../components/common/Input";
+import { Loading } from "../../components/common/Loading";
+import { getAvatarUrl } from "../../utils/avatarUtil";
+import { EmptyState } from "../../components/common/EmptyState";
 
 const getStatusBadgeVariant = (status: string): BadgeVariant => {
   switch (status) {
-    case 'APPROVED': return 'success';
-    case 'PENDING': return 'warning';
-    case 'REJECTED':
-    case 'BANNED': return 'danger';
-    case 'SUSPENDED': return 'warning';
-    default: return 'default';
+    case "APPROVED":
+      return "success";
+    case "PENDING":
+      return "warning";
+    case "REJECTED":
+    case "BANNED":
+      return "danger";
+    case "SUSPENDED":
+      return "warning";
+    default:
+      return "default";
   }
 };
 
 export const VerificationList = () => {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const limit = 10;
 
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
-    queryKey: ['verification-girls', page, limit, search, statusFilter],
+    queryKey: ["verification-girls", page, limit, search, statusFilter],
     queryFn: async () => {
-      const response = await apiClient.get('/admin/users', {
+      const response = await apiClient.get("/admin/users", {
         params: {
-          role: 'GIRL',
+          role: "GIRL",
           page,
           limit,
           search: search || undefined,
@@ -60,7 +65,9 @@ export const VerificationList = () => {
       description="Review and verify newly registered girls."
       action={
         <Button onClick={() => refetch()} variant="secondary" className="gap-2">
-          <RefreshCcw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
+          <RefreshCcw
+            className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`}
+          />
           Refresh
         </Button>
       }
@@ -68,11 +75,11 @@ export const VerificationList = () => {
       {/* Status Filter Tabs */}
       <div className="flex flex-wrap gap-2 mb-4">
         {[
-          { label: 'All Girls', value: '' },
-          { label: 'Pending Verification', value: 'PENDING' },
-          { label: 'Approved', value: 'APPROVED' },
-          { label: 'Rejected', value: 'REJECTED' },
-          { label: 'Suspended', value: 'SUSPENDED' },
+          { label: "All Girls", value: "" },
+          { label: "Pending Verification", value: "PENDING" },
+          { label: "Approved", value: "APPROVED" },
+          { label: "Rejected", value: "REJECTED" },
+          { label: "Suspended", value: "SUSPENDED" },
         ].map((tab) => (
           <button
             key={tab.value}
@@ -80,10 +87,11 @@ export const VerificationList = () => {
               setStatusFilter(tab.value);
               setPage(1);
             }}
-            className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${statusFilter === tab.value
-                ? 'bg-primary text-white shadow-sm'
-                : 'bg-surface-light dark:bg-surface-dark text-textSecondary-light dark:text-textSecondary-dark hover:bg-surface-light/80 border border-border-light dark:border-border-dark'
-              }`}
+            className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${
+              statusFilter === tab.value
+                ? "bg-primary text-white shadow-sm"
+                : "bg-surface-light dark:bg-surface-dark text-textSecondary-light dark:text-textSecondary-dark hover:bg-surface-light/80 border border-border-light dark:border-border-dark"
+            }`}
           >
             {tab.label}
           </button>
@@ -120,31 +128,53 @@ export const VerificationList = () => {
         ) : users.length === 0 ? (
           <EmptyState
             title="No girls found"
-            description={search || statusFilter ? "Try adjusting your search or filters." : "There are currently no girls registered or awaiting verification."}
+            description={
+              search || statusFilter
+                ? "Try adjusting your search or filters."
+                : "There are currently no girls registered or awaiting verification."
+            }
           />
         ) : (
           <div className="overflow-x-auto">
-            <Table headers={['Profile', 'Contact Info', 'Reg. Date', 'Status', 'Actions']}>
+            <Table
+              headers={[
+                "Profile",
+                "Contact Info",
+                "Reg. Date",
+                "Status",
+                "Actions",
+              ]}
+            >
               {users.map((user: any) => (
                 <TableRow key={user._id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-primary/10 overflow-hidden flex-shrink-0">
-                        <img src={getAvatarUrl(user.avatar, user.name)} alt={user.name} className="w-full h-full object-cover" />
+                        <img
+                          src={getAvatarUrl(user.avatar, user.name)}
+                          alt={user.name}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                       <div>
-                        <div className="font-semibold text-textMain-light dark:text-textMain-dark">{user.name}</div>
+                        <div className="font-semibold text-textMain-light dark:text-textMain-dark">
+                          {user.name}
+                        </div>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="text-sm">
-                      <div className="text-textMain-light dark:text-textMain-dark">{user.email}</div>
-                      <div className="text-textSecondary-light dark:text-textSecondary-dark">{user.phone || 'N/A'}</div>
+                      <div className="text-textMain-light dark:text-textMain-dark">
+                        {user.email}
+                      </div>
+                      <div className="text-textSecondary-light dark:text-textSecondary-dark">
+                        {user.phone || "N/A"}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    {format(new Date(user.createdAt), 'MMM d, yyyy')}
+                    {format(new Date(user.createdAt), "MMM d, yyyy")}
                   </TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(user.status)}>

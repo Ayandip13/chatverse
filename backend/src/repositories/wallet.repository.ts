@@ -11,14 +11,18 @@ class WalletRepository {
   }
 
   // Atomic update logic using Mongoose $inc
-  async incrementBalance(userId: string, amount: number, fieldName: 'lifetimeRecharge' | 'lifetimeEarnings' | 'lifetimeSpent' | 'lifetimeWithdraw'): Promise<IWallet | null> {
+  async incrementBalance(
+    userId: string,
+    amount: number,
+    fieldName: 'lifetimeRecharge' | 'lifetimeEarnings' | 'lifetimeSpent' | 'lifetimeWithdraw',
+  ): Promise<IWallet | null> {
     const updateQuery: any = { $inc: { currentBalance: amount } };
     if (amount > 0) {
       updateQuery.$inc[fieldName] = amount;
     } else {
       updateQuery.$inc[fieldName] = Math.abs(amount);
     }
-    
+
     return Wallet.findOneAndUpdate({ userId }, updateQuery, { new: true }).exec();
   }
 }

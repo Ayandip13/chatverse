@@ -7,9 +7,10 @@ This document defines the absolute business logic and operational rules for the 
 ## 1. Authentication Rules
 
 ### Registration & Login
+
 - **Purpose:** Securely identify and authenticate users.
 - **Trigger:** User opens app and submits credentials (Email/Password or Google OAuth).
-- **Expected Behavior:** 
+- **Expected Behavior:**
   - Boys are granted instant access with an `ACTIVE` status.
   - Girls are registered but placed in a `PENDING` status. They cannot access core features until Admin verified.
 - **Session Handling:** Stateless JWTs. Access tokens have short lifespans; Refresh tokens are rotated. Multiple devices are allowed, but sessions can be universally invalidated by an Admin.
@@ -18,9 +19,10 @@ This document defines the absolute business logic and operational rules for the 
 ## 2. Girl Verification Rules
 
 ### Approval Flow
+
 - **Purpose:** Ensure only legitimate, verified females provide services.
 - **Trigger:** Girl completes registration.
-- **Expected Behavior:** 
+- **Expected Behavior:**
   - Status = `PENDING`. UI blocks chat/wallet access.
   - Admin manually calls the registered phone number.
   - Admin approves or rejects via the Admin Panel.
@@ -31,14 +33,16 @@ This document defines the absolute business logic and operational rules for the 
 ## 3. Wallet & Coin Rules
 
 ### Coin Policy & Valuation
+
 - **Rule:** ₹1 INR = 1 Coin. 100 Coins = 10 Minutes (10 Coins per Minute).
 - **Purpose:** Standardize the platform economy.
-- **Deduction Timing:** Coins are deducted *only* for completed minutes. E.g., 3m 40s = 3 minutes charged.
+- **Deduction Timing:** Coins are deducted _only_ for completed minutes. E.g., 3m 40s = 3 minutes charged.
 - **Trigger:** Initiates exactly when a Girl accepts a Chat Request.
 - **Commission:** Configurable percentage (e.g., 20%). If 10 coins are deducted, Girl earns 8, Platform retains 2.
 
 ### Wallet Recharge & Balances
-- **Expected Behavior:** 
+
+- **Expected Behavior:**
   - Boys recharge via Razorpay. Coins are credited instantly upon successful payment webhook.
   - Wallet balances are stored as an integer (Coins/INR).
   - A Boy cannot send a Chat Request if his balance is strictly < 10 Coins (1 minute).
@@ -46,6 +50,7 @@ This document defines the absolute business logic and operational rules for the 
 ## 4. Chat Request Rules
 
 ### Request Lifecycle
+
 - **Purpose:** Handshake before paid billing starts.
 - **Trigger:** Boy clicks "Send Request".
 - **Expected Behavior:**
@@ -60,6 +65,7 @@ This document defines the absolute business logic and operational rules for the 
 ## 5. Chat Rules
 
 ### Chat Lifecycle & Billing
+
 - **Purpose:** Manage real-time interactions and fair billing.
 - **Trigger:** Chat Request accepted.
 - **Expected Behavior:**
@@ -73,6 +79,7 @@ This document defines the absolute business logic and operational rules for the 
 ## 6. Messaging Rules
 
 ### Content & Moderation
+
 - **Purpose:** Enforce platform safety and prevent revenue circumvention.
 - **Expected Behavior:**
   - Supported: Text and Emojis.
@@ -83,14 +90,16 @@ This document defines the absolute business logic and operational rules for the 
 ## 7. Rating & Favorite Rules
 
 ### Feedback & Discovery
+
 - **Rating:** A Boy can rate a Girl (1-5 stars) only once per unique Chat session. Updating a rating overwrites the previous one. Ratings dynamically adjust the Girl's public average.
 - **Favorites:** A Boy can favorite a Girl for quick access. This is a toggle (Add/Remove). Duplicate favorite entries are structurally prevented at the database level.
 
 ## 8. Report Rules
 
 ### Moderation Queue
+
 - **Purpose:** Allow user-driven moderation.
-- **Expected Behavior:** 
+- **Expected Behavior:**
   - Any user can report another user during or after a chat.
   - Valid reasons: Harassment, Spam, Scam, Inappropriate Behavior.
   - Reports enter the Admin Queue as `PENDING`.
@@ -99,6 +108,7 @@ This document defines the absolute business logic and operational rules for the 
 ## 9. Withdrawal Rules
 
 ### Payout Lifecycle
+
 - **Purpose:** Allow Girls to cash out earnings securely.
 - **Eligibility:** Girl must exceed the `MinimumWithdrawalAmount` (configured in Platform Settings) and have no active bans.
 - **Expected Behavior:**
@@ -109,29 +119,34 @@ This document defines the absolute business logic and operational rules for the 
 ## 10. Admin & Platform Rules
 
 ### Platform Configuration
+
 - **Purpose:** Maintain dynamic control over the economy.
 - **Expected Behavior:**
   - Values like Commission %, Minimum Withdrawal, and Maintenance Mode are strictly managed via a `PlatformSettings` singleton.
-  - **Commission Changes:** If commission is updated, the new rate applies *only* to new chats. Active chats continue on the rate established at their `StartTime`.
+  - **Commission Changes:** If commission is updated, the new rate applies _only_ to new chats. Active chats continue on the rate established at their `StartTime`.
 
 ---
 
 ## 11. Edge Cases & Exceptional Conditions
 
 ### Disconnections & Backgrounding
+
 - **Boy/Girl Closes App:** Chat remains `ACTIVE`. Billing continues. The offline user receives push notifications for new messages. The chat only ends if explicitly terminated by a user, or if coins run out.
 - **Internet Disconnect:** The socket drops, but the server maintains the chat state. When the user reconnects, they sync missed messages. If disconnected for > 5 minutes without returning, the server may auto-terminate the chat to protect the Boy's balance.
 
 ### Financial Edge Cases
+
 - **Payment Succeeds but Callback Delayed:** Razorpay webhook acts as the source of truth. If delayed, the balance updates when the webhook arrives. Webhooks must be idempotent (duplicate callbacks are ignored based on transaction ID).
 - **Simultaneous Withdrawals:** Database locks (optimistic concurrency) prevent a Girl from withdrawing more than her balance by submitting two requests at the exact same millisecond.
 - **Coins Become Zero During a Message:** If a message is typed right as the 60-second tick triggers and balance hits zero, the server terminates the chat and rejects the message delivery with a "Chat Ended" error.
 - **Simultaneous Chat Deductions (Race Condition):** If a Boy is in 3 chats with 25 coins left, the server tick must process deductions atomically. It will deduct for 2 chats (20 coins), realize balance is 5, and immediately terminate all 3 chats.
 
 ### Moderation Edge Cases
+
 - **Admin Bans User During Active Chat:** Socket connections are immediately severed. The chat is forcefully ended. Billing stops at the exact second of the ban. No pending minute is billed.
 - **Admin Rejects a Verified Girl:** If an Admin revokes approval, active chats are terminated, and her profile is instantly hidden from discovery. Balance remains intact for withdrawal unless confiscated by Admin.
 - **Blocked Message Logic:** If a Boy tries to send his phone number, the server intercepts it. The Boy receives a local UI error ("Sharing contact info is prohibited"). The Girl is completely unaware the attempt occurred.
 
 ---
-*These rules are designed to protect the platform's revenue, ensure user safety, and provide clear directives for backend and frontend implementation.*
+
+_These rules are designed to protect the platform's revenue, ensure user safety, and provide clear directives for backend and frontend implementation._

@@ -10,6 +10,11 @@ const router = Router();
 router.get('/', settingsController.getSettings);
 
 // Admin-only route to update dynamic configuration
-router.patch('/', requireAdminAuth, validate(updateSettingsSchema), settingsController.updateSettings);
+router.patch(
+  '/',
+  requireAdminAuth,
+  validate(updateSettingsSchema),
+  settingsController.updateSettings,
+);
 
 export default router;

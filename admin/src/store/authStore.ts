@@ -1,5 +1,5 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export interface User {
   _id: string;
@@ -33,11 +33,16 @@ export const useAuthStore = create<AuthState>()(
         set({ accessToken });
       },
       logout: () => {
-        set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false });
+        set({
+          user: null,
+          accessToken: null,
+          refreshToken: null,
+          isAuthenticated: false,
+        });
       },
     }),
     {
-      name: 'admin-auth-storage',
-    }
-  )
+      name: "admin-auth-storage",
+    },
+  ),
 );

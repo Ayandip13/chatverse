@@ -22,7 +22,7 @@ class WalletService {
     // 1. Generate Mongoose ObjectId hex for mock order
     const hexId = new Types.ObjectId().toString();
     const mockOrderId = `order_${hexId}`;
-    
+
     return {
       id: mockOrderId,
       orderId: mockOrderId,
@@ -33,11 +33,11 @@ class WalletService {
   }
 
   async verifyRecharge(
-    userId: string, 
-    razorpayOrderId: string, 
-    razorpayPaymentId: string, 
+    userId: string,
+    razorpayOrderId: string,
+    razorpayPaymentId: string,
     razorpaySignature: string,
-    amountInr?: number
+    amountInr?: number,
   ) {
     // 1. Clean orderId string to extract ObjectId hex
     const cleanHex = razorpayOrderId?.replace(/^order_/, '');
@@ -47,7 +47,10 @@ class WalletService {
     }
 
     // 2. Idempotency Check: Prevent duplicate crediting
-    const existingTx = await walletTransactionRepository.findByReferenceId(refId.toString(), TransactionType.RECHARGE);
+    const existingTx = await walletTransactionRepository.findByReferenceId(
+      refId.toString(),
+      TransactionType.RECHARGE,
+    );
     if (existingTx) {
       throw new ApiError(STATUS_CODES.CONFLICT, 'Payment already verified', 'DUPLICATE_PAYMENT');
     }
@@ -63,7 +66,7 @@ class WalletService {
 
     // 5. Execute DB Updates (Atomic)
     await walletRepository.incrementBalance(userId, coinsToCredit, 'lifetimeRecharge');
-    
+
     const transaction = await walletTransactionRepository.create({
       walletId: wallet.id,
       userId: new Types.ObjectId(userId),

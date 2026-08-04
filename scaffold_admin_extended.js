@@ -1,10 +1,10 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-const backendDir = path.join(__dirname, 'backend');
+const backendDir = path.join(__dirname, "backend");
 
 const files = {
-  'src/validators/adminExtended.validator.ts': `import { z } from 'zod';
+  "src/validators/adminExtended.validator.ts": `import { z } from 'zod';
 import { WithdrawStatus } from '@/constants/enums.constant';
 
 export const getChatsQuerySchema = z.object({
@@ -42,7 +42,7 @@ export const updateWithdrawalSchema = z.object({
   }),
 });
 `,
-  'src/repositories/withdrawRequest.repository.ts': `import { WithdrawRequest } from '@/models';
+  "src/repositories/withdrawRequest.repository.ts": `import { WithdrawRequest } from '@/models';
 import { IWithdrawRequest } from '@/types/models.type';
 import { FilterQuery, Types } from 'mongoose';
 
@@ -73,7 +73,7 @@ class WithdrawRequestRepository {
 
 export const withdrawRequestRepository = new WithdrawRequestRepository();
 `,
-  'src/repositories/adminDashboard.repository.ts': `import { User, Chat, WalletTransaction, WithdrawRequest } from '@/models';
+  "src/repositories/adminDashboard.repository.ts": `import { User, Chat, WalletTransaction, WithdrawRequest } from '@/models';
 import { Role, GirlStatus, ChatStatus, TransactionType, WithdrawStatus } from '@/constants/enums.constant';
 
 class AdminDashboardRepository {
@@ -111,7 +111,7 @@ class AdminDashboardRepository {
 
 export const adminDashboardRepository = new AdminDashboardRepository();
 `,
-  'src/services/admin.service.ts': `import { adminDashboardRepository } from '@/repositories/adminDashboard.repository';
+  "src/services/admin.service.ts": `import { adminDashboardRepository } from '@/repositories/adminDashboard.repository';
 import { withdrawRequestRepository } from '@/repositories/withdrawRequest.repository';
 import { walletTransactionRepository } from '@/repositories/walletTransaction.repository';
 import { walletRepository } from '@/repositories/wallet.repository';
@@ -219,7 +219,7 @@ class AdminService {
 
 export const adminService = new AdminService();
 `,
-  'src/api/admin/admin.controller.ts': `import { Request, Response } from 'express';
+  "src/api/admin/admin.controller.ts": `import { Request, Response } from 'express';
 import { asyncHandler } from '@/utils/asyncHandler.util';
 import { ApiResponse } from '@/utils/ApiResponse.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
@@ -285,7 +285,7 @@ export const updateWithdrawal = asyncHandler(async (req: Request, res: Response)
   res.status(STATUS_CODES.OK).json(new ApiResponse(updated, 'Withdrawal status updated'));
 });
 `,
-  'src/api/admin/admin.route.ts': `import { Router } from 'express';
+  "src/api/admin/admin.route.ts": `import { Router } from 'express';
 import * as adminController from './admin.controller';
 import { validate } from '@/middlewares/validate.middleware';
 import { requireAdminAuth } from '@/middlewares/adminAuth.middleware';
@@ -321,11 +321,11 @@ router.get('/withdrawals', validate(getWithdrawalsQuerySchema), adminController.
 router.patch('/withdrawals/:id/status', validate(updateWithdrawalSchema), adminController.updateWithdrawal);
 
 export default router;
-`
+`,
 };
 
 for (const [relativePath, content] of Object.entries(files)) {
   const filePath = path.join(backendDir, relativePath);
-  fs.writeFileSync(filePath, content, 'utf8');
+  fs.writeFileSync(filePath, content, "utf8");
 }
-console.log('Admin Extended scaffolding complete.');
+console.log("Admin Extended scaffolding complete.");

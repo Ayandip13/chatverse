@@ -1,25 +1,25 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-const backendDir = path.join(__dirname, 'backend');
+const backendDir = path.join(__dirname, "backend");
 
 const mkDir = (dir) => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 };
 
 const dirs = [
-  'src/validators',
-  'src/repositories',
-  'src/services',
-  'src/api/auth',
-  'src/middlewares',
-  'src/utils'
-].map(p => path.join(backendDir, p));
+  "src/validators",
+  "src/repositories",
+  "src/services",
+  "src/api/auth",
+  "src/middlewares",
+  "src/utils",
+].map((p) => path.join(backendDir, p));
 
 dirs.forEach(mkDir);
 
 const files = {
-  'src/validators/auth.validator.ts': `import { z } from 'zod';
+  "src/validators/auth.validator.ts": `import { z } from 'zod';
 import { Role } from '@/constants/enums.constant';
 
 export const registerSchema = z.object({
@@ -59,7 +59,7 @@ export const resetPasswordSchema = z.object({
   }),
 });
 `,
-  'src/middlewares/validate.middleware.ts': `import { Request, Response, NextFunction } from 'express';
+  "src/middlewares/validate.middleware.ts": `import { Request, Response, NextFunction } from 'express';
 import { AnyZodObject, ZodError } from 'zod';
 import { ApiError } from '@/utils/ApiError.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
@@ -95,7 +95,7 @@ export const validate = (schema: AnyZodObject) => {
   };
 };
 `,
-  'src/repositories/user.repository.ts': `import { User } from '@/models';
+  "src/repositories/user.repository.ts": `import { User } from '@/models';
 import { IUser } from '@/types/models.type';
 
 class UserRepository {
@@ -126,7 +126,7 @@ class UserRepository {
 
 export const userRepository = new UserRepository();
 `,
-  'src/repositories/wallet.repository.ts': `import { Wallet } from '@/models';
+  "src/repositories/wallet.repository.ts": `import { Wallet } from '@/models';
 import { IWallet } from '@/types/models.type';
 
 class WalletRepository {
@@ -141,7 +141,7 @@ class WalletRepository {
 
 export const walletRepository = new WalletRepository();
 `,
-  'src/utils/jwt.util.ts': `import jwt from 'jsonwebtoken';
+  "src/utils/jwt.util.ts": `import jwt from 'jsonwebtoken';
 import envConfig from '@/config/env.config';
 import { Types } from 'mongoose';
 import { Role } from '@/constants/enums.constant';
@@ -172,7 +172,7 @@ export const verifyRefreshToken = (token: string): JwtPayload => {
   return jwt.verify(token, envConfig.JWT_REFRESH_SECRET) as JwtPayload;
 };
 `,
-  'src/services/auth.service.ts': `import { userRepository } from '@/repositories/user.repository';
+  "src/services/auth.service.ts": `import { userRepository } from '@/repositories/user.repository';
 import { walletRepository } from '@/repositories/wallet.repository';
 import { ApiError } from '@/utils/ApiError.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
@@ -361,7 +361,7 @@ class AuthService {
 
 export const authService = new AuthService();
 `,
-  'src/api/auth/auth.controller.ts': `import { Request, Response } from 'express';
+  "src/api/auth/auth.controller.ts": `import { Request, Response } from 'express';
 import { asyncHandler } from '@/utils/asyncHandler.util';
 import { ApiResponse } from '@/utils/ApiResponse.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
@@ -411,7 +411,7 @@ export const resetPassword = asyncHandler(async (req: Request, res: Response) =>
   res.status(STATUS_CODES.OK).json(new ApiResponse(null, 'Password has been reset'));
 });
 `,
-  'src/api/auth/auth.route.ts': `import { Router } from 'express';
+  "src/api/auth/auth.route.ts": `import { Router } from 'express';
 import * as authController from './auth.controller';
 import { validate } from '@/middlewares/validate.middleware';
 import { requireAuth } from '@/middlewares/auth.middleware';
@@ -435,7 +435,7 @@ router.post('/reset-password', validate(resetPasswordSchema), authController.res
 
 export default router;
 `,
-  'src/middlewares/auth.middleware.ts': `import { Request, Response, NextFunction } from 'express';
+  "src/middlewares/auth.middleware.ts": `import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken, JwtPayload } from '@/utils/jwt.util';
 import { ApiError } from '@/utils/ApiError.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
@@ -481,11 +481,11 @@ export const requireRole = (roles: Role[]) => {
     next();
   };
 };
-`
+`,
 };
 
 for (const [relativePath, content] of Object.entries(files)) {
   const filePath = path.join(backendDir, relativePath);
-  fs.writeFileSync(filePath, content, 'utf8');
+  fs.writeFileSync(filePath, content, "utf8");
 }
-console.log('Auth scaffolding complete.');
+console.log("Auth scaffolding complete.");

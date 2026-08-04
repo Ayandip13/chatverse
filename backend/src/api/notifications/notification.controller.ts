@@ -9,7 +9,7 @@ export const getNotifications = asyncHandler(async (req: Request, res: Response)
   const result = await notificationService.getNotifications(
     req.user!.userId,
     parseInt(page, 10),
-    parseInt(limit, 10)
+    parseInt(limit, 10),
   );
 
   res.status(STATUS_CODES.OK).json({
@@ -25,7 +25,10 @@ export const getNotifications = asyncHandler(async (req: Request, res: Response)
 });
 
 export const getNotificationDetails = asyncHandler(async (req: Request, res: Response) => {
-  const notification = await notificationService.getNotificationDetails(req.user!.userId, req.params.id);
+  const notification = await notificationService.getNotificationDetails(
+    req.user!.userId,
+    req.params.id,
+  );
   res.status(STATUS_CODES.OK).json(new ApiResponse(notification, 'Notification details retrieved'));
 });
 
@@ -36,7 +39,9 @@ export const markAsRead = asyncHandler(async (req: Request, res: Response) => {
 
 export const markAllAsRead = asyncHandler(async (req: Request, res: Response) => {
   const count = await notificationService.markAllAsRead(req.user!.userId);
-  res.status(STATUS_CODES.OK).json(new ApiResponse({ updatedCount: count }, 'All notifications marked as read'));
+  res
+    .status(STATUS_CODES.OK)
+    .json(new ApiResponse({ updatedCount: count }, 'All notifications marked as read'));
 });
 
 export const deleteNotification = asyncHandler(async (req: Request, res: Response) => {

@@ -1,18 +1,18 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-const backendDir = path.join(__dirname, 'backend');
+const backendDir = path.join(__dirname, "backend");
 const mkDir = (dir) => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 };
 
-mkDir(path.join(backendDir, 'src/api/reports'));
-mkDir(path.join(backendDir, 'src/validators'));
-mkDir(path.join(backendDir, 'src/services'));
-mkDir(path.join(backendDir, 'src/repositories'));
+mkDir(path.join(backendDir, "src/api/reports"));
+mkDir(path.join(backendDir, "src/validators"));
+mkDir(path.join(backendDir, "src/services"));
+mkDir(path.join(backendDir, "src/repositories"));
 
 const files = {
-  'src/validators/report.validator.ts': `import { z } from 'zod';
+  "src/validators/report.validator.ts": `import { z } from 'zod';
 import { ReportStatus } from '@/constants/enums.constant';
 
 export const createReportSchema = z.object({
@@ -40,7 +40,7 @@ export const updateReportStatusSchema = z.object({
   }),
 });
 `,
-  'src/repositories/report.repository.ts': `import { Report } from '@/models';
+  "src/repositories/report.repository.ts": `import { Report } from '@/models';
 import { IReport } from '@/types/models.type';
 import { FilterQuery, Types } from 'mongoose';
 
@@ -87,7 +87,7 @@ class ReportRepository {
 
 export const reportRepository = new ReportRepository();
 `,
-  'src/services/report.service.ts': `import { reportRepository } from '@/repositories/report.repository';
+  "src/services/report.service.ts": `import { reportRepository } from '@/repositories/report.repository';
 import { userRepository } from '@/repositories/user.repository';
 import { ApiError } from '@/utils/ApiError.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
@@ -173,7 +173,7 @@ class ReportService {
 
 export const reportService = new ReportService();
 `,
-  'src/api/reports/report.controller.ts': `import { Request, Response } from 'express';
+  "src/api/reports/report.controller.ts": `import { Request, Response } from 'express';
 import { asyncHandler } from '@/utils/asyncHandler.util';
 import { ApiResponse } from '@/utils/ApiResponse.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
@@ -216,7 +216,7 @@ export const updateReportStatus = asyncHandler(async (req: Request, res: Respons
   res.status(STATUS_CODES.OK).json(new ApiResponse(result, \`Report status updated to \${status}\`));
 });
 `,
-  'src/api/reports/report.route.ts': `import { Router } from 'express';
+  "src/api/reports/report.route.ts": `import { Router } from 'express';
 import * as reportController from './report.controller';
 import { validate } from '@/middlewares/validate.middleware';
 import { requireAuth } from '@/middlewares/auth.middleware';
@@ -248,11 +248,11 @@ router.use('/', userRouter);
 router.use('/admin', adminRouter); // e.g. /api/v1/reports/admin
 
 export default router;
-`
+`,
 };
 
 for (const [relativePath, content] of Object.entries(files)) {
   const filePath = path.join(backendDir, relativePath);
-  fs.writeFileSync(filePath, content, 'utf8');
+  fs.writeFileSync(filePath, content, "utf8");
 }
-console.log('Report scaffolding complete.');
+console.log("Report scaffolding complete.");

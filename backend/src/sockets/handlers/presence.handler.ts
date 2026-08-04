@@ -10,7 +10,7 @@ export const registerPresenceHandlers = (io: Server, socket: AuthenticatedSocket
   socket.join(`user:${userId}`);
 
   // Update user's last active / updatedAt timestamp in DB
-  User.updateOne({ _id: userId }, { updatedAt: new Date() }).catch(err => {
+  User.updateOne({ _id: userId }, { updatedAt: new Date() }).catch((err) => {
     logger.error(`Failed to update presence timestamp for user ${userId}:`, err);
   });
 
@@ -23,10 +23,10 @@ export const registerPresenceHandlers = (io: Server, socket: AuthenticatedSocket
 
   socket.on('disconnect', async () => {
     logger.info(`User ${userId} disconnected (Socket ${socket.id})`);
-    
+
     // Broadcast offline status immediately
     io.emit('presence:update', { userId, status: 'OFFLINE', lastSeen: new Date() });
-    
+
     // Note: If they reconnect within the pingTimeout, Socket.IO handles it implicitly.
     // If we wanted to pause billing on disconnect, we would hook into chatSessionService here,
     // but typically billing continues until the chat is explicitly ended by a user or zero balance.

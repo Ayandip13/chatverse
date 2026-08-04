@@ -15,7 +15,7 @@ export const errorHandler = (
   req: Request,
   res: Response,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  next: NextFunction
+  next: NextFunction,
 ) => {
   let statusCode: number = STATUS_CODES.INTERNAL_SERVER_ERROR;
   let message: string = ERROR_MESSAGES.INTERNAL_SERVER_ERROR;
@@ -27,7 +27,9 @@ export const errorHandler = (
     code = err.code || code;
   }
 
-  logger.error(`[${req.method}] ${req.originalUrl} >> StatusCode:: ${statusCode}, Message:: ${message}`);
+  logger.error(
+    `[${req.method}] ${req.originalUrl} >> StatusCode:: ${statusCode}, Message:: ${message}`,
+  );
   if (envConfig.NODE_ENV === 'development') {
     logger.error(err.stack);
   }

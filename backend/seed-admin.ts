@@ -3,7 +3,9 @@ import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://bookosaurs_db_user:cwqV0FPhgfwGWwgR@cluster0.u2kx0pf.mongodb.net/chatverse?retryWrites=true&w=majority';
+const MONGO_URI =
+  process.env.MONGO_URI ||
+  'mongodb+srv://bookosaurs_db_user:cwqV0FPhgfwGWwgR@cluster0.u2kx0pf.mongodb.net/chatverse?retryWrites=true&w=majority';
 
 const seedAdmin = async () => {
   try {
@@ -33,7 +35,7 @@ const seedAdmin = async () => {
     } else {
       await usersCollection.updateOne(
         { email: adminEmail },
-        { $set: { password: hashedPassword, role: 'ADMIN', status: 'ACTIVE' } }
+        { $set: { password: hashedPassword, role: 'ADMIN', status: 'ACTIVE' } },
       );
       console.log('Admin user updated in chatverse database: admin@chatverse.com / Admin@1234');
     }

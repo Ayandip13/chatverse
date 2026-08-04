@@ -1,20 +1,20 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-const backendDir = path.join(__dirname, 'backend');
+const backendDir = path.join(__dirname, "backend");
 
 const mkDir = (dir) => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 };
 
-mkDir(path.join(backendDir, 'src/api/settings'));
-mkDir(path.join(backendDir, 'src/validators'));
-mkDir(path.join(backendDir, 'src/repositories'));
-mkDir(path.join(backendDir, 'src/services'));
-mkDir(path.join(backendDir, 'src/middlewares'));
+mkDir(path.join(backendDir, "src/api/settings"));
+mkDir(path.join(backendDir, "src/validators"));
+mkDir(path.join(backendDir, "src/repositories"));
+mkDir(path.join(backendDir, "src/services"));
+mkDir(path.join(backendDir, "src/middlewares"));
 
 const files = {
-  'src/validators/settings.validator.ts': `import { z } from 'zod';
+  "src/validators/settings.validator.ts": `import { z } from 'zod';
 
 export const updateSettingsSchema = z.object({
   body: z.object({
@@ -32,7 +32,7 @@ export const updateSettingsSchema = z.object({
   }),
 });
 `,
-  'src/repositories/settings.repository.ts': `import { PlatformSetting } from '@/models';
+  "src/repositories/settings.repository.ts": `import { PlatformSetting } from '@/models';
 import { IPlatformSetting } from '@/types/models.type';
 
 class SettingsRepository {
@@ -57,7 +57,7 @@ class SettingsRepository {
 
 export const settingsRepository = new SettingsRepository();
 `,
-  'src/services/settings.service.ts': `import { settingsRepository } from '@/repositories/settings.repository';
+  "src/services/settings.service.ts": `import { settingsRepository } from '@/repositories/settings.repository';
 import { IPlatformSetting } from '@/types/models.type';
 
 class SettingsService {
@@ -76,7 +76,7 @@ class SettingsService {
 
 export const settingsService = new SettingsService();
 `,
-  'src/api/settings/settings.controller.ts': `import { Request, Response } from 'express';
+  "src/api/settings/settings.controller.ts": `import { Request, Response } from 'express';
 import { asyncHandler } from '@/utils/asyncHandler.util';
 import { ApiResponse } from '@/utils/ApiResponse.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
@@ -92,7 +92,7 @@ export const updateSettings = asyncHandler(async (req: Request, res: Response) =
   res.status(STATUS_CODES.OK).json(new ApiResponse(updatedSettings, 'Settings updated successfully'));
 });
 `,
-  'src/api/settings/settings.route.ts': `import { Router } from 'express';
+  "src/api/settings/settings.route.ts": `import { Router } from 'express';
 import * as settingsController from './settings.controller';
 import { validate } from '@/middlewares/validate.middleware';
 import { requireAdminAuth } from '@/middlewares/adminAuth.middleware';
@@ -108,7 +108,7 @@ router.patch('/', requireAdminAuth, validate(updateSettingsSchema), settingsCont
 
 export default router;
 `,
-  'src/middlewares/adminAuth.middleware.ts': `import { Request, Response, NextFunction } from 'express';
+  "src/middlewares/adminAuth.middleware.ts": `import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken } from '@/utils/jwt.util';
 import { ApiError } from '@/utils/ApiError.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
@@ -139,11 +139,11 @@ export const requireAdminAuth = async (req: Request, res: Response, next: NextFu
     next(new ApiError(STATUS_CODES.UNAUTHORIZED, 'Admin authentication failed', 'UNAUTHORIZED'));
   }
 };
-`
+`,
 };
 
 for (const [relativePath, content] of Object.entries(files)) {
   const filePath = path.join(backendDir, relativePath);
-  fs.writeFileSync(filePath, content, 'utf8');
+  fs.writeFileSync(filePath, content, "utf8");
 }
-console.log('Settings scaffolding complete.');
+console.log("Settings scaffolding complete.");

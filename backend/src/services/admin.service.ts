@@ -35,7 +35,11 @@ class AdminService {
   async getChatMessages(chatId: string, page: number, limit: number) {
     const skip = (page - 1) * limit;
     const [messages, total] = await Promise.all([
-      Message.find({ chatId: new Types.ObjectId(chatId) }).sort({ createdAt: -1 }).skip(skip).limit(limit).exec(),
+      Message.find({ chatId: new Types.ObjectId(chatId) })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
       Message.countDocuments({ chatId: new Types.ObjectId(chatId) }).exec(),
     ]);
     return { messages, total };
@@ -75,7 +79,7 @@ class AdminService {
     adminId: string,
     notes?: string,
     rejectionReason?: string,
-    transactionReference?: string
+    transactionReference?: string,
   ) {
     if (status === WithdrawStatus.APPROVED) {
       return await withdrawalService.adminApprove(withdrawalId, adminId, notes);
@@ -84,17 +88,21 @@ class AdminService {
         withdrawalId,
         adminId,
         rejectionReason || notes || 'Rejected by administrator',
-        notes
+        notes,
       );
     } else if (status === WithdrawStatus.COMPLETED || (status as any) === 'PAID') {
       return await withdrawalService.adminMarkPaid(
         withdrawalId,
         adminId,
         transactionReference || notes || `TXN_${Date.now()}`,
-        notes
+        notes,
       );
     } else {
-      throw new ApiError(STATUS_CODES.BAD_REQUEST, `Unsupported withdrawal status '${status}'`, 'INVALID_STATUS');
+      throw new ApiError(
+        STATUS_CODES.BAD_REQUEST,
+        `Unsupported withdrawal status '${status}'`,
+        'INVALID_STATUS',
+      );
     }
   }
 }

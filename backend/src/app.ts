@@ -19,7 +19,7 @@ app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      const allowedOrigins = envConfig.FRONTEND_URL.split(',').map(u => u.trim());
+      const allowedOrigins = envConfig.FRONTEND_URL.split(',').map((u) => u.trim());
       if (
         envConfig.FRONTEND_URL === '*' ||
         allowedOrigins.includes('*') ||
@@ -32,7 +32,7 @@ app.use(
       return callback(new Error(msg), false);
     },
     credentials: true,
-  })
+  }),
 );
 
 // Serve static uploads
@@ -56,7 +56,7 @@ app.use(
       if (res.statusCode >= 400) return 'warn';
       return 'info';
     },
-  })
+  }),
 );
 
 // API Routes

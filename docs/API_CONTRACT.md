@@ -5,6 +5,7 @@ This document defines the complete REST API contract for the ChatVerse platform.
 ---
 
 ## 1. API Design Principles & Philosophy
+
 - **RESTful Naming:** URLs represent resources (nouns, plural), not actions (verbs). E.g., `POST /api/v1/users`, not `/api/v1/createUser`.
 - **Versioning:** All APIs reside under `/api/v1`. Breaking changes will necessitate `/api/v2` while maintaining `v1` backward compatibility until deprecated.
 - **Stateless:** APIs are entirely stateless. Authentication relies on JWTs passed in the `Authorization` header.
@@ -13,9 +14,11 @@ This document defines the complete REST API contract for the ChatVerse platform.
 ---
 
 ## 2. Standard Response Format
+
 To ensure frontend predictability, every response uses a strict JSON envelope.
 
 ### 2.1 Success Response
+
 ```json
 {
   "success": true,
@@ -30,6 +33,7 @@ To ensure frontend predictability, every response uses a strict JSON envelope.
 ```
 
 ### 2.2 Error Response
+
 ```json
 {
   "success": false,
@@ -37,17 +41,17 @@ To ensure frontend predictability, every response uses a strict JSON envelope.
   "error": {
     "code": "ERROR_CODE_ENUM",
     "message": "Developer-friendly error message",
-    "details": [
-      { "field": "email", "message": "Invalid email format" }
-    ]
+    "details": [{ "field": "email", "message": "Invalid email format" }]
   }
 }
 ```
+
 **HTTP Status Codes:** `200 OK`, `201 Created`, `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `404 Not Found`, `409 Conflict`, `429 Too Many Requests`, `500 Internal Server Error`.
 
 ---
 
 ## 3. Pagination, Search, and Filtering
+
 - **Query Parameters:** `?page=1&limit=20&sort=-createdAt&search=keyword&status=ACTIVE`
 - **Response Structure:** Includes the `meta` block (see Success Response).
 
@@ -56,6 +60,7 @@ To ensure frontend predictability, every response uses a strict JSON envelope.
 ## 4. Endpoint Catalogue
 
 ### 4.1 Authentication APIs
+
 - **POST `/api/v1/auth/register`**
   - **Purpose:** Register Boy/Girl.
   - **Body:** `{ email, password, role, name, phone (if girl) }`
@@ -71,6 +76,7 @@ To ensure frontend predictability, every response uses a strict JSON envelope.
   - **Auth:** Required. Invalidates token.
 
 ### 4.2 Profile APIs
+
 - **GET `/api/v1/users/me`**
   - **Auth:** Required. Returns current user profile.
 - **PATCH `/api/v1/users/me`**
@@ -87,6 +93,7 @@ To ensure frontend predictability, every response uses a strict JSON envelope.
   - **Purpose:** Soft delete account.
 
 ### 4.3 Girl Discovery APIs (Boys App)
+
 - **GET `/api/v1/girls`**
   - **Purpose:** List girls for discovery.
   - **Filters:** `?isOnline=true&sort=-rating`
@@ -98,6 +105,7 @@ To ensure frontend predictability, every response uses a strict JSON envelope.
   - **Purpose:** Remove from favorites.
 
 ### 4.4 Wallet & Payment APIs
+
 - **GET `/api/v1/wallet`**
   - **Purpose:** Get wallet summary (balance, lifetime stats).
 - **POST `/api/v1/wallet/recharge`**
@@ -109,6 +117,7 @@ To ensure frontend predictability, every response uses a strict JSON envelope.
   - **Purpose:** Paginated transaction history.
 
 ### 4.5 Chat Request APIs
+
 - **GET `/api/v1/chat-requests`**
   - **Purpose:** List paginated chat requests for the current user.
   - **Filters:** `?page=1&limit=20&status=PENDING`
@@ -123,6 +132,7 @@ To ensure frontend predictability, every response uses a strict JSON envelope.
   - **Auth:** Sender Boy only.
 
 ### 4.6 Chat APIs
+
 - **GET `/api/v1/chats`**
   - **Purpose:** List active or historical chats.
 - **GET `/api/v1/chats/:id`**
@@ -133,6 +143,7 @@ To ensure frontend predictability, every response uses a strict JSON envelope.
   - **Purpose:** Manually end an active chat.
 
 ### 4.7 Rating APIs
+
 - **POST `/api/v1/chats/:id/ratings`**
   - **Purpose:** Boy rates a Girl after a chat.
   - **Body:** `{ score, comment }`
@@ -140,17 +151,20 @@ To ensure frontend predictability, every response uses a strict JSON envelope.
   - **Purpose:** Update a previous rating.
 
 ### 4.8 Report APIs
+
 - **POST `/api/v1/reports`**
   - **Purpose:** Report a user.
   - **Body:** `{ targetUserId, reason, evidence, chatId? }`
 
 ### 4.9 Notification APIs
+
 - **GET `/api/v1/notifications`**
   - **Purpose:** Paginated list of user notifications.
 - **PATCH `/api/v1/notifications/:id/read`**
   - **Purpose:** Mark as read.
 
 ### 4.10 Withdrawal APIs (Girls)
+
 - **GET `/api/v1/withdrawals`**
   - **Purpose:** Girl's withdrawal history.
 - **POST `/api/v1/withdrawals`**
@@ -158,7 +172,9 @@ To ensure frontend predictability, every response uses a strict JSON envelope.
   - **Body:** `{ amount, upiId }`
 
 ### 4.11 Admin APIs
+
 **Auth:** Admin Token Required.
+
 - **GET `/api/v1/admin/dashboard`** (Platform analytics)
 - **GET `/api/v1/admin/users`** (Manage all users)
 - **PATCH `/api/v1/admin/users/:id/status`** (Ban/Suspend/Approve)
@@ -171,6 +187,7 @@ To ensure frontend predictability, every response uses a strict JSON envelope.
 ---
 
 ## 5. Security & Authorization
+
 - **JWT:** Access tokens expire quickly (e.g., 15m). Refresh tokens are HTTP-only secure cookies (Web) or encrypted storage (Mobile).
 - **Authorization Header:** `Authorization: Bearer <token>`
 - **Role-Based Access (RBAC):** Middleware validates roles (`boy`, `girl`, `admin`).
@@ -180,7 +197,9 @@ To ensure frontend predictability, every response uses a strict JSON envelope.
 ---
 
 ## 6. Standard Error Catalogue
+
 The `error.code` field ensures frontends can localize error messages without parsing strings.
+
 - `INVALID_CREDENTIALS`: Login failed.
 - `TOKEN_EXPIRED`: JWT expired.
 - `UNAUTHORIZED`: Missing/invalid token.
@@ -197,6 +216,7 @@ The `error.code` field ensures frontends can localize error messages without par
 ---
 
 ## 7. Future Expansion Readiness
+
 - **Pagination Strategy:** Cursor-based pagination can be seamlessly introduced alongside offset-based via query params.
 - **Media Uploads:** APIs are designed to return pre-signed S3 URLs for future video/image uploads without passing binaries through Node.js.
 - **Webhooks:** `/api/v1/webhooks/razorpay` is isolated to allow scaling independent of core business logic.

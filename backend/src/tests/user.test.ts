@@ -12,11 +12,11 @@ describe('User Controller - getMyProfile', () => {
 
   beforeEach(() => {
     mockReq = {
-      user: { userId: 'mock-user-id' }
+      user: { userId: 'mock-user-id' },
     };
     mockRes = {
       status: jest.fn().mockReturnThis(),
-      json: jest.fn()
+      json: jest.fn(),
     };
     mockNext = jest.fn();
   });
@@ -29,10 +29,12 @@ describe('User Controller - getMyProfile', () => {
 
     expect(userRepository.findById).toHaveBeenCalledWith('mock-user-id');
     expect(mockRes.status).toHaveBeenCalledWith(200);
-    expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({
-      success: true,
-      data: mockUser
-    }));
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: true,
+        data: mockUser,
+      }),
+    );
   });
 
   it('should call next with ApiError if user not found', async () => {

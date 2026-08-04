@@ -16,7 +16,7 @@ const ReportSchema = new Schema<IReport>(
     evidence: { type: String },
     resolvedById: { type: Schema.Types.ObjectId, ref: 'Admin' },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 ReportSchema.index({ targetId: 1, status: 1 });

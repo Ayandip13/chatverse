@@ -22,7 +22,7 @@ async function testGirlsDashboardApis() {
         name: 'Test Dashboard Creator',
         role: 'GIRL',
         status: 'APPROVED',
-        authProvider: 'LOCAL'
+        authProvider: 'LOCAL',
       });
     }
 
@@ -41,11 +41,17 @@ async function testGirlsDashboardApis() {
     console.log('✅ WALLET KPI SUMMARY TEST:', summary);
 
     // 4. Test Active Chats Query
-    const activeChats = await Chat.find({ girlId: girl._id, status: 'ACTIVE' }).populate('boyId', 'name avatar');
+    const activeChats = await Chat.find({ girlId: girl._id, status: 'ACTIVE' }).populate(
+      'boyId',
+      'name avatar',
+    );
     console.log(`✅ ACTIVE CHATS QUERY TEST: Found ${activeChats.length} active sessions.`);
 
     // 5. Test Pending Requests Query
-    const pendingRequests = await ChatRequest.find({ receiverId: girl._id, status: 'PENDING' }).populate('senderId', 'name avatar');
+    const pendingRequests = await ChatRequest.find({
+      receiverId: girl._id,
+      status: 'PENDING',
+    }).populate('senderId', 'name avatar');
     console.log(`✅ PENDING REQUESTS TEST: Found ${pendingRequests.length} pending chat requests.`);
 
     console.log('\n==================================================');

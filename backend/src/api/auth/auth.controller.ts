@@ -23,7 +23,12 @@ export const googleLogin = asyncHandler(async (req: Request, res: Response) => {
 export const refresh = asyncHandler(async (req: Request, res: Response) => {
   const token = req.cookies.refreshToken || req.body.refreshToken;
   if (!token) {
-    res.status(STATUS_CODES.UNAUTHORIZED).json({ success: false, error: { code: 'UNAUTHORIZED', message: 'No refresh token provided' } });
+    res
+      .status(STATUS_CODES.UNAUTHORIZED)
+      .json({
+        success: false,
+        error: { code: 'UNAUTHORIZED', message: 'No refresh token provided' },
+      });
     return;
   }
   const result = await authService.refresh(token);
@@ -39,7 +44,9 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
 
 export const forgotPassword = asyncHandler(async (req: Request, res: Response) => {
   await authService.forgotPassword(req.body.email);
-  res.status(STATUS_CODES.OK).json(new ApiResponse(null, 'Password reset email sent (if account exists)'));
+  res
+    .status(STATUS_CODES.OK)
+    .json(new ApiResponse(null, 'Password reset email sent (if account exists)'));
 });
 
 export const resetPassword = asyncHandler(async (req: Request, res: Response) => {

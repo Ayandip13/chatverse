@@ -1,9 +1,13 @@
-import { useQuery } from '@tanstack/react-query';
-import { fetchWalletSummary, fetchDiscoveryGirls, fetchRecentChats } from '../api/homeApi';
+import { useQuery } from "@tanstack/react-query";
+import {
+  fetchWalletSummary,
+  fetchDiscoveryGirls,
+  fetchRecentChats,
+} from "../api/homeApi";
 
 export const useWalletSummary = () => {
   return useQuery({
-    queryKey: ['walletSummary'],
+    queryKey: ["walletSummary"],
     queryFn: fetchWalletSummary,
     staleTime: 60000, // 1 minute
   });
@@ -11,7 +15,7 @@ export const useWalletSummary = () => {
 
 export const useOnlineGirls = () => {
   return useQuery({
-    queryKey: ['girls', 'online'],
+    queryKey: ["girls", "online"],
     queryFn: () => fetchDiscoveryGirls({ online: true, limit: 10 }),
     staleTime: 10000,
     refetchInterval: 10000, // Automatically refresh every 10 seconds
@@ -20,7 +24,7 @@ export const useOnlineGirls = () => {
 
 export const useRecommendedGirls = () => {
   return useQuery({
-    queryKey: ['girls', 'recommended'],
+    queryKey: ["girls", "recommended"],
     queryFn: () => fetchDiscoveryGirls({ recommended: true, limit: 5 }),
     staleTime: 5 * 60000,
   });
@@ -28,7 +32,7 @@ export const useRecommendedGirls = () => {
 
 export const usePopularGirls = () => {
   return useQuery({
-    queryKey: ['girls', 'popular'],
+    queryKey: ["girls", "popular"],
     queryFn: () => fetchDiscoveryGirls({ popular: true, limit: 10 }),
     staleTime: 5 * 60000,
   });
@@ -36,7 +40,7 @@ export const usePopularGirls = () => {
 
 export const useRecentlyJoinedGirls = () => {
   return useQuery({
-    queryKey: ['girls', 'recentlyJoined'],
+    queryKey: ["girls", "recentlyJoined"],
     queryFn: () => fetchDiscoveryGirls({ recentlyJoined: true, limit: 10 }),
     staleTime: 5 * 60000,
   });
@@ -44,7 +48,7 @@ export const useRecentlyJoinedGirls = () => {
 
 export const useRecentChats = () => {
   return useQuery({
-    queryKey: ['recentChats'],
+    queryKey: ["recentChats"],
     queryFn: fetchRecentChats,
     staleTime: 30000,
   });

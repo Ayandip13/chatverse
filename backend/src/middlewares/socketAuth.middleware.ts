@@ -7,10 +7,14 @@ export interface AuthenticatedSocket extends Socket {
   user?: JwtPayload;
 }
 
-export const socketAuthMiddleware = async (socket: AuthenticatedSocket, next: (err?: Error) => void) => {
+export const socketAuthMiddleware = async (
+  socket: AuthenticatedSocket,
+  next: (err?: Error) => void,
+) => {
   try {
-    const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.split(' ')[1];
-    
+    const token =
+      socket.handshake.auth.token || socket.handshake.headers.authorization?.split(' ')[1];
+
     if (!token) {
       return next(new Error('Authentication error: Token missing'));
     }

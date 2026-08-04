@@ -1,36 +1,46 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { MessageSquare, RefreshCcw, AlertCircle, Clock, Coins, Eye } from 'lucide-react';
-import { format } from 'date-fns';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  MessageSquare,
+  RefreshCcw,
+  AlertCircle,
+  Clock,
+  Coins,
+  Eye,
+} from "lucide-react";
+import { format } from "date-fns";
 
-import apiClient from '../../api/apiClient';
-import { PageLayout } from '../../components/layout/PageLayout';
-import { Card } from '../../components/common/Card';
-import { Table, TableRow, TableCell } from '../../components/common/Table';
-import { Badge, type BadgeVariant } from '../../components/common/Badge';
-import { Button } from '../../components/common/Button';
-import { Loading } from '../../components/common/Loading';
-import { EmptyState } from '../../components/common/EmptyState';
-import { Modal } from '../../components/common/Modal';
+import apiClient from "../../api/apiClient";
+import { PageLayout } from "../../components/layout/PageLayout";
+import { Card } from "../../components/common/Card";
+import { Table, TableRow, TableCell } from "../../components/common/Table";
+import { Badge, type BadgeVariant } from "../../components/common/Badge";
+import { Button } from "../../components/common/Button";
+import { Loading } from "../../components/common/Loading";
+import { EmptyState } from "../../components/common/EmptyState";
+import { Modal } from "../../components/common/Modal";
 
 const getStatusBadgeVariant = (status: string): BadgeVariant => {
   switch (status) {
-    case 'ACTIVE': return 'success';
-    case 'ENDED': return 'default';
-    default: return 'default';
+    case "ACTIVE":
+      return "success";
+    case "ENDED":
+      return "default";
+    default:
+      return "default";
   }
 };
 
 export const Chats = () => {
   const [page, setPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState("");
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const limit = 10;
 
   const { data, isLoading, isError, refetch, isFetching } = useQuery({
-    queryKey: ['admin-chats', page, limit, statusFilter],
+    queryKey: ["admin-chats", page, limit, statusFilter],
     queryFn: async () => {
-      const response = await apiClient.get('/admin/chats', {
+      const response = await apiClient.get("/admin/chats", {
         params: {
           page,
           limit,
@@ -43,9 +53,11 @@ export const Chats = () => {
   });
 
   const { data: transcriptData, isLoading: isLoadingTranscript } = useQuery({
-    queryKey: ['admin-chat-messages', selectedChatId],
+    queryKey: ["admin-chat-messages", selectedChatId],
     queryFn: async () => {
-      const response = await apiClient.get(`/admin/chats/${selectedChatId}/messages`);
+      const response = await apiClient.get(
+        `/admin/chats/${selectedChatId}/messages`,
+      );
       return response.data.data;
     },
     enabled: !!selectedChatId,
@@ -61,7 +73,9 @@ export const Chats = () => {
       description="Monitor active and past chat sessions across the platform in real time."
       action={
         <Button onClick={() => refetch()} variant="secondary" className="gap-2">
-          <RefreshCcw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
+          <RefreshCcw
+            className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`}
+          />
           Refresh
         </Button>
       }
@@ -69,9 +83,9 @@ export const Chats = () => {
       {/* Filter Tabs */}
       <div className="flex flex-wrap gap-2 mb-4">
         {[
-          { label: 'All Sessions', value: '' },
-          { label: 'Active Chats', value: 'ACTIVE' },
-          { label: 'Ended Chats', value: 'ENDED' },
+          { label: "All Sessions", value: "" },
+          { label: "Active Chats", value: "ACTIVE" },
+          { label: "Ended Chats", value: "ENDED" },
         ].map((tab) => (
           <button
             key={tab.value}
@@ -81,8 +95,8 @@ export const Chats = () => {
             }}
             className={`px-4 py-2 text-sm font-medium rounded-xl transition-all ${
               statusFilter === tab.value
-                ? 'bg-primary text-white shadow-sm'
-                : 'bg-surface-light dark:bg-surface-dark text-textSecondary-light dark:text-textSecondary-dark hover:bg-surface-light/80 border border-border-light dark:border-border-dark'
+                ? "bg-primary text-white shadow-sm"
+                : "bg-surface-light dark:bg-surface-dark text-textSecondary-light dark:text-textSecondary-dark hover:bg-surface-light/80 border border-border-light dark:border-border-dark"
             }`}
           >
             {tab.label}
@@ -103,20 +117,33 @@ export const Chats = () => {
         ) : chats.length === 0 ? (
           <EmptyState
             title="No chat sessions found"
-            description={statusFilter ? 'No chat sessions match the selected filter.' : 'No active or historical chats available.'}
+            description={
+              statusFilter
+                ? "No chat sessions match the selected filter."
+                : "No active or historical chats available."
+            }
           />
         ) : (
           <div className="overflow-x-auto">
-            <Table headers={['Participants', 'Status', 'Duration', 'Cost', 'Started At', 'Actions']}>
+            <Table
+              headers={[
+                "Participants",
+                "Status",
+                "Duration",
+                "Cost",
+                "Started At",
+                "Actions",
+              ]}
+            >
               {chats.map((chat: any) => (
                 <TableRow key={chat._id}>
                   <TableCell>
                     <div className="text-sm">
                       <div className="font-semibold text-textMain-light dark:text-textMain-dark">
-                        Boy: {chat.boyId?.name || chat.boyId || 'Unknown'}
+                        Boy: {chat.boyId?.name || chat.boyId || "Unknown"}
                       </div>
                       <div className="text-pink-500 font-medium">
-                        Girl: {chat.girlId?.name || chat.girlId || 'Unknown'}
+                        Girl: {chat.girlId?.name || chat.girlId || "Unknown"}
                       </div>
                     </div>
                   </TableCell>
@@ -138,7 +165,10 @@ export const Chats = () => {
                     </div>
                   </TableCell>
                   <TableCell className="text-sm text-textSecondary-light dark:text-textSecondary-dark">
-                    {format(new Date(chat.startTime || chat.createdAt), 'MMM d, yyyy HH:mm')}
+                    {format(
+                      new Date(chat.startTime || chat.createdAt),
+                      "MMM d, yyyy HH:mm",
+                    )}
                   </TableCell>
                   <TableCell>
                     <Button
@@ -195,7 +225,9 @@ export const Chats = () => {
             <Loading className="py-12" />
           ) : !transcriptData || transcriptData.length === 0 ? (
             <EmptyState
-              icon={<MessageSquare className="w-10 h-10 text-textMuted-light dark:text-textMuted-dark" />}
+              icon={
+                <MessageSquare className="w-10 h-10 text-textMuted-light dark:text-textMuted-dark" />
+              }
               title="No messages found"
               description="This chat session contains no recorded textual messages."
               className="py-8"
@@ -212,7 +244,7 @@ export const Chats = () => {
                       {msg.senderId?.name || msg.senderId}
                     </span>
                     <span className="text-textMuted-light dark:text-textMuted-dark">
-                      {format(new Date(msg.createdAt), 'HH:mm:ss')}
+                      {format(new Date(msg.createdAt), "HH:mm:ss")}
                     </span>
                   </div>
                   <p className="text-sm text-textMain-light dark:text-textMain-dark leading-relaxed">

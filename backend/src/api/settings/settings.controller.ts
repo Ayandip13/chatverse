@@ -11,5 +11,7 @@ export const getSettings = asyncHandler(async (req: Request, res: Response) => {
 
 export const updateSettings = asyncHandler(async (req: Request, res: Response) => {
   const updatedSettings = await settingsService.updateSettings(req.body);
-  res.status(STATUS_CODES.OK).json(new ApiResponse(updatedSettings, 'Settings updated successfully'));
+  res
+    .status(STATUS_CODES.OK)
+    .json(new ApiResponse(updatedSettings, 'Settings updated successfully'));
 });

@@ -23,7 +23,7 @@ async function testTimerSettlementSuite() {
         name: 'Test Boy Settlement',
         role: 'BOY',
         status: 'ACTIVE',
-        authProvider: 'LOCAL'
+        authProvider: 'LOCAL',
       });
     }
 
@@ -34,7 +34,7 @@ async function testTimerSettlementSuite() {
         name: 'Test Girl Settlement',
         role: 'GIRL',
         status: 'APPROVED',
-        authProvider: 'LOCAL'
+        authProvider: 'LOCAL',
       });
     }
 
@@ -44,12 +44,12 @@ async function testTimerSettlementSuite() {
     await Wallet.findOneAndUpdate(
       { userId: boy._id },
       { currentBalance: 25, lifetimeSpent: 0 },
-      { upsert: true, new: true }
+      { upsert: true, new: true },
     );
     await Wallet.findOneAndUpdate(
       { userId: girl._id },
       { currentBalance: 0, lifetimeEarnings: 0 },
-      { upsert: true, new: true }
+      { upsert: true, new: true },
     );
     console.log('Initial Boy Wallet: 25 coins | Girl Wallet: 0 coins');
 
@@ -61,7 +61,7 @@ async function testTimerSettlementSuite() {
       status: 'ACTIVE',
       startTime: new Date(),
       durationInMinutes: 0,
-      totalCost: 0
+      totalCost: 0,
     });
     console.log(`Created Active Chat Session ID: ${chat._id}`);
 
@@ -70,7 +70,7 @@ async function testTimerSettlementSuite() {
     const res1 = await settlementService.processMinuteSettlement(
       chat._id.toString(),
       boy._id.toString(),
-      girl._id.toString()
+      girl._id.toString(),
     );
     console.log('Settlement 1 Result:', res1);
 
@@ -92,7 +92,7 @@ async function testTimerSettlementSuite() {
     const res2 = await settlementService.processMinuteSettlement(
       chat._id.toString(),
       boy._id.toString(),
-      girl._id.toString()
+      girl._id.toString(),
     );
     console.log('Settlement 2 Result:', res2);
 
@@ -114,7 +114,7 @@ async function testTimerSettlementSuite() {
     const res3 = await settlementService.processMinuteSettlement(
       chat._id.toString(),
       boy._id.toString(),
-      girl._id.toString()
+      girl._id.toString(),
     );
     console.log('Settlement 3 Result (Should Fail):', res3);
 

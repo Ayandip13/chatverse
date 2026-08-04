@@ -1,15 +1,28 @@
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Settings as SettingsIcon, Save, RefreshCcw, AlertCircle, ShieldAlert, ToggleLeft, ToggleRight } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  Settings as SettingsIcon,
+  Save,
+  RefreshCcw,
+  AlertCircle,
+  ShieldAlert,
+  ToggleLeft,
+  ToggleRight,
+} from "lucide-react";
+import toast from "react-hot-toast";
 
-import apiClient from '../../api/apiClient';
-import { PageLayout } from '../../components/layout/PageLayout';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/common/Card';
-import { Button } from '../../components/common/Button';
-import { Input } from '../../components/common/Input';
-import { Loading } from '../../components/common/Loading';
-import { EmptyState } from '../../components/common/EmptyState';
+import apiClient from "../../api/apiClient";
+import { PageLayout } from "../../components/layout/PageLayout";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "../../components/common/Card";
+import { Button } from "../../components/common/Button";
+import { Input } from "../../components/common/Input";
+import { Loading } from "../../components/common/Loading";
+import { EmptyState } from "../../components/common/EmptyState";
 
 export const Settings = () => {
   const queryClient = useQueryClient();
@@ -22,10 +35,16 @@ export const Settings = () => {
     isGirlRegistrationEnabled: true,
   });
 
-  const { data: settingsData, isLoading, isError, refetch, isFetching } = useQuery({
-    queryKey: ['platform-settings'],
+  const {
+    data: settingsData,
+    isLoading,
+    isError,
+    refetch,
+    isFetching,
+  } = useQuery({
+    queryKey: ["platform-settings"],
     queryFn: async () => {
-      const response = await apiClient.get('/settings');
+      const response = await apiClient.get("/settings");
       return response.data.data;
     },
   });
@@ -37,22 +56,25 @@ export const Settings = () => {
         minimumWithdrawalAmount: settingsData.minimumWithdrawalAmount ?? 500,
         maximumRechargeAmount: settingsData.maximumRechargeAmount ?? 10000,
         isMaintenanceMode: !!settingsData.isMaintenanceMode,
-        isGirlRegistrationEnabled: settingsData.isGirlRegistrationEnabled ?? true,
+        isGirlRegistrationEnabled:
+          settingsData.isGirlRegistrationEnabled ?? true,
       });
     }
   }, [settingsData]);
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (payload: typeof formData) => {
-      const response = await apiClient.patch('/settings', payload);
+      const response = await apiClient.patch("/settings", payload);
       return response.data;
     },
     onSuccess: () => {
-      toast.success('Platform settings updated successfully!');
-      queryClient.invalidateQueries({ queryKey: ['platform-settings'] });
+      toast.success("Platform settings updated successfully!");
+      queryClient.invalidateQueries({ queryKey: ["platform-settings"] });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update platform settings');
+      toast.error(
+        error.response?.data?.message || "Failed to update platform settings",
+      );
     },
   });
 
@@ -73,7 +95,9 @@ export const Settings = () => {
       description="Manage platform commission rules, withdrawal limits, and system controls."
       action={
         <Button onClick={() => refetch()} variant="secondary" className="gap-2">
-          <RefreshCcw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
+          <RefreshCcw
+            className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`}
+          />
           Refresh
         </Button>
       }
@@ -105,7 +129,12 @@ export const Settings = () => {
                     min={0}
                     max={100}
                     value={formData.commissionPercentage}
-                    onChange={(e) => handleChange('commissionPercentage', Number(e.target.value))}
+                    onChange={(e) =>
+                      handleChange(
+                        "commissionPercentage",
+                        Number(e.target.value),
+                      )
+                    }
                   />
                   <span className="text-xs text-textSecondary-light dark:text-textSecondary-dark mt-1 block">
                     Percentage retained by platform on each call.
@@ -120,7 +149,12 @@ export const Settings = () => {
                     type="number"
                     min={1}
                     value={formData.minimumWithdrawalAmount}
-                    onChange={(e) => handleChange('minimumWithdrawalAmount', Number(e.target.value))}
+                    onChange={(e) =>
+                      handleChange(
+                        "minimumWithdrawalAmount",
+                        Number(e.target.value),
+                      )
+                    }
                   />
                   <span className="text-xs text-textSecondary-light dark:text-textSecondary-dark mt-1 block">
                     Minimum earnings required for creator payout.
@@ -135,7 +169,12 @@ export const Settings = () => {
                     type="number"
                     min={1}
                     value={formData.maximumRechargeAmount}
-                    onChange={(e) => handleChange('maximumRechargeAmount', Number(e.target.value))}
+                    onChange={(e) =>
+                      handleChange(
+                        "maximumRechargeAmount",
+                        Number(e.target.value),
+                      )
+                    }
                   />
                   <span className="text-xs text-textSecondary-light dark:text-textSecondary-dark mt-1 block">
                     Maximum coin recharge allowed per transaction.
@@ -155,14 +194,21 @@ export const Settings = () => {
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between p-4 bg-surface-light dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark">
                 <div>
-                  <p className="font-semibold text-textMain-light dark:text-textMain-dark">Creator Registrations</p>
+                  <p className="font-semibold text-textMain-light dark:text-textMain-dark">
+                    Creator Registrations
+                  </p>
                   <p className="text-xs text-textSecondary-light dark:text-textSecondary-dark">
                     Allow new creator applications on the Girls App.
                   </p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => handleChange('isGirlRegistrationEnabled', !formData.isGirlRegistrationEnabled)}
+                  onClick={() =>
+                    handleChange(
+                      "isGirlRegistrationEnabled",
+                      !formData.isGirlRegistrationEnabled,
+                    )
+                  }
                   className="text-primary hover:opacity-80 transition-all"
                 >
                   {formData.isGirlRegistrationEnabled ? (
@@ -175,14 +221,21 @@ export const Settings = () => {
 
               <div className="flex items-center justify-between p-4 bg-surface-light dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark">
                 <div>
-                  <p className="font-semibold text-textMain-light dark:text-textMain-dark">Maintenance Mode</p>
+                  <p className="font-semibold text-textMain-light dark:text-textMain-dark">
+                    Maintenance Mode
+                  </p>
                   <p className="text-xs text-textSecondary-light dark:text-textSecondary-dark">
                     Temporarily restrict user access for platform updates.
                   </p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => handleChange('isMaintenanceMode', !formData.isMaintenanceMode)}
+                  onClick={() =>
+                    handleChange(
+                      "isMaintenanceMode",
+                      !formData.isMaintenanceMode,
+                    )
+                  }
                   className="text-primary hover:opacity-80 transition-all"
                 >
                   {formData.isMaintenanceMode ? (

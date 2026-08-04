@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { Card, CardContent } from '../common/Card';
+import type { ReactNode } from "react";
+import { Card, CardContent } from "../common/Card";
 
 interface KpiCardProps {
   title: string;
@@ -12,7 +12,13 @@ interface KpiCardProps {
   isLoading?: boolean;
 }
 
-export const KpiCard = ({ title, value, icon, trend, isLoading }: KpiCardProps) => {
+export const KpiCard = ({
+  title,
+  value,
+  icon,
+  trend,
+  isLoading,
+}: KpiCardProps) => {
   return (
     <Card className="border-none shadow-card overflow-hidden">
       <CardContent className="p-6">
@@ -26,13 +32,16 @@ export const KpiCard = ({ title, value, icon, trend, isLoading }: KpiCardProps) 
                 <div className="h-8 w-24 bg-surface-dark/10 animate-pulse rounded" />
               ) : (
                 <h3 className="text-2xl font-bold text-textMain-light dark:text-textMain-dark">
-                  {value ?? 'N/A'}
+                  {value ?? "N/A"}
                 </h3>
               )}
 
               {!isLoading && trend && (
-                <span className={`text-xs font-semibold ${trend.isPositive ? 'text-success' : 'text-danger'}`}>
-                  {trend.isPositive ? '+' : ''}{trend.value}%
+                <span
+                  className={`text-xs font-semibold ${trend.isPositive ? "text-success" : "text-danger"}`}
+                >
+                  {trend.isPositive ? "+" : ""}
+                  {trend.value}%
                 </span>
               )}
             </div>

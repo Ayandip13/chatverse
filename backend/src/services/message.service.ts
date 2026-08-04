@@ -27,7 +27,11 @@ class MessageService {
     if (!isStructuredContent) {
       for (const pattern of this.BLOCKED_PATTERNS) {
         if (pattern.test(content)) {
-          throw new ApiError(STATUS_CODES.FORBIDDEN, 'Message contains blocked content', 'BLOCKED_CONTENT');
+          throw new ApiError(
+            STATUS_CODES.FORBIDDEN,
+            'Message contains blocked content',
+            'BLOCKED_CONTENT',
+          );
         }
       }
     }

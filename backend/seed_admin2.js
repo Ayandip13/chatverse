@@ -18,7 +18,10 @@ async function seedAdmin() {
     if (existingAdmin) {
       console.log('Admin already exists in User collection.');
       if (!existingAdmin.password) {
-        await User.updateOne({ email }, { $set: { password: hashedPassword, role: 'ADMIN', status: 'ACTIVE' } });
+        await User.updateOne(
+          { email },
+          { $set: { password: hashedPassword, role: 'ADMIN', status: 'ACTIVE' } },
+        );
         console.log('Admin updated with password and role.');
       }
     } else {
@@ -28,7 +31,7 @@ async function seedAdmin() {
         name: 'Super Admin',
         role: 'ADMIN',
         status: 'ACTIVE',
-        authProvider: 'LOCAL'
+        authProvider: 'LOCAL',
       });
       console.log('Admin seeded successfully in User collection.');
     }

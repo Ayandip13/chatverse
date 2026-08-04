@@ -84,13 +84,17 @@ class AuthService {
     // For this implementation, we will mock the verification and assume the token is the user's email
     // This is because we don't have Google client ID configured.
     const email = idToken; // MOCK
-    const name = "Google User"; // MOCK
-    
+    const name = 'Google User'; // MOCK
+
     let user = await userRepository.findByEmail(email);
-    
+
     if (!user) {
       if (!role) {
-        throw new ApiError(STATUS_CODES.BAD_REQUEST, 'Role is required for registration', 'ROLE_REQUIRED');
+        throw new ApiError(
+          STATUS_CODES.BAD_REQUEST,
+          'Role is required for registration',
+          'ROLE_REQUIRED',
+        );
       }
       const status = role === Role.BOY ? BoyStatus.ACTIVE : GirlStatus.PENDING;
       user = await userRepository.create({
@@ -123,9 +127,9 @@ class AuthService {
 
   async refresh(token: string) {
     try {
-      const decoded = await import('@/utils/jwt.util').then(m => m.verifyRefreshToken(token));
+      const decoded = await import('@/utils/jwt.util').then((m) => m.verifyRefreshToken(token));
       const user = await userRepository.findById(decoded.userId);
-      
+
       if (!user || user.tokenVersion !== decoded.tokenVersion) {
         throw new ApiError(STATUS_CODES.UNAUTHORIZED, 'Invalid refresh token', 'UNAUTHORIZED');
       }
@@ -143,7 +147,11 @@ class AuthService {
 
       return { accessToken, refreshToken };
     } catch (error) {
-      throw new ApiError(STATUS_CODES.UNAUTHORIZED, 'Invalid or expired refresh token', 'TOKEN_EXPIRED');
+      throw new ApiError(
+        STATUS_CODES.UNAUTHORIZED,
+        'Invalid or expired refresh token',
+        'TOKEN_EXPIRED',
+      );
     }
   }
 

@@ -1,19 +1,19 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-const backendDir = path.join(__dirname, 'backend');
+const backendDir = path.join(__dirname, "backend");
 
 const mkDir = (dir) => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 };
 
-mkDir(path.join(backendDir, 'src/api/notifications'));
-mkDir(path.join(backendDir, 'src/validators'));
-mkDir(path.join(backendDir, 'src/services'));
-mkDir(path.join(backendDir, 'src/repositories'));
+mkDir(path.join(backendDir, "src/api/notifications"));
+mkDir(path.join(backendDir, "src/validators"));
+mkDir(path.join(backendDir, "src/services"));
+mkDir(path.join(backendDir, "src/repositories"));
 
 const files = {
-  'src/validators/notification.validator.ts': `import { z } from 'zod';
+  "src/validators/notification.validator.ts": `import { z } from 'zod';
 
 export const getNotificationsQuerySchema = z.object({
   query: z.object({
@@ -22,7 +22,7 @@ export const getNotificationsQuerySchema = z.object({
   }),
 });
 `,
-  'src/repositories/notification.repository.ts': `import { Notification } from '@/models';
+  "src/repositories/notification.repository.ts": `import { Notification } from '@/models';
 import { INotification } from '@/types/models.type';
 import { NotificationStatus } from '@/constants/enums.constant';
 import { Types } from 'mongoose';
@@ -71,7 +71,7 @@ class NotificationRepository {
 
 export const notificationRepository = new NotificationRepository();
 `,
-  'src/services/notification.service.ts': `import { notificationRepository } from '@/repositories/notification.repository';
+  "src/services/notification.service.ts": `import { notificationRepository } from '@/repositories/notification.repository';
 import { ApiError } from '@/utils/ApiError.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
 import { NotificationStatus } from '@/constants/enums.constant';
@@ -173,7 +173,7 @@ class NotificationService {
 
 export const notificationService = new NotificationService();
 `,
-  'src/api/notifications/notification.controller.ts': `import { Request, Response } from 'express';
+  "src/api/notifications/notification.controller.ts": `import { Request, Response } from 'express';
 import { asyncHandler } from '@/utils/asyncHandler.util';
 import { ApiResponse } from '@/utils/ApiResponse.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
@@ -224,7 +224,7 @@ export const getUnreadCount = asyncHandler(async (req: Request, res: Response) =
   res.status(STATUS_CODES.OK).json(new ApiResponse({ count }, 'Unread count retrieved'));
 });
 `,
-  'src/api/notifications/notification.route.ts': `import { Router } from 'express';
+  "src/api/notifications/notification.route.ts": `import { Router } from 'express';
 import * as notificationController from './notification.controller';
 import { validate } from '@/middlewares/validate.middleware';
 import { requireAuth } from '@/middlewares/auth.middleware';
@@ -244,11 +244,11 @@ router.patch('/:id/read', notificationController.markAsRead);
 router.delete('/:id', notificationController.deleteNotification);
 
 export default router;
-`
+`,
 };
 
 for (const [relativePath, content] of Object.entries(files)) {
   const filePath = path.join(backendDir, relativePath);
-  fs.writeFileSync(filePath, content, 'utf8');
+  fs.writeFileSync(filePath, content, "utf8");
 }
-console.log('Notification scaffolding complete.');
+console.log("Notification scaffolding complete.");

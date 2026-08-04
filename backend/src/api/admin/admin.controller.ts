@@ -18,9 +18,11 @@ export const getUsers = asyncHandler(async (req: Request, res: Response) => {
   const result = await verificationService.getUsers(
     { role, status, search },
     parseInt(page as string, 10) || 1,
-    parseInt(limit as string, 10) || 10
+    parseInt(limit as string, 10) || 10,
   );
-  res.status(STATUS_CODES.OK).json({ success: true, data: result.users, meta: { total: result.total } });
+  res
+    .status(STATUS_CODES.OK)
+    .json({ success: true, data: result.users, meta: { total: result.total } });
 });
 
 export const getUserDetails = asyncHandler(async (req: Request, res: Response) => {
@@ -31,7 +33,12 @@ export const getUserDetails = asyncHandler(async (req: Request, res: Response) =
 export const updateUserStatus = asyncHandler(async (req: Request, res: Response) => {
   const { status, reason } = req.body;
   const adminId = (req as any).admin?.adminId || 'mock_admin_id';
-  const updatedUser = await verificationService.updateUserStatus(req.params.id, status, adminId, reason);
+  const updatedUser = await verificationService.updateUserStatus(
+    req.params.id,
+    status,
+    adminId,
+    reason,
+  );
   res.status(STATUS_CODES.OK).json(new ApiResponse(updatedUser, 'User status updated'));
 });
 
@@ -41,9 +48,11 @@ export const getChats = asyncHandler(async (req: Request, res: Response) => {
   const result = await adminService.getChats(
     { status },
     parseInt(page as string, 10) || 1,
-    parseInt(limit as string, 10) || 10
+    parseInt(limit as string, 10) || 10,
   );
-  res.status(STATUS_CODES.OK).json({ success: true, data: result.chats, meta: { total: result.total } });
+  res
+    .status(STATUS_CODES.OK)
+    .json({ success: true, data: result.chats, meta: { total: result.total } });
 });
 
 export const getChatMessages = asyncHandler(async (req: Request, res: Response) => {
@@ -51,9 +60,11 @@ export const getChatMessages = asyncHandler(async (req: Request, res: Response) 
   const result = await adminService.getChatMessages(
     req.params.id,
     parseInt(page as string, 10) || 1,
-    parseInt(limit as string, 10) || 20
+    parseInt(limit as string, 10) || 20,
   );
-  res.status(STATUS_CODES.OK).json({ success: true, data: result.messages, meta: { total: result.total } });
+  res
+    .status(STATUS_CODES.OK)
+    .json({ success: true, data: result.messages, meta: { total: result.total } });
 });
 
 // Transactions
@@ -62,9 +73,11 @@ export const getTransactions = asyncHandler(async (req: Request, res: Response) 
   const result = await adminService.getTransactions(
     { type, startDate, endDate },
     parseInt(page as string, 10) || 1,
-    parseInt(limit as string, 10) || 10
+    parseInt(limit as string, 10) || 10,
   );
-  res.status(STATUS_CODES.OK).json({ success: true, data: result.transactions, meta: { total: result.total } });
+  res
+    .status(STATUS_CODES.OK)
+    .json({ success: true, data: result.transactions, meta: { total: result.total } });
 });
 
 // Withdrawals
@@ -73,9 +86,11 @@ export const getWithdrawals = asyncHandler(async (req: Request, res: Response) =
   const result = await adminService.getWithdrawals(
     { status },
     parseInt(page as string, 10) || 1,
-    parseInt(limit as string, 10) || 10
+    parseInt(limit as string, 10) || 10,
   );
-  res.status(STATUS_CODES.OK).json({ success: true, data: result.requests, meta: { total: result.total } });
+  res
+    .status(STATUS_CODES.OK)
+    .json({ success: true, data: result.requests, meta: { total: result.total } });
 });
 
 export const updateWithdrawal = asyncHandler(async (req: Request, res: Response) => {
@@ -87,7 +102,7 @@ export const updateWithdrawal = asyncHandler(async (req: Request, res: Response)
     adminId,
     notes,
     rejectionReason,
-    transactionReference || transactionReason
+    transactionReference || transactionReason,
   );
   res.status(STATUS_CODES.OK).json(new ApiResponse(updated, 'Withdrawal status updated'));
 });
@@ -100,9 +115,11 @@ export const getReports = asyncHandler(async (req: Request, res: Response) => {
   const result = await reportRepository.getPaginatedReports(
     status ? { status } : {},
     parseInt(page as string, 10) || 1,
-    parseInt(limit as string, 10) || 20
+    parseInt(limit as string, 10) || 20,
   );
-  res.status(STATUS_CODES.OK).json({ success: true, data: result.reports, meta: { total: result.total } });
+  res
+    .status(STATUS_CODES.OK)
+    .json({ success: true, data: result.reports, meta: { total: result.total } });
 });
 
 // Financial Settlements
@@ -111,10 +128,12 @@ export const getSettlements = asyncHandler(async (req: Request, res: Response) =
   const result = await settlementService.getSettlements(
     parseInt(page as string, 10) || 1,
     parseInt(limit as string, 10) || 10,
-    { status }
+    { status },
   );
   const summary = await settlementService.getFinancialSummary();
-  res.status(STATUS_CODES.OK).json({ success: true, data: result.items, meta: { total: result.total, summary } });
+  res
+    .status(STATUS_CODES.OK)
+    .json({ success: true, data: result.items, meta: { total: result.total, summary } });
 });
 
 export const getFinancialSummary = asyncHandler(async (req: Request, res: Response) => {

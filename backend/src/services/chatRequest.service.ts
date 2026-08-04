@@ -33,10 +33,18 @@ class ChatRequestService {
 
     const receiver = await userRepository.findById(receiverId);
     if (!receiver || receiver.role !== Role.GIRL) {
-      throw new ApiError(STATUS_CODES.BAD_REQUEST, 'You can only send requests to girls', 'INVALID_TARGET');
+      throw new ApiError(
+        STATUS_CODES.BAD_REQUEST,
+        'You can only send requests to girls',
+        'INVALID_TARGET',
+      );
     }
     if (receiver.status !== GirlStatus.APPROVED) {
-      throw new ApiError(STATUS_CODES.FORBIDDEN, 'This girl is not approved to receive requests', 'GIRL_NOT_APPROVED');
+      throw new ApiError(
+        STATUS_CODES.FORBIDDEN,
+        'This girl is not approved to receive requests',
+        'GIRL_NOT_APPROVED',
+      );
     }
 
     // Check Wallet Balance (Minimum 10 coins)
@@ -48,30 +56,40 @@ class ChatRequestService {
       throw new ApiError(
         STATUS_CODES.BAD_REQUEST,
         'Insufficient wallet balance. You need at least 10 coins to request a chat.',
-        'INSUFFICIENT_FUNDS'
+        'INSUFFICIENT_FUNDS',
       );
     }
 
     // Check Girl Online Status
-    const isOnline = isUserOnline(receiverId) || (receiver.updatedAt && new Date(receiver.updatedAt).getTime() > Date.now() - 15 * 60000);
+    const isOnline =
+      isUserOnline(receiverId) ||
+      (receiver.updatedAt && new Date(receiver.updatedAt).getTime() > Date.now() - 15 * 60000);
     if (!isOnline) {
       throw new ApiError(
         STATUS_CODES.BAD_REQUEST,
         'This creator is currently offline. You can only send chat requests to online creators.',
-        'GIRL_OFFLINE'
+        'GIRL_OFFLINE',
       );
     }
 
     // Check for duplicate pending request
     const existingRequest = await chatRequestRepository.findPendingRequest(senderId, receiverId);
     if (existingRequest) {
-      throw new ApiError(STATUS_CODES.CONFLICT, 'You already have a pending request to this girl', 'DUPLICATE_REQUEST');
+      throw new ApiError(
+        STATUS_CODES.CONFLICT,
+        'You already have a pending request to this girl',
+        'DUPLICATE_REQUEST',
+      );
     }
 
     // Check for existing active chat
     const activeChat = await chatRepository.findActiveChat(senderId, receiverId);
     if (activeChat) {
-      throw new ApiError(STATUS_CODES.CONFLICT, 'You already have an active chat session with this girl', 'CHAT_ALREADY_ACTIVE');
+      throw new ApiError(
+        STATUS_CODES.CONFLICT,
+        'You already have an active chat session with this girl',
+        'CHAT_ALREADY_ACTIVE',
+      );
     }
 
     const request = await chatRequestRepository.create(senderId, receiverId);
@@ -103,33 +121,52 @@ class ChatRequestService {
       throw new ApiError(STATUS_CODES.NOT_FOUND, 'Chat request not found', 'NOT_FOUND');
     }
     if (request.receiverId.toString() !== receiverId) {
-      throw new ApiError(STATUS_CODES.FORBIDDEN, 'You can only accept your own requests', 'UNAUTHORIZED');
+      throw new ApiError(
+        STATUS_CODES.FORBIDDEN,
+        'You can only accept your own requests',
+        'UNAUTHORIZED',
+      );
     }
     if (request.status !== ChatRequestStatus.PENDING) {
-      throw new ApiError(STATUS_CODES.BAD_REQUEST, `Request cannot be accepted as it is ${request.status}`, 'INVALID_STATE');
+      throw new ApiError(
+        STATUS_CODES.BAD_REQUEST,
+        `Request cannot be accepted as it is ${request.status}`,
+        'INVALID_STATE',
+      );
     }
 
     // Ensure girl is still approved
     const receiver = await userRepository.findById(receiverId);
     if (!receiver || receiver.status !== GirlStatus.APPROVED) {
-      throw new ApiError(STATUS_CODES.FORBIDDEN, 'Your account is not approved to accept requests', 'GIRL_NOT_APPROVED');
+      throw new ApiError(
+        STATUS_CODES.FORBIDDEN,
+        'Your account is not approved to accept requests',
+        'GIRL_NOT_APPROVED',
+      );
     }
 
     // Re-verify Boy's balance
     const wallet = await walletRepository.findByUserId(request.senderId.toString());
     if (!wallet || wallet.currentBalance < 10) {
       await chatRequestRepository.updateStatus(requestId, ChatRequestStatus.EXPIRED);
-      throw new ApiError(STATUS_CODES.BAD_REQUEST, 'Sender balance is insufficient for chat', 'INSUFFICIENT_FUNDS');
+      throw new ApiError(
+        STATUS_CODES.BAD_REQUEST,
+        'Sender balance is insufficient for chat',
+        'INSUFFICIENT_FUNDS',
+      );
     }
 
     // Update Request Status
-    const updatedRequest = await chatRequestRepository.updateStatus(requestId, ChatRequestStatus.ACCEPTED);
-    
+    const updatedRequest = await chatRequestRepository.updateStatus(
+      requestId,
+      ChatRequestStatus.ACCEPTED,
+    );
+
     // Create Active Chat
     const activeChat = await chatRepository.create(
       request.senderId.toString(),
       receiverId,
-      requestId
+      requestId,
     );
 
     const io = getSocketIO();
@@ -143,7 +180,9 @@ class ChatRequestService {
 
       io.to(`user:${request.senderId.toString()}`).emit('chat_request:accepted', acceptedPayload);
       io.to(`user:${receiverId}`).emit('chat_request:accepted', acceptedPayload);
-      io.to(`user:${request.senderId.toString()}`).emit('chat:started', { chatId: activeChat._id.toString() });
+      io.to(`user:${request.senderId.toString()}`).emit('chat:started', {
+        chatId: activeChat._id.toString(),
+      });
       io.to(`user:${receiverId}`).emit('chat:started', { chatId: activeChat._id.toString() });
     }
 
@@ -156,10 +195,18 @@ class ChatRequestService {
       throw new ApiError(STATUS_CODES.NOT_FOUND, 'Chat request not found', 'NOT_FOUND');
     }
     if (request.receiverId.toString() !== receiverId) {
-      throw new ApiError(STATUS_CODES.FORBIDDEN, 'You can only reject your own requests', 'UNAUTHORIZED');
+      throw new ApiError(
+        STATUS_CODES.FORBIDDEN,
+        'You can only reject your own requests',
+        'UNAUTHORIZED',
+      );
     }
     if (request.status !== ChatRequestStatus.PENDING) {
-      throw new ApiError(STATUS_CODES.BAD_REQUEST, `Request cannot be rejected as it is ${request.status}`, 'INVALID_STATE');
+      throw new ApiError(
+        STATUS_CODES.BAD_REQUEST,
+        `Request cannot be rejected as it is ${request.status}`,
+        'INVALID_STATE',
+      );
     }
 
     const updated = await chatRequestRepository.updateStatus(requestId, ChatRequestStatus.REJECTED);
@@ -179,24 +226,44 @@ class ChatRequestService {
       throw new ApiError(STATUS_CODES.NOT_FOUND, 'Chat request not found', 'NOT_FOUND');
     }
     if (request.senderId.toString() !== senderId) {
-      throw new ApiError(STATUS_CODES.FORBIDDEN, 'You can only cancel your own requests', 'UNAUTHORIZED');
+      throw new ApiError(
+        STATUS_CODES.FORBIDDEN,
+        'You can only cancel your own requests',
+        'UNAUTHORIZED',
+      );
     }
     if (request.status !== ChatRequestStatus.PENDING) {
-      throw new ApiError(STATUS_CODES.BAD_REQUEST, `Request cannot be cancelled as it is ${request.status}`, 'INVALID_STATE');
+      throw new ApiError(
+        STATUS_CODES.BAD_REQUEST,
+        `Request cannot be cancelled as it is ${request.status}`,
+        'INVALID_STATE',
+      );
     }
 
-    const updated = await chatRequestRepository.updateStatus(requestId, ChatRequestStatus.CANCELLED);
+    const updated = await chatRequestRepository.updateStatus(
+      requestId,
+      ChatRequestStatus.CANCELLED,
+    );
 
     const io = getSocketIO();
     if (io) {
       const cancelledPayload = { requestId, boyId: senderId };
-      io.to(`user:${request.receiverId.toString()}`).emit('chat_request:cancelled', cancelledPayload);
+      io.to(`user:${request.receiverId.toString()}`).emit(
+        'chat_request:cancelled',
+        cancelledPayload,
+      );
     }
 
     return updated;
   }
 
-  async getRequests(userId: string, role: 'BOY' | 'GIRL', filters: any, page: number, limit: number) {
+  async getRequests(
+    userId: string,
+    role: 'BOY' | 'GIRL',
+    filters: any,
+    page: number,
+    limit: number,
+  ) {
     return await chatRequestRepository.getPaginatedRequests(userId, role, filters, page, limit);
   }
 }

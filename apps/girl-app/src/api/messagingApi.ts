@@ -1,4 +1,4 @@
-import apiClient from './apiClient';
+import apiClient from "./apiClient";
 
 export interface ChatRequest {
   _id: string;
@@ -9,18 +9,20 @@ export interface ChatRequest {
     role: string;
   };
   receiverId: string;
-  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED' | 'CANCELLED';
+  status: "PENDING" | "ACCEPTED" | "REJECTED" | "EXPIRED" | "CANCELLED";
   createdAt: string;
   updatedAt: string;
 }
 
 export interface Chat {
   _id: string;
-  boyId?: {
-    _id: string;
-    name: string;
-    avatar?: string;
-  } | string;
+  boyId?:
+    | {
+        _id: string;
+        name: string;
+        avatar?: string;
+      }
+    | string;
   girlId?: string;
   otherParticipant?: {
     _id: string;
@@ -29,7 +31,7 @@ export interface Chat {
     isOnline?: boolean;
   };
   chatRequestId?: string;
-  status: 'ACTIVE' | 'ENDED';
+  status: "ACTIVE" | "ENDED";
   startTime: string;
   endTime?: string;
   durationInMinutes?: number;
@@ -45,8 +47,12 @@ export interface Message {
   createdAt: string;
 }
 
-export const fetchChatRequests = async (params?: { status?: string; page?: number; limit?: number }) => {
-  const response = await apiClient.get('/chat-requests', { params });
+export const fetchChatRequests = async (params?: {
+  status?: string;
+  page?: number;
+  limit?: number;
+}) => {
+  const response = await apiClient.get("/chat-requests", { params });
   return response.data.data as ChatRequest[];
 };
 
@@ -61,12 +67,14 @@ export const rejectChatRequest = async (requestId: string) => {
 };
 
 export const fetchActiveChats = async () => {
-  const response = await apiClient.get('/chats', { params: { status: 'ACTIVE', limit: 20 } });
+  const response = await apiClient.get("/chats", {
+    params: { status: "ACTIVE", limit: 20 },
+  });
   return response.data.data as Chat[];
 };
 
 export const fetchRecentChats = async () => {
-  const response = await apiClient.get('/chats', { params: { limit: 50 } });
+  const response = await apiClient.get("/chats", { params: { limit: 50 } });
   return response.data.data as Chat[];
 };
 
@@ -75,8 +83,14 @@ export const fetchChatDetails = async (chatId: string) => {
   return response.data.data as Chat;
 };
 
-export const fetchChatMessages = async (chatId: string, page = 1, limit = 50) => {
-  const response = await apiClient.get(`/chats/${chatId}/messages`, { params: { page, limit } });
+export const fetchChatMessages = async (
+  chatId: string,
+  page = 1,
+  limit = 50,
+) => {
+  const response = await apiClient.get(`/chats/${chatId}/messages`, {
+    params: { page, limit },
+  });
   return {
     messages: response.data.data as Message[],
     meta: response.data.meta,

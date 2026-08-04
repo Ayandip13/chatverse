@@ -29,7 +29,7 @@ export const initializeSocket = (server: HttpServer): void => {
     connectionStateRecovery: {
       maxDisconnectionDuration: 2 * 60 * 1000,
       skipMiddlewares: true,
-    }
+    },
   });
 
   // Attach Authentication Middleware

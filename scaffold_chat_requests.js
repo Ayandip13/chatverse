@@ -1,18 +1,18 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-const backendDir = path.join(__dirname, 'backend');
+const backendDir = path.join(__dirname, "backend");
 const mkDir = (dir) => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 };
 
-mkDir(path.join(backendDir, 'src/api/chat-requests'));
-mkDir(path.join(backendDir, 'src/validators'));
-mkDir(path.join(backendDir, 'src/services'));
-mkDir(path.join(backendDir, 'src/repositories'));
+mkDir(path.join(backendDir, "src/api/chat-requests"));
+mkDir(path.join(backendDir, "src/validators"));
+mkDir(path.join(backendDir, "src/services"));
+mkDir(path.join(backendDir, "src/repositories"));
 
 const files = {
-  'src/validators/chatRequest.validator.ts': `import { z } from 'zod';
+  "src/validators/chatRequest.validator.ts": `import { z } from 'zod';
 
 export const sendChatRequestSchema = z.object({
   body: z.object({
@@ -28,7 +28,7 @@ export const getRequestsQuerySchema = z.object({
   }),
 });
 `,
-  'src/repositories/chatRequest.repository.ts': `import { ChatRequest } from '@/models';
+  "src/repositories/chatRequest.repository.ts": `import { ChatRequest } from '@/models';
 import { IChatRequest } from '@/types/models.type';
 import { ChatRequestStatus } from '@/constants/enums.constant';
 import { FilterQuery, Types } from 'mongoose';
@@ -81,7 +81,7 @@ class ChatRequestRepository {
 
 export const chatRequestRepository = new ChatRequestRepository();
 `,
-  'src/repositories/chat.repository.ts': `import { Chat } from '@/models';
+  "src/repositories/chat.repository.ts": `import { Chat } from '@/models';
 import { IChat } from '@/types/models.type';
 import { ChatStatus } from '@/constants/enums.constant';
 
@@ -93,7 +93,7 @@ class ChatRepository {
 
 export const chatRepository = new ChatRepository();
 `,
-  'src/services/chatRequest.service.ts': `import { chatRequestRepository } from '@/repositories/chatRequest.repository';
+  "src/services/chatRequest.service.ts": `import { chatRequestRepository } from '@/repositories/chatRequest.repository';
 import { chatRepository } from '@/repositories/chat.repository';
 import { userRepository } from '@/repositories/user.repository';
 import { ApiError } from '@/utils/ApiError.util';
@@ -199,7 +199,7 @@ class ChatRequestService {
 
 export const chatRequestService = new ChatRequestService();
 `,
-  'src/api/chat-requests/chatRequest.controller.ts': `import { Request, Response } from 'express';
+  "src/api/chat-requests/chatRequest.controller.ts": `import { Request, Response } from 'express';
 import { asyncHandler } from '@/utils/asyncHandler.util';
 import { ApiResponse } from '@/utils/ApiResponse.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
@@ -248,7 +248,7 @@ export const getRequests = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 `,
-  'src/api/chat-requests/chatRequest.route.ts': `import { Router } from 'express';
+  "src/api/chat-requests/chatRequest.route.ts": `import { Router } from 'express';
 import * as chatRequestController from './chatRequest.controller';
 import { validate } from '@/middlewares/validate.middleware';
 import { requireAuth, requireRole } from '@/middlewares/auth.middleware';
@@ -266,11 +266,11 @@ router.post('/:id/cancel', requireRole([Role.BOY]), chatRequestController.cancel
 router.get('/', validate(getRequestsQuerySchema), chatRequestController.getRequests);
 
 export default router;
-`
+`,
 };
 
 for (const [relativePath, content] of Object.entries(files)) {
   const filePath = path.join(backendDir, relativePath);
-  fs.writeFileSync(filePath, content, 'utf8');
+  fs.writeFileSync(filePath, content, "utf8");
 }
-console.log('Chat Request scaffolding complete.');
+console.log("Chat Request scaffolding complete.");

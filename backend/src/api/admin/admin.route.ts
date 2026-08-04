@@ -3,11 +3,11 @@ import * as adminController from './admin.controller';
 import { validate } from '@/middlewares/validate.middleware';
 import { requireAdminAuth } from '@/middlewares/adminAuth.middleware';
 import { updateStatusSchema, getUsersQuerySchema } from '@/validators/admin.validator';
-import { 
-  getChatsQuerySchema, 
-  getTransactionsQuerySchema, 
-  getWithdrawalsQuerySchema, 
-  updateWithdrawalSchema 
+import {
+  getChatsQuerySchema,
+  getTransactionsQuerySchema,
+  getWithdrawalsQuerySchema,
+  updateWithdrawalSchema,
 } from '@/validators/adminExtended.validator';
 
 const router = Router();
@@ -31,8 +31,16 @@ router.get('/transactions', validate(getTransactionsQuerySchema), adminControlle
 
 // Withdrawal Management
 router.get('/withdrawals', validate(getWithdrawalsQuerySchema), adminController.getWithdrawals);
-router.patch('/withdrawals/:id/status', validate(updateWithdrawalSchema), adminController.updateWithdrawal);
-router.post('/withdrawals/:id/process', validate(updateWithdrawalSchema), adminController.updateWithdrawal); // Alias to match contract
+router.patch(
+  '/withdrawals/:id/status',
+  validate(updateWithdrawalSchema),
+  adminController.updateWithdrawal,
+);
+router.post(
+  '/withdrawals/:id/process',
+  validate(updateWithdrawalSchema),
+  adminController.updateWithdrawal,
+); // Alias to match contract
 
 // Reports
 router.get('/reports', adminController.getReports);

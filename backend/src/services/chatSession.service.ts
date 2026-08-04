@@ -99,7 +99,11 @@ class ChatSessionService {
    * Runs AFTER the message is saved & broadcast. Uses the atomic `$gte` billing
    * in settlement service to guarantee the balance never goes negative.
    */
-  public async processMessageDeduction(chatId: string, senderId: string, io: Server): Promise<boolean> {
+  public async processMessageDeduction(
+    chatId: string,
+    senderId: string,
+    io: Server,
+  ): Promise<boolean> {
     const session = this.sessions.get(chatId);
     if (!session) return false;
 
@@ -111,18 +115,24 @@ class ChatSessionService {
     const result = await settlementService.processMessageSettlement(
       session.chatId,
       session.boyId,
-      session.girlId
+      session.girlId,
     );
 
     if (!result.success) {
-      io.to(`chat:${chatId}`).emit('chat:error', { message: 'Failed to process payment for message.' });
+      io.to(`chat:${chatId}`).emit('chat:error', {
+        message: 'Failed to process payment for message.',
+      });
       return false;
     }
 
     // Update Chat model with total duration & cost (message count)
-    const updatedChat = await Chat.findByIdAndUpdate(chatId, {
-      $inc: { durationInMinutes: 1, totalCost: 1 } // Using durationInMinutes temporarily as message count until model is updated
-    }, { new: true });
+    const updatedChat = await Chat.findByIdAndUpdate(
+      chatId,
+      {
+        $inc: { durationInMinutes: 1, totalCost: 1 }, // Using durationInMinutes temporarily as message count until model is updated
+      },
+      { new: true },
+    );
 
     // Reuse the balances already returned by processMessageSettlement (no extra DB reads)
     const boyBalance = result.boyBalance;
@@ -138,10 +148,10 @@ class ChatSessionService {
       io.to(`chat:${chatId}`).emit('chat:stats_update', {
         chatId,
         messagesSent: updatedChat ? updatedChat.totalCost : 1, // Use the current chat's cost
-        remainingCoins: boyBalance
+        remainingCoins: boyBalance,
       });
     }
-    
+
     if (girlBalance !== undefined) {
       io.to(`user:${session.girlId}`).emit('wallet:update', {
         newBalance: girlBalance,
@@ -173,12 +183,10 @@ class ChatSessionService {
     }
 
     io.to(`chat:${chatId}`).emit('chat:participant_disconnected', { chatId, userId });
-    
-    // Note: We no longer auto-terminate the session on disconnect. 
+
+    // Note: We no longer auto-terminate the session on disconnect.
     // It remains active until explicitly ended by the girl.
   }
-
-
 
   /**
    * Terminate chat session gracefully
@@ -197,7 +205,9 @@ class ChatSessionService {
         chat.endTime = new Date();
         await chat.save();
 
-        logger.info(`Terminated chat ${chatId}. Reason: ${reason}, Total Duration: ${chat.durationInMinutes}m, Total Cost: ${chat.totalCost} coins`);
+        logger.info(
+          `Terminated chat ${chatId}. Reason: ${reason}, Total Duration: ${chat.durationInMinutes}m, Total Cost: ${chat.totalCost} coins`,
+        );
 
         if (io) {
           io.to(`chat:${chatId}`).emit('chat:ended', {

@@ -1,40 +1,56 @@
-import { useEffect, useRef, useState } from 'react';
-import { View, FlatList, ActivityIndicator, Text, KeyboardAvoidingView, Platform, Modal, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { AppStackParamList } from '../../navigation/types';
-import { useAuthStore } from '../../store/authStore';
-import { useChatDetails, useChatMessages } from '../../hooks/useMessaging';
-import { useChatSocket } from '../../hooks/useChatSocket';
-import { useChatStore } from '../../store/chatStore';
+import { useEffect, useRef, useState } from "react";
+import {
+  View,
+  FlatList,
+  ActivityIndicator,
+  Text,
+  KeyboardAvoidingView,
+  Platform,
+  Modal,
+  TouchableOpacity,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import { AppStackParamList } from "../../navigation/types";
+import { useAuthStore } from "../../store/authStore";
+import { useChatDetails, useChatMessages } from "../../hooks/useMessaging";
+import { useChatSocket } from "../../hooks/useChatSocket";
+import { useChatStore } from "../../store/chatStore";
 
-import { ChatHeader } from '../../components/chat/ChatHeader';
-import { CoinMessageCard } from '../../components/chat/CoinMessageCard';
-import { MessageBubble } from '../../components/chat/MessageBubble';
-import { ChatInput } from '../../components/chat/ChatInput';
-import { RatingModal } from '../../components/chat/RatingModal';
-import { CheckCircle2, Clock, Coins, XCircle } from 'lucide-react-native';
-import { Message } from '../../api/messagingApi';
-import { submitRating } from '../../api/ratingApi';
+import { ChatHeader } from "../../components/chat/ChatHeader";
+import { CoinMessageCard } from "../../components/chat/CoinMessageCard";
+import { MessageBubble } from "../../components/chat/MessageBubble";
+import { ChatInput } from "../../components/chat/ChatInput";
+import { RatingModal } from "../../components/chat/RatingModal";
+import { CheckCircle2, Clock, Coins, XCircle } from "lucide-react-native";
+import { Message } from "../../api/messagingApi";
+import { submitRating } from "../../api/ratingApi";
 
 export default function ChatScreen() {
-  const route = useRoute<RouteProp<AppStackParamList, 'ChatScreen'>>();
+  const route = useRoute<RouteProp<AppStackParamList, "ChatScreen">>();
   const { id } = route.params;
   const navigation = useNavigation<any>();
-  const userId = useAuthStore(state => state.user?._id);
+  const userId = useAuthStore((state) => state.user?._id);
   const { data: chat, isLoading: isChatLoading, isError } = useChatDetails(id);
-  
-  const { 
-    data: messagesData, 
-    isLoading: isMessagesLoading, 
-    fetchNextPage, 
+
+  const {
+    data: messagesData,
+    isLoading: isMessagesLoading,
+    fetchNextPage,
     hasNextPage,
-    isFetchingNextPage
+    isFetchingNextPage,
   } = useChatMessages(id);
 
-  const { sendMessage, emitTyping, endChatSession, chatStats, lowBalanceWarning, endedSummary } = useChatSocket(id);
-  
-  const typingUsers = useChatStore(state => state.typingUsers);
+  const {
+    sendMessage,
+    emitTyping,
+    endChatSession,
+    chatStats,
+    lowBalanceWarning,
+    endedSummary,
+  } = useChatSocket(id);
+
+  const typingUsers = useChatStore((state) => state.typingUsers);
   const isOtherUserTyping = typingUsers[id];
 
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
@@ -63,7 +79,7 @@ export default function ChatScreen() {
     );
   }
 
-  const allMessages = messagesData?.pages.flatMap(p => p.messages) || [];
+  const allMessages = messagesData?.pages.flatMap((p) => p.messages) || [];
 
   const handleSend = (text: string) => {
     sendMessage(id, text, Date.now().toString());
@@ -71,18 +87,25 @@ export default function ChatScreen() {
   };
 
   const handleCloseSummary = () => {
-    navigation.replace('Home');
+    navigation.replace("Home");
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900" edges={['bottom']}>
-      <KeyboardAvoidingView 
-        style={{ flex: 1 }} 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <SafeAreaView
+      className="flex-1 bg-gray-50 dark:bg-gray-900"
+      edges={["bottom"]}
+    >
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ChatHeader chat={chat} onRate={() => setShowRating(true)} />
-        {chat.status === 'ACTIVE' && (
-          <CoinMessageCard chat={chat} chatStats={chatStats} lowBalanceWarning={lowBalanceWarning} />
+        {chat.status === "ACTIVE" && (
+          <CoinMessageCard
+            chat={chat}
+            chatStats={chatStats}
+            lowBalanceWarning={lowBalanceWarning}
+          />
         )}
 
         <FlatList
@@ -93,9 +116,9 @@ export default function ChatScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: 16 }}
           renderItem={({ item }) => (
-            <MessageBubble 
-              message={item} 
-              isOwnMessage={item.senderId === userId} 
+            <MessageBubble
+              message={item}
+              isOwnMessage={item.senderId === userId}
               onReply={(msg) => setReplyingTo(msg)}
             />
           )}
@@ -104,22 +127,30 @@ export default function ChatScreen() {
           }}
           onEndReachedThreshold={0.5}
           ListFooterComponent={
-            isFetchingNextPage ? <ActivityIndicator size="small" color="#4f46e5" className="my-4" /> : null
+            isFetchingNextPage ? (
+              <ActivityIndicator
+                size="small"
+                color="#4f46e5"
+                className="my-4"
+              />
+            ) : null
           }
           ListHeaderComponent={
             isOtherUserTyping ? (
               <View className="flex-row items-center mb-4">
                 <View className="bg-gray-200 dark:bg-gray-800 rounded-full px-3 py-2">
-                  <Text className="text-gray-500 dark:text-gray-400 text-xs italic">Typing...</Text>
+                  <Text className="text-gray-500 dark:text-gray-400 text-xs italic">
+                    Typing...
+                  </Text>
                 </View>
               </View>
             ) : null
           }
         />
 
-        <ChatInput 
-          onSend={handleSend} 
-          onTyping={(isTyping) => emitTyping(id, isTyping)} 
+        <ChatInput
+          onSend={handleSend}
+          onTyping={(isTyping) => emitTyping(id, isTyping)}
           replyingTo={replyingTo}
           onCancelReply={() => setReplyingTo(null)}
         />
@@ -137,14 +168,16 @@ export default function ChatScreen() {
               Chat Session Completed
             </Text>
             <Text className="text-xs text-gray-500 dark:text-gray-400 text-center mb-6">
-              Reason: {endedSummary?.reason || 'Session ended'}
+              Reason: {endedSummary?.reason || "Session ended"}
             </Text>
 
             {/* Stats Breakdown */}
             <View className="w-full bg-gray-50 dark:bg-gray-900/50 p-4 rounded-2xl mb-6 flex-row justify-around border border-gray-100 dark:border-gray-800">
               <View className="items-center">
                 <Clock size={20} color="#6366f1" className="mb-1" />
-                <Text className="text-xs text-gray-400 font-medium">Messages Sent</Text>
+                <Text className="text-xs text-gray-400 font-medium">
+                  Messages Sent
+                </Text>
                 <Text className="text-base font-bold text-gray-900 dark:text-white mt-0.5">
                   {endedSummary?.finalDuration || 0} msgs
                 </Text>
@@ -154,18 +187,22 @@ export default function ChatScreen() {
 
               <View className="items-center">
                 <Coins size={20} color="#fbbf24" className="mb-1" />
-                <Text className="text-xs text-gray-400 font-medium">Total Cost</Text>
+                <Text className="text-xs text-gray-400 font-medium">
+                  Total Cost
+                </Text>
                 <Text className="text-base font-bold text-amber-600 dark:text-amber-400 mt-0.5 font-mono">
                   {endedSummary?.finalCost || 0} coins
                 </Text>
               </View>
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={handleCloseSummary}
               className="w-full bg-indigo-600 py-3.5 rounded-2xl items-center shadow-md shadow-indigo-500/30"
             >
-              <Text className="text-white font-bold text-base">Back to Home</Text>
+              <Text className="text-white font-bold text-base">
+                Back to Home
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

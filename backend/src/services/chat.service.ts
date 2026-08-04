@@ -13,7 +13,7 @@ class ChatService {
 
     const matchStage: any = {
       $or: [{ boyId: userObjId }, { girlId: userObjId }],
-      deletedAt: null
+      deletedAt: null,
     };
 
     if (status) {
@@ -28,27 +28,27 @@ class ChatService {
             $cond: {
               if: { $eq: ['$boyId', userObjId] },
               then: '$girlId',
-              else: '$boyId'
-            }
-          }
-        }
+              else: '$boyId',
+            },
+          },
+        },
       },
       {
         $lookup: {
           from: 'users',
           localField: 'otherParticipantId',
           foreignField: '_id',
-          as: 'participant'
-        }
+          as: 'participant',
+        },
       },
-      { $unwind: '$participant' }
+      { $unwind: '$participant' },
     ];
 
     if (search) {
       pipeline.push({
         $match: {
-          'participant.name': { $regex: search, $options: 'i' }
-        }
+          'participant.name': { $regex: search, $options: 'i' },
+        },
       });
     }
 
@@ -60,15 +60,15 @@ class ChatService {
           pipeline: [
             { $match: { $expr: { $eq: ['$chatId', '$$chatId'] } } },
             { $sort: { createdAt: -1 } },
-            { $limit: 1 }
+            { $limit: 1 },
           ],
-          as: 'lastMessageArr'
-        }
+          as: 'lastMessageArr',
+        },
       },
       {
         $addFields: {
-          lastMessage: { $arrayElemAt: ['$lastMessageArr', 0] }
-        }
+          lastMessage: { $arrayElemAt: ['$lastMessageArr', 0] },
+        },
       },
       {
         $project: {
@@ -85,39 +85,39 @@ class ChatService {
             _id: '$participant._id',
             name: '$participant.name',
             avatar: '$participant.avatar',
-            isOnline: { 
-              $gte: ['$participant.updatedAt', new Date(Date.now() - 15 * 60000)]
-            }
+            isOnline: {
+              $gte: ['$participant.updatedAt', new Date(Date.now() - 15 * 60000)],
+            },
           },
           lastMessage: {
             content: '$lastMessage.content',
             createdAt: '$lastMessage.createdAt',
-            senderId: '$lastMessage.senderId'
+            senderId: '$lastMessage.senderId',
           },
-          unreadCount: { $literal: 0 } // Mock unread count for now
-        }
-      }
+          unreadCount: { $literal: 0 }, // Mock unread count for now
+        },
+      },
     );
 
     // Filter by unread if requested
     if (unread) {
       pipeline.push({
-        $match: { unreadCount: { $gt: 0 } }
+        $match: { unreadCount: { $gt: 0 } },
       });
     }
 
     // Sort, facet for pagination
     pipeline.push({ $sort: { lastActivity: -1 } });
-    
+
     pipeline.push({
       $facet: {
         metadata: [{ $count: 'total' }],
-        data: [{ $skip: skip }, { $limit: limit }]
-      }
+        data: [{ $skip: skip }, { $limit: limit }],
+      },
     });
 
     const result = await Chat.aggregate(pipeline);
-    
+
     const rawChats = result[0].data;
     const total = result[0].metadata[0]?.total || 0;
 
@@ -125,13 +125,14 @@ class ChatService {
       ...chat,
       otherParticipant: {
         ...chat.otherParticipant,
-        isOnline: isUserOnline(chat.otherParticipant._id?.toString()) || chat.otherParticipant.isOnline
-      }
+        isOnline:
+          isUserOnline(chat.otherParticipant._id?.toString()) || chat.otherParticipant.isOnline,
+      },
     }));
 
     return { chats, total };
   }
-  
+
   async getChatDetails(userId: string, chatId: string) {
     if (!mongoose.Types.ObjectId.isValid(chatId)) {
       throw new ApiError(STATUS_CODES.BAD_REQUEST, 'Invalid chat ID', 'VALIDATION_ERROR');
@@ -145,8 +146,8 @@ class ChatService {
         $match: {
           _id: chatObjId,
           $or: [{ boyId: userObjId }, { girlId: userObjId }],
-          deletedAt: null
-        }
+          deletedAt: null,
+        },
       },
       {
         $addFields: {
@@ -154,18 +155,18 @@ class ChatService {
             $cond: {
               if: { $eq: ['$boyId', userObjId] },
               then: '$girlId',
-              else: '$boyId'
-            }
-          }
-        }
+              else: '$boyId',
+            },
+          },
+        },
       },
       {
         $lookup: {
           from: 'users',
           localField: 'otherParticipantId',
           foreignField: '_id',
-          as: 'participant'
-        }
+          as: 'participant',
+        },
       },
       { $unwind: '$participant' },
       {
@@ -182,12 +183,12 @@ class ChatService {
             _id: '$participant._id',
             name: '$participant.name',
             avatar: '$participant.avatar',
-            isOnline: { 
-              $gte: ['$participant.updatedAt', new Date(Date.now() - 15 * 60000)]
-            }
-          }
-        }
-      }
+            isOnline: {
+              $gte: ['$participant.updatedAt', new Date(Date.now() - 15 * 60000)],
+            },
+          },
+        },
+      },
     ];
 
     const result = await Chat.aggregate(pipeline);
@@ -198,7 +199,8 @@ class ChatService {
 
     const chat = result[0];
     if (chat.otherParticipant) {
-      chat.otherParticipant.isOnline = isUserOnline(chat.otherParticipant._id?.toString()) || chat.otherParticipant.isOnline;
+      chat.otherParticipant.isOnline =
+        isUserOnline(chat.otherParticipant._id?.toString()) || chat.otherParticipant.isOnline;
     }
 
     return chat;
@@ -212,7 +214,7 @@ class ChatService {
     const chat = await Chat.findOne({
       _id: chatId,
       $or: [{ boyId: userId }, { girlId: userId }],
-      deletedAt: null
+      deletedAt: null,
     }).lean();
 
     if (!chat) {
@@ -222,12 +224,8 @@ class ChatService {
     const skip = (page - 1) * limit;
 
     const [messages, total] = await Promise.all([
-      Message.find({ chatId })
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Message.countDocuments({ chatId })
+      Message.find({ chatId }).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Message.countDocuments({ chatId }),
     ]);
 
     return { messages, total };
@@ -242,7 +240,7 @@ class ChatService {
       _id: chatId,
       $or: [{ boyId: userId }, { girlId: userId }],
       deletedAt: null,
-      status: ChatStatus.ACTIVE
+      status: ChatStatus.ACTIVE,
     });
 
     if (!chat) {
@@ -256,7 +254,7 @@ class ChatService {
     const diffMs = chat.endTime.getTime() - chat.startTime.getTime();
     const durationMins = Math.ceil(diffMs / 60000);
     chat.durationInMinutes = durationMins;
-    
+
     await chat.save();
     return chat;
   }

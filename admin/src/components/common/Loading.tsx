@@ -1,11 +1,17 @@
-import { Loader2 } from 'lucide-react';
-import { cn } from '../../utils/cn';
+import { Loader2 } from "lucide-react";
+import { cn } from "../../utils/cn";
 
-export const Loading = ({ className, size = 'md' }: { className?: string, size?: 'sm' | 'md' | 'lg' }) => {
+export const Loading = ({
+  className,
+  size = "md",
+}: {
+  className?: string;
+  size?: "sm" | "md" | "lg";
+}) => {
   const sizes = {
-    sm: 'w-4 h-4',
-    md: 'w-8 h-8',
-    lg: 'w-12 h-12'
+    sm: "w-4 h-4",
+    md: "w-8 h-8",
+    lg: "w-12 h-12",
   };
 
   return (

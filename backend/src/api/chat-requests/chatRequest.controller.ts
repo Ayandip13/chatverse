@@ -12,7 +12,9 @@ export const sendRequest = asyncHandler(async (req: Request, res: Response) => {
 
 export const acceptRequest = asyncHandler(async (req: Request, res: Response) => {
   const result = await chatRequestService.acceptRequest(req.user!.userId, req.params.id);
-  res.status(STATUS_CODES.OK).json(new ApiResponse(result, 'Chat request accepted and chat started'));
+  res
+    .status(STATUS_CODES.OK)
+    .json(new ApiResponse(result, 'Chat request accepted and chat started'));
 });
 
 export const rejectRequest = asyncHandler(async (req: Request, res: Response) => {
@@ -32,7 +34,7 @@ export const getRequests = asyncHandler(async (req: Request, res: Response) => {
     req.user!.role as 'BOY' | 'GIRL',
     { status },
     parseInt(page, 10),
-    parseInt(limit, 10)
+    parseInt(limit, 10),
   );
 
   res.status(STATUS_CODES.OK).json({

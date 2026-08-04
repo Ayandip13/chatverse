@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, Text } from 'react-native';
-import { cn } from '../../utils/cn';
-import { theme } from '../../constants/theme';
+import React from "react";
+import { View, Text } from "react-native";
+import { cn } from "../../utils/cn";
+import { theme } from "../../constants/theme";
 
 interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -11,9 +11,15 @@ interface EmptyStateProps {
   className?: string;
 }
 
-export const EmptyState = ({ icon, title, description, action, className }: EmptyStateProps) => {
+export const EmptyState = ({
+  icon,
+  title,
+  description,
+  action,
+  className,
+}: EmptyStateProps) => {
   return (
-    <View className={cn('flex-1 items-center justify-center p-6', className)}>
+    <View className={cn("flex-1 items-center justify-center p-6", className)}>
       {icon && (
         <View className="mb-4 bg-gray-100 dark:bg-gray-800 p-4 rounded-full">
           {icon}

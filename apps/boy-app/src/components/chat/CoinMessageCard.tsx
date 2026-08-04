@@ -1,10 +1,10 @@
-import React from 'react';
-import { View, Text } from 'react-native';
-import { MessageSquare, Coins, AlertTriangle } from 'lucide-react-native';
-import { useQueryClient } from '@tanstack/react-query';
-import { WalletSummary } from '../../api/homeApi';
-import { ChatDetails } from '../../api/messagingApi';
-import { ChatStatsData } from '../../hooks/useChatSocket';
+import React from "react";
+import { View, Text } from "react-native";
+import { MessageSquare, Coins, AlertTriangle } from "lucide-react-native";
+import { useQueryClient } from "@tanstack/react-query";
+import { WalletSummary } from "../../api/homeApi";
+import { ChatDetails } from "../../api/messagingApi";
+import { ChatStatsData } from "../../hooks/useChatSocket";
 
 interface CoinMessageCardProps {
   chat: ChatDetails;
@@ -12,13 +12,18 @@ interface CoinMessageCardProps {
   lowBalanceWarning?: string | null;
 }
 
-export function CoinMessageCard({ chat, chatStats, lowBalanceWarning }: CoinMessageCardProps) {
+export function CoinMessageCard({
+  chat,
+  chatStats,
+  lowBalanceWarning,
+}: CoinMessageCardProps) {
   const queryClient = useQueryClient();
-  const wallet = queryClient.getQueryData<WalletSummary>(['walletSummary']);
+  const wallet = queryClient.getQueryData<WalletSummary>(["walletSummary"]);
 
-  const balance = chatStats?.remainingCoins !== undefined 
-    ? chatStats.remainingCoins 
-    : wallet?.currentBalance || 0;
+  const balance =
+    chatStats?.remainingCoins !== undefined
+      ? chatStats.remainingCoins
+      : wallet?.currentBalance || 0;
 
   const messagesSent = chatStats?.messagesSent || chat.totalCost || 0;
 
@@ -51,7 +56,10 @@ export function CoinMessageCard({ chat, chatStats, lowBalanceWarning }: CoinMess
       {lowBalanceWarning && (
         <View className="flex-row items-center bg-red-100 dark:bg-red-900/40 px-3 py-1.5 rounded-xl mt-2 border border-red-200 dark:border-red-800">
           <AlertTriangle size={14} color="#ef4444" className="mr-1.5" />
-          <Text className="text-red-700 dark:text-red-300 text-xs font-bold flex-1" numberOfLines={1}>
+          <Text
+            className="text-red-700 dark:text-red-300 text-xs font-bold flex-1"
+            numberOfLines={1}
+          >
             {lowBalanceWarning}
           </Text>
         </View>

@@ -23,15 +23,15 @@ const settlementSchema = new Schema<ISettlement>(
     grossCoins: { type: Number, default: 0, required: true },
     platformCommissionCoins: { type: Number, default: 0, required: true },
     girlEarningsCoins: { type: Number, default: 0, required: true },
-    status: { 
-      type: String, 
-      enum: ['COMPLETED', 'FAILED', 'PARTIAL'], 
+    status: {
+      type: String,
+      enum: ['COMPLETED', 'FAILED', 'PARTIAL'],
       default: 'COMPLETED',
-      required: true 
+      required: true,
     },
-    settledAt: { type: Date, default: Date.now }
+    settledAt: { type: Date, default: Date.now },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const Settlement = model<ISettlement>('Settlement', settlementSchema);

@@ -11,7 +11,12 @@ class WithdrawRequestRepository {
     const skip = (page - 1) * limit;
 
     const [requests, total] = await Promise.all([
-      WithdrawRequest.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).populate('userId', 'name email phone avatar').exec(),
+      WithdrawRequest.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('userId', 'name email phone avatar')
+        .exec(),
       WithdrawRequest.countDocuments(query).exec(),
     ]);
 
@@ -22,7 +27,10 @@ class WithdrawRequestRepository {
     return WithdrawRequest.findById(id).exec();
   }
 
-  async update(id: string, updateData: Partial<IWithdrawRequest>): Promise<IWithdrawRequest | null> {
+  async update(
+    id: string,
+    updateData: Partial<IWithdrawRequest>,
+  ): Promise<IWithdrawRequest | null> {
     return WithdrawRequest.findByIdAndUpdate(id, updateData, { new: true }).exec();
   }
 }

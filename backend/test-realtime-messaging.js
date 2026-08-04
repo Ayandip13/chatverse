@@ -34,18 +34,28 @@ async function testRealtimeMessaging() {
         status: 'ACTIVE',
         startTime: new Date(),
         durationInMinutes: 0,
-        totalCost: 0
+        totalCost: 0,
       });
     }
 
-    console.log(`[ACTIVE CHAT SETUP] ID: ${activeChat._id} | Boy: ${boy._id} | Girl: ${girl._id}\n`);
+    console.log(
+      `[ACTIVE CHAT SETUP] ID: ${activeChat._id} | Boy: ${boy._id} | Girl: ${girl._id}\n`,
+    );
 
     // -------------------------------------------------------------
     // TEST 1: Standard Text Message
     // -------------------------------------------------------------
     console.log('--- TEST 1: Standard Text Message ---');
-    const msg1 = await messageService.validateAndSaveMessage(activeChat._id.toString(), boy._id.toString(), 'Hello! How are you today? 😊');
-    console.log('Saved Message 1:', { _id: msg1._id, content: msg1.content, senderId: msg1.senderId });
+    const msg1 = await messageService.validateAndSaveMessage(
+      activeChat._id.toString(),
+      boy._id.toString(),
+      'Hello! How are you today? 😊',
+    );
+    console.log('Saved Message 1:', {
+      _id: msg1._id,
+      content: msg1.content,
+      senderId: msg1.senderId,
+    });
     if (!msg1 || msg1.content !== 'Hello! How are you today? 😊') {
       throw new Error('TEST 1 FAILED: Standard text message failed!');
     }
@@ -56,18 +66,28 @@ async function testRealtimeMessaging() {
     // -------------------------------------------------------------
     console.log('--- TEST 2: Image Message ([IMAGE]:url) ---');
     const imageUrl = 'https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg';
-    const msg2 = await messageService.validateAndSaveMessage(activeChat._id.toString(), girl._id.toString(), `[IMAGE]:${imageUrl}`);
+    const msg2 = await messageService.validateAndSaveMessage(
+      activeChat._id.toString(),
+      girl._id.toString(),
+      `[IMAGE]:${imageUrl}`,
+    );
     console.log('Saved Message 2 (Image):', { _id: msg2._id, content: msg2.content });
     if (!msg2 || !msg2.content.startsWith('[IMAGE]:')) {
       throw new Error('TEST 2 FAILED: Image message failed!');
     }
-    console.log('✅ TEST 2 PASSED: Image URL message correctly bypassed regex blocklist & saved.\n');
+    console.log(
+      '✅ TEST 2 PASSED: Image URL message correctly bypassed regex blocklist & saved.\n',
+    );
 
     // -------------------------------------------------------------
     // TEST 3: Quote Reply Message ([REPLY:quote]:body)
     // -------------------------------------------------------------
     console.log('--- TEST 3: Quote Reply Message ([REPLY:quote]:body) ---');
-    const msg3 = await messageService.validateAndSaveMessage(activeChat._id.toString(), boy._id.toString(), '[REPLY:Hello! How are you today?]:I am doing great!');
+    const msg3 = await messageService.validateAndSaveMessage(
+      activeChat._id.toString(),
+      boy._id.toString(),
+      '[REPLY:Hello! How are you today?]:I am doing great!',
+    );
     console.log('Saved Message 3 (Reply):', { _id: msg3._id, content: msg3.content });
     if (!msg3 || !msg3.content.startsWith('[REPLY:')) {
       throw new Error('TEST 3 FAILED: Quote reply message failed!');
@@ -79,12 +99,18 @@ async function testRealtimeMessaging() {
     // -------------------------------------------------------------
     console.log('--- TEST 4: Blocked Content Enforcement (External URL) ---');
     try {
-      await messageService.validateAndSaveMessage(activeChat._id.toString(), boy._id.toString(), 'Check out my site http://spam-website.com');
+      await messageService.validateAndSaveMessage(
+        activeChat._id.toString(),
+        boy._id.toString(),
+        'Check out my site http://spam-website.com',
+      );
       throw new Error('TEST 4 FAILED: External link was not blocked!');
     } catch (err) {
       if (err.code === 'BLOCKED_CONTENT' || err.statusCode === 403) {
         console.log('Blocked Content Output:', err.message, '| Code:', err.code);
-        console.log('✅ TEST 4 PASSED: Unformatted external link correctly blocked (HTTP 403 Forbidden).\n');
+        console.log(
+          '✅ TEST 4 PASSED: Unformatted external link correctly blocked (HTTP 403 Forbidden).\n',
+        );
       } else {
         throw err;
       }
@@ -93,7 +119,6 @@ async function testRealtimeMessaging() {
     console.log('===========================================================');
     console.log('🏆 ALL 4 REAL-TIME MESSAGING INTEGRATION TESTS PASSED!');
     console.log('===========================================================');
-
   } catch (error) {
     console.error('Test Suite Error:', error);
   } finally {

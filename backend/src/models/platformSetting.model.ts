@@ -15,10 +15,10 @@ const PlatformSettingSchema = new Schema<IPlatformSetting>(
     isGoogleLoginEnabled: { type: Boolean, required: true, default: true },
     isRazorpayEnabled: { type: Boolean, required: true, default: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const PlatformSetting = mongoose.model<IPlatformSetting>(
   'PlatformSetting',
-  PlatformSettingSchema
+  PlatformSettingSchema,
 );

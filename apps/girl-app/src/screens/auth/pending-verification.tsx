@@ -1,12 +1,19 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, Alert, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuthStore } from '../../store/authStore';
-import { StatusBadge } from '../../components/ui/StatusBadge';
-import { Button } from '../../components/ui/Button';
-import { Clock, PhoneCall, ShieldCheck, RefreshCw, LogOut, CheckCircle2 } from 'lucide-react-native';
-import { theme } from '../../constants/theme';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState } from "react";
+import { View, Text, ScrollView, Alert, RefreshControl } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuthStore } from "../../store/authStore";
+import { StatusBadge } from "../../components/ui/StatusBadge";
+import { Button } from "../../components/ui/Button";
+import {
+  Clock,
+  PhoneCall,
+  ShieldCheck,
+  RefreshCw,
+  LogOut,
+  CheckCircle2,
+} from "lucide-react-native";
+import { theme } from "../../constants/theme";
+import { useNavigation } from "@react-navigation/native";
 
 export default function PendingVerificationScreen() {
   const navigation = useNavigation<any>();
@@ -35,18 +42,27 @@ export default function PendingVerificationScreen() {
       setChecking(true);
       const updatedUser = await checkAccountStatus();
       if (updatedUser) {
-        if (updatedUser.status === 'APPROVED') {
+        if (updatedUser.status === "APPROVED") {
           // Navigation is handled automatically by RootNavigator
-        } else if (updatedUser.status === 'REJECTED') {
+        } else if (updatedUser.status === "REJECTED") {
           // Navigation is handled automatically by RootNavigator
-        } else if (updatedUser.status === 'SUSPENDED' || updatedUser.status === 'BANNED') {
+        } else if (
+          updatedUser.status === "SUSPENDED" ||
+          updatedUser.status === "BANNED"
+        ) {
           // Navigation is handled automatically by RootNavigator
         } else {
-          Alert.alert('Status Updated', 'Your account is still pending phone verification by an administrator.');
+          Alert.alert(
+            "Status Updated",
+            "Your account is still pending phone verification by an administrator.",
+          );
         }
       }
     } catch (error) {
-      Alert.alert('Error', 'Unable to check status. Please verify your network connection.');
+      Alert.alert(
+        "Error",
+        "Unable to check status. Please verify your network connection.",
+      );
     } finally {
       setChecking(false);
     }
@@ -54,15 +70,23 @@ export default function PendingVerificationScreen() {
 
   const handleLogout = async () => {
     await logout();
-    navigation.replace('Login');
+    navigation.replace("Login");
   };
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50 dark:bg-slate-900">
-      <ScrollView 
-        contentContainerStyle={{ flexGrow: 1, padding: 24, justifyContent: 'center' }}
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          padding: 24,
+          justifyContent: "center",
+        }}
         refreshControl={
-          <RefreshControl refreshing={checking} onRefresh={handleRefreshStatus} tintColor={theme.colors.primary} />
+          <RefreshControl
+            refreshing={checking}
+            onRefresh={handleRefreshStatus}
+            tintColor={theme.colors.primary}
+          />
         }
       >
         <View className="items-center mb-8">
@@ -77,7 +101,11 @@ export default function PendingVerificationScreen() {
           </Text>
 
           <Text className="text-slate-600 dark:text-slate-300 mt-3 text-center text-base leading-relaxed max-w-sm">
-            Welcome, <Text className="font-bold text-slate-900 dark:text-white">{user?.name || 'Creator'}</Text>! Your profile has been created successfully.
+            Welcome,{" "}
+            <Text className="font-bold text-slate-900 dark:text-white">
+              {user?.name || "Creator"}
+            </Text>
+            ! Your profile has been created successfully.
           </Text>
         </View>
 
@@ -92,7 +120,12 @@ export default function PendingVerificationScreen() {
                 Manual Phone Verification Required
               </Text>
               <Text className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
-                To maintain high platform security and trust, an administrator will call your registered phone number (<Text className="font-semibold text-slate-700 dark:text-slate-200">{user?.phone || 'Provided Number'}</Text>) to complete verification.
+                To maintain high platform security and trust, an administrator
+                will call your registered phone number (
+                <Text className="font-semibold text-slate-700 dark:text-slate-200">
+                  {user?.phone || "Provided Number"}
+                </Text>
+                ) to complete verification.
               </Text>
             </View>
           </View>
@@ -102,7 +135,8 @@ export default function PendingVerificationScreen() {
           <View className="flex-row items-center gap-3">
             <ShieldCheck color={theme.colors.success} size={20} />
             <Text className="text-xs text-slate-500 dark:text-slate-400 font-medium flex-1">
-              Once verified, your profile will become active and visible to Boys across the platform.
+              Once verified, your profile will become active and visible to Boys
+              across the platform.
             </Text>
           </View>
         </View>
@@ -128,7 +162,6 @@ export default function PendingVerificationScreen() {
             Sign Out
           </Button>
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );

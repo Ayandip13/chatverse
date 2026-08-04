@@ -26,16 +26,22 @@ class VerificationService {
     }
 
     // Validate Status against Role
-    const isValidBoyStatus = user.role === Role.BOY && Object.values(BoyStatus).includes(status as BoyStatus);
-    const isValidGirlStatus = user.role === Role.GIRL && Object.values(GirlStatus).includes(status as GirlStatus);
+    const isValidBoyStatus =
+      user.role === Role.BOY && Object.values(BoyStatus).includes(status as BoyStatus);
+    const isValidGirlStatus =
+      user.role === Role.GIRL && Object.values(GirlStatus).includes(status as GirlStatus);
 
     if (!isValidBoyStatus && !isValidGirlStatus) {
-      throw new ApiError(STATUS_CODES.BAD_REQUEST, `Invalid status '${status}' for role '${user.role}'`, 'INVALID_STATUS');
+      throw new ApiError(
+        STATUS_CODES.BAD_REQUEST,
+        `Invalid status '${status}' for role '${user.role}'`,
+        'INVALID_STATUS',
+      );
     }
 
     user.status = status as BoyStatus | GirlStatus;
     user.verifiedAt = new Date();
-    
+
     if (adminId && Types.ObjectId.isValid(adminId) && /^[0-9a-fA-F]{24}$/.test(adminId)) {
       user.verifiedByAdminId = new Types.ObjectId(adminId);
     }
@@ -60,7 +66,8 @@ class VerificationService {
 
     if (status === 'APPROVED') {
       notifTitle = 'Account Approved!';
-      notifBody = 'Congratulations! Your creator account has been approved by administration. You can now access all features.';
+      notifBody =
+        'Congratulations! Your creator account has been approved by administration. You can now access all features.';
     } else if (status === 'REJECTED') {
       notifTitle = 'Application Not Approved';
       notifBody = `Your creator application was rejected.${reason ? ` Reason: ${reason}` : ''}`;

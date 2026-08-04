@@ -11,7 +11,7 @@ const WalletTransactionSchema = new Schema<IWalletTransaction>(
     description: { type: String },
     referenceId: { type: Schema.Types.ObjectId },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 WalletTransactionSchema.index({ walletId: 1, createdAt: -1 });
@@ -19,5 +19,5 @@ WalletTransactionSchema.index({ userId: 1, type: 1 });
 
 export const WalletTransaction = mongoose.model<IWalletTransaction>(
   'WalletTransaction',
-  WalletTransactionSchema
+  WalletTransactionSchema,
 );

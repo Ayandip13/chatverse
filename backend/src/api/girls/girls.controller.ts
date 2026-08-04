@@ -7,7 +7,7 @@ import { girlsService } from '@/services/girls.service';
 export const getGirls = asyncHandler(async (req: Request, res: Response) => {
   const filters = req.query as any;
   const result = await girlsService.discoverGirls(req.user!.userId, filters);
-  
+
   res.status(STATUS_CODES.OK).json({
     success: true,
     data: result.girls,
@@ -23,7 +23,7 @@ export const getGirls = asyncHandler(async (req: Request, res: Response) => {
 export const getGirlDetails = asyncHandler(async (req: Request, res: Response) => {
   const girlId = req.params.id;
   const result = await girlsService.getGirlDetails(req.user!.userId, girlId);
-  
+
   res.status(STATUS_CODES.OK).json(new ApiResponse(result, 'Girl details retrieved'));
 });
 

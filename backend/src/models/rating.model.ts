@@ -15,7 +15,7 @@ const RatingSchema = new Schema<IRating>(
       default: RatingStatus.ACTIVE,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 RatingSchema.index({ chatId: 1, reviewerId: 1 }, { unique: true });

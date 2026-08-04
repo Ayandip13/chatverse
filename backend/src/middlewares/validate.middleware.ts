@@ -21,7 +21,7 @@ export const validate = (schema: AnyZodObject) => {
           field: e.path.join('.'),
           message: e.message,
         }));
-        
+
         return res.status(STATUS_CODES.BAD_REQUEST).json({
           success: false,
           data: null,

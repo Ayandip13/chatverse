@@ -52,7 +52,9 @@ const diagnoseConnectionError = async (uri: string, err: any) => {
         });
 
         if (addresses && addresses.length > 0) {
-          logger.info(`[DB DIAGNOSTIC] DNS SRV Lookup SUCCESS. Found ${addresses.length} Atlas hosts.`);
+          logger.info(
+            `[DB DIAGNOSTIC] DNS SRV Lookup SUCCESS. Found ${addresses.length} Atlas hosts.`,
+          );
         }
       }
     } catch (dErr: any) {

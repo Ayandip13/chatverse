@@ -14,7 +14,7 @@ const AdminSchema = new Schema<IAdmin>(
     name: { type: String, required: true },
     tokenVersion: { type: Number, default: 0 },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 AdminSchema.index({ email: 1 }, { unique: true });

@@ -8,7 +8,11 @@ export const requireAdminAuth = async (req: Request, res: Response, next: NextFu
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new ApiError(STATUS_CODES.UNAUTHORIZED, 'Admin authentication required', 'UNAUTHORIZED');
+      throw new ApiError(
+        STATUS_CODES.UNAUTHORIZED,
+        'Admin authentication required',
+        'UNAUTHORIZED',
+      );
     }
 
     const token = authHeader.split(' ')[1];
@@ -26,7 +30,11 @@ export const requireAdminAuth = async (req: Request, res: Response, next: NextFu
     }
 
     if (!adminDoc || adminDoc.tokenVersion !== decoded.tokenVersion) {
-      throw new ApiError(STATUS_CODES.UNAUTHORIZED, 'Invalid or expired admin token', 'TOKEN_EXPIRED');
+      throw new ApiError(
+        STATUS_CODES.UNAUTHORIZED,
+        'Invalid or expired admin token',
+        'TOKEN_EXPIRED',
+      );
     }
 
     (req as any).admin = { adminId: adminDoc._id.toString(), role: 'ADMIN', email: adminDoc.email };

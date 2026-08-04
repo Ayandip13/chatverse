@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuthStore } from '../../store/authStore';
-import { StatusBadge } from '../../components/ui/StatusBadge';
-import { Button } from '../../components/ui/Button';
-import { XCircle, RefreshCw, LogOut, HelpCircle } from 'lucide-react-native';
-import { theme } from '../../constants/theme';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState } from "react";
+import { View, Text, ScrollView, Alert } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuthStore } from "../../store/authStore";
+import { StatusBadge } from "../../components/ui/StatusBadge";
+import { Button } from "../../components/ui/Button";
+import { XCircle, RefreshCw, LogOut, HelpCircle } from "lucide-react-native";
+import { theme } from "../../constants/theme";
+import { useNavigation } from "@react-navigation/native";
 
 export default function AccountRejectedScreen() {
   const navigation = useNavigation<any>();
@@ -18,16 +18,22 @@ export default function AccountRejectedScreen() {
       setChecking(true);
       const updatedUser = await checkAccountStatus();
       if (updatedUser) {
-        if (updatedUser.status === 'APPROVED') {
+        if (updatedUser.status === "APPROVED") {
           // Handled by RootNavigator
-        } else if (updatedUser.status === 'PENDING') {
+        } else if (updatedUser.status === "PENDING") {
           // Handled by RootNavigator
         } else {
-          Alert.alert('Status Unchanged', 'Your creator account application remains rejected.');
+          Alert.alert(
+            "Status Unchanged",
+            "Your creator account application remains rejected.",
+          );
         }
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to check status. Please check your network.');
+      Alert.alert(
+        "Error",
+        "Failed to check status. Please check your network.",
+      );
     } finally {
       setChecking(false);
     }
@@ -35,13 +41,18 @@ export default function AccountRejectedScreen() {
 
   const handleLogout = async () => {
     await logout();
-    navigation.replace('Login');
+    navigation.replace("Login");
   };
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50 dark:bg-slate-900">
-      <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24, justifyContent: 'center' }}>
-        
+      <ScrollView
+        contentContainerStyle={{
+          flexGrow: 1,
+          padding: 24,
+          justifyContent: "center",
+        }}
+      >
         <View className="items-center mb-8">
           <View className="w-24 h-24 bg-red-500/10 rounded-full items-center justify-center mb-6 border-2 border-red-500/30">
             <XCircle color={theme.colors.danger} size={48} />
@@ -54,7 +65,12 @@ export default function AccountRejectedScreen() {
           </Text>
 
           <Text className="text-slate-600 dark:text-slate-300 mt-3 text-center text-base leading-relaxed max-w-sm">
-            Hello, <Text className="font-bold text-slate-900 dark:text-white">{user?.name || 'Applicant'}</Text>. We regret to inform you that your creator account application was not approved during manual verification.
+            Hello,{" "}
+            <Text className="font-bold text-slate-900 dark:text-white">
+              {user?.name || "Applicant"}
+            </Text>
+            . We regret to inform you that your creator account application was
+            not approved during manual verification.
           </Text>
         </View>
 
@@ -67,11 +83,14 @@ export default function AccountRejectedScreen() {
           </View>
 
           <Text className="text-slate-700 dark:text-slate-200 text-sm leading-relaxed bg-amber-500/10 p-3 rounded-xl border border-amber-500/20 font-medium">
-            {user?.rejectionReason || user?.statusReason || 'Incomplete profile details or failure to complete phone verification.'}
+            {user?.rejectionReason ||
+              user?.statusReason ||
+              "Incomplete profile details or failure to complete phone verification."}
           </Text>
 
           <Text className="text-xs text-slate-400 dark:text-slate-500 pt-2 border-t border-slate-100 dark:border-slate-700">
-            If you believe this was an error or wish to request re-application, please contact platform administration.
+            If you believe this was an error or wish to request re-application,
+            please contact platform administration.
           </Text>
         </View>
 
@@ -95,7 +114,6 @@ export default function AccountRejectedScreen() {
             Sign Out
           </Button>
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );

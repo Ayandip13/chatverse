@@ -15,7 +15,7 @@ const NotificationSchema = new Schema<INotification>(
     type: { type: String, required: true },
     actionUrl: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // TTL Index to automatically delete read or old notifications after 30 days

@@ -10,21 +10,25 @@ class GirlsService {
     return {
       role: Role.GIRL,
       status: GirlStatus.APPROVED,
-      deletedAt: null
+      deletedAt: null,
     };
   }
-  
+
   private async enrichWithFavorites(userId: string, girls: any[]) {
     if (!girls || girls.length === 0) return [];
-    
-    const girlIds = girls.map(g => g._id);
-    const favorites = await Favorite.find({ boyId: userId, girlId: { $in: girlIds } }).select('girlId').lean();
-    const favSet = new Set(favorites.map(f => f.girlId.toString()));
-    
-    return girls.map(girl => ({
+
+    const girlIds = girls.map((g) => g._id);
+    const favorites = await Favorite.find({ boyId: userId, girlId: { $in: girlIds } })
+      .select('girlId')
+      .lean();
+    const favSet = new Set(favorites.map((f) => f.girlId.toString()));
+
+    return girls.map((girl) => ({
       ...girl,
       isFavorite: favSet.has(girl._id.toString()),
-      isOnline: isUserOnline(girl._id.toString()) || (girl.updatedAt && new Date(girl.updatedAt).getTime() > Date.now() - 15 * 60000)
+      isOnline:
+        isUserOnline(girl._id.toString()) ||
+        (girl.updatedAt && new Date(girl.updatedAt).getTime() > Date.now() - 15 * 60000),
     }));
   }
 
@@ -37,7 +41,7 @@ class GirlsService {
     if (recommended) return this.getRecommendedGirls(userId, filters);
     if (popular) return this.getPopularGirls(userId, filters);
     if (recentlyJoined) return this.getRecentGirls(userId, filters);
-    
+
     // Default fallback list
     return this.getAllGirls(userId, filters);
   }
@@ -48,7 +52,7 @@ class GirlsService {
 
     let sortObj: any = { createdAt: -1 };
     if (sort === '-rating') sortObj = { averageRating: -1 };
-    
+
     return this.executePaginatedQuery(userId, query, sortObj, page, limit);
   }
 
@@ -56,7 +60,7 @@ class GirlsService {
     const query: any = this.getBaseQuery();
     query.$or = [
       { name: { $regex: search, $options: 'i' } },
-      { bio: { $regex: search, $options: 'i' } }
+      { bio: { $regex: search, $options: 'i' } },
     ];
     return this.executePaginatedQuery(userId, query, { createdAt: -1 }, page, limit);
   }
@@ -93,15 +97,21 @@ class GirlsService {
 
   async getFavoriteGirls(userId: string, { page, limit }: any) {
     const userFavorites = await Favorite.find({ boyId: userId }).select('girlId').lean();
-    const girlIds = userFavorites.map(f => f.girlId);
-    
+    const girlIds = userFavorites.map((f) => f.girlId);
+
     const query: any = this.getBaseQuery();
     query._id = { $in: girlIds };
-    
+
     return this.executePaginatedQuery(userId, query, { createdAt: -1 }, page, limit);
   }
 
-  private async executePaginatedQuery(userId: string, query: any, sort: any, page: number, limit: number) {
+  private async executePaginatedQuery(
+    userId: string,
+    query: any,
+    sort: any,
+    page: number,
+    limit: number,
+  ) {
     const skip = (page - 1) * limit;
 
     const [girls, total] = await Promise.all([
@@ -111,14 +121,14 @@ class GirlsService {
         .skip(skip)
         .limit(limit)
         .lean(),
-      User.countDocuments(query)
+      User.countDocuments(query),
     ]);
-    
+
     const enrichedGirls = await this.enrichWithFavorites(userId, girls);
 
     return { girls: enrichedGirls, total };
   }
-  
+
   async getGirlDetails(userId: string, targetId: string) {
     if (!mongoose.Types.ObjectId.isValid(targetId)) {
       throw new ApiError(STATUS_CODES.BAD_REQUEST, 'Invalid girl ID', 'VALIDATION_ERROR');
@@ -126,19 +136,23 @@ class GirlsService {
 
     const girl = await User.findOne({
       _id: targetId,
-      ...this.getBaseQuery()
-    }).select('-password -tokenVersion -authProvider -phone -email').lean();
-    
+      ...this.getBaseQuery(),
+    })
+      .select('-password -tokenVersion -authProvider -phone -email')
+      .lean();
+
     if (!girl) {
       throw new ApiError(STATUS_CODES.NOT_FOUND, 'Girl not found', 'GIRL_NOT_FOUND');
     }
-    
+
     const isFavorite = await Favorite.exists({ boyId: userId, girlId: targetId });
-    
+
     return {
       ...girl,
       isFavorite: !!isFavorite,
-      isOnline: isUserOnline(girl._id.toString()) || (girl.updatedAt && new Date(girl.updatedAt).getTime() > Date.now() - 15 * 60000)
+      isOnline:
+        isUserOnline(girl._id.toString()) ||
+        (girl.updatedAt && new Date(girl.updatedAt).getTime() > Date.now() - 15 * 60000),
     };
   }
 
@@ -148,11 +162,7 @@ class GirlsService {
     }
 
     if (isFavorite) {
-      await Favorite.updateOne(
-        { boyId, girlId },
-        { boyId, girlId },
-        { upsert: true }
-      );
+      await Favorite.updateOne({ boyId, girlId }, { boyId, girlId }, { upsert: true });
     } else {
       await Favorite.deleteOne({ boyId, girlId });
     }

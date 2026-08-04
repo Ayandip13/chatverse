@@ -1,18 +1,18 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-const backendDir = path.join(__dirname, 'backend');
+const backendDir = path.join(__dirname, "backend");
 const mkDir = (dir) => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 };
 
-mkDir(path.join(backendDir, 'src/api/wallet'));
-mkDir(path.join(backendDir, 'src/validators'));
-mkDir(path.join(backendDir, 'src/repositories'));
-mkDir(path.join(backendDir, 'src/services'));
+mkDir(path.join(backendDir, "src/api/wallet"));
+mkDir(path.join(backendDir, "src/validators"));
+mkDir(path.join(backendDir, "src/repositories"));
+mkDir(path.join(backendDir, "src/services"));
 
 const files = {
-  'src/validators/wallet.validator.ts': `import { z } from 'zod';
+  "src/validators/wallet.validator.ts": `import { z } from 'zod';
 import { TransactionType } from '@/constants/enums.constant';
 
 export const rechargeSchema = z.object({
@@ -39,7 +39,7 @@ export const transactionHistoryQuerySchema = z.object({
   }),
 });
 `,
-  'src/repositories/wallet.repository.ts': `import { Wallet } from '@/models';
+  "src/repositories/wallet.repository.ts": `import { Wallet } from '@/models';
 import { IWallet } from '@/types/models.type';
 
 class WalletRepository {
@@ -66,7 +66,7 @@ class WalletRepository {
 
 export const walletRepository = new WalletRepository();
 `,
-  'src/repositories/walletTransaction.repository.ts': `import { WalletTransaction } from '@/models';
+  "src/repositories/walletTransaction.repository.ts": `import { WalletTransaction } from '@/models';
 import { IWalletTransaction } from '@/types/models.type';
 import { Types, FilterQuery } from 'mongoose';
 
@@ -110,7 +110,7 @@ class WalletTransactionRepository {
 
 export const walletTransactionRepository = new WalletTransactionRepository();
 `,
-  'src/services/wallet.service.ts': `import crypto from 'crypto';
+  "src/services/wallet.service.ts": `import crypto from 'crypto';
 import { walletRepository } from '@/repositories/wallet.repository';
 import { walletTransactionRepository } from '@/repositories/walletTransaction.repository';
 import { ApiError } from '@/utils/ApiError.util';
@@ -198,7 +198,7 @@ class WalletService {
 
 export const walletService = new WalletService();
 `,
-  'src/api/wallet/wallet.controller.ts': `import { Request, Response } from 'express';
+  "src/api/wallet/wallet.controller.ts": `import { Request, Response } from 'express';
 import { asyncHandler } from '@/utils/asyncHandler.util';
 import { ApiResponse } from '@/utils/ApiResponse.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
@@ -248,7 +248,7 @@ export const getTransactions = asyncHandler(async (req: Request, res: Response) 
   });
 });
 `,
-  'src/api/wallet/wallet.route.ts': `import { Router } from 'express';
+  "src/api/wallet/wallet.route.ts": `import { Router } from 'express';
 import * as walletController from './wallet.controller';
 import { validate } from '@/middlewares/validate.middleware';
 import { requireAuth } from '@/middlewares/auth.middleware';
@@ -265,11 +265,11 @@ router.post('/verify', validate(verifyRechargeSchema), walletController.verifyRe
 router.get('/transactions', validate(transactionHistoryQuerySchema), walletController.getTransactions);
 
 export default router;
-`
+`,
 };
 
 for (const [relativePath, content] of Object.entries(files)) {
   const filePath = path.join(backendDir, relativePath);
-  fs.writeFileSync(filePath, content, 'utf8');
+  fs.writeFileSync(filePath, content, "utf8");
 }
-console.log('Wallet scaffolding complete.');
+console.log("Wallet scaffolding complete.");

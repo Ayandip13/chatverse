@@ -7,14 +7,28 @@ import { ReportStatus } from '@/constants/enums.constant';
 
 export const createReport = asyncHandler(async (req: Request, res: Response) => {
   const { targetId, reason, notes, evidence } = req.body;
-  const result = await reportService.createReport(req.user!.userId, targetId, reason, notes, evidence);
+  const result = await reportService.createReport(
+    req.user!.userId,
+    targetId,
+    reason,
+    notes,
+    evidence,
+  );
   res.status(STATUS_CODES.CREATED).json(new ApiResponse(result, 'Report submitted successfully'));
 });
 
 export const getMyReports = asyncHandler(async (req: Request, res: Response) => {
   const { page, limit, status } = req.query as any;
-  const result = await reportService.getReports(req.user!.userId, req.user!.role, { status }, parseInt(page, 10), parseInt(limit, 10));
-  res.status(STATUS_CODES.OK).json({ success: true, data: result.reports, meta: { total: result.total } });
+  const result = await reportService.getReports(
+    req.user!.userId,
+    req.user!.role,
+    { status },
+    parseInt(page, 10),
+    parseInt(limit, 10),
+  );
+  res
+    .status(STATUS_CODES.OK)
+    .json({ success: true, data: result.reports, meta: { total: result.total } });
 });
 
 export const getReportDetails = asyncHandler(async (req: Request, res: Response) => {
@@ -30,13 +44,26 @@ export const getReportDetails = asyncHandler(async (req: Request, res: Response)
 // Admin Controllers
 export const getAdminReports = asyncHandler(async (req: Request, res: Response) => {
   const { page, limit, status, targetId } = req.query as any;
-  const result = await reportService.getReports('admin', 'ADMIN', { status, targetId }, parseInt(page, 10), parseInt(limit, 10));
-  res.status(STATUS_CODES.OK).json({ success: true, data: result.reports, meta: { total: result.total } });
+  const result = await reportService.getReports(
+    'admin',
+    'ADMIN',
+    { status, targetId },
+    parseInt(page, 10),
+    parseInt(limit, 10),
+  );
+  res
+    .status(STATUS_CODES.OK)
+    .json({ success: true, data: result.reports, meta: { total: result.total } });
 });
 
 export const updateReportStatus = asyncHandler(async (req: Request, res: Response) => {
   const { status, notes } = req.body;
   const adminId = (req as any).admin?.adminId || (req as any).admin?.userId; // Handling different JWT structures
-  const result = await reportService.updateReportStatus(adminId, req.params.id, status as ReportStatus, notes);
+  const result = await reportService.updateReportStatus(
+    adminId,
+    req.params.id,
+    status as ReportStatus,
+    notes,
+  );
   res.status(STATUS_CODES.OK).json(new ApiResponse(result, `Report status updated to ${status}`));
 });

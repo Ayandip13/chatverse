@@ -1,7 +1,7 @@
-import type { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent } from '../common/Card';
-import { ChevronRight } from 'lucide-react';
+import type { ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
+import { Card, CardContent } from "../common/Card";
+import { ChevronRight } from "lucide-react";
 
 interface QuickActionCardProps {
   title: string;
@@ -11,7 +11,13 @@ interface QuickActionCardProps {
   badgeCount?: number;
 }
 
-export const QuickActionCard = ({ title, description, icon, route, badgeCount }: QuickActionCardProps) => {
+export const QuickActionCard = ({
+  title,
+  description,
+  icon,
+  route,
+  badgeCount,
+}: QuickActionCardProps) => {
   const navigate = useNavigate();
 
   return (
