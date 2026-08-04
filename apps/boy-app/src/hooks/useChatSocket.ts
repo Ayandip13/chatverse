@@ -46,6 +46,15 @@ export const useChatSocket = (chatId?: string) => {
     const onMessage = (message: Message) => {
       queryClient.setQueryData(['messages', message.chatId], (oldData: any) => {
         if (!oldData) return oldData;
+
+        // Dedupe: if this message already exists in the cache (e.g. the sender's
+        // optimistic temp message was already reconciled by the ack, or the
+        // broadcast arrived before the ack), don't double-render it.
+        const exists = oldData.pages.some((page: any) =>
+          (page.messages || []).some((m: any) => m?._id === message._id)
+        );
+        if (exists) return oldData;
+
         const newPages = [...oldData.pages];
         if (newPages.length > 0) {
           newPages[0] = {
@@ -145,13 +154,66 @@ export const useChatSocket = (chatId?: string) => {
   }, [socket, isConnected, chatId, queryClient, setTyping]);
 
   const sendMessage = (chatId: string, content: string, tempId: string) => {
-    if (socket && isConnected) {
-      socket.emit('chat:send_message', { chatId, content, tempId }, (response: any) => {
-        if (response?.error) {
-          Alert.alert('Error', response.error);
-        }
-      });
-    }
+    if (!socket || !isConnected) return;
+
+    // Optimistically insert a temporary (SENDING) message so the sender sees it
+    // immediately, before the server round-trip completes.
+    const tempMessage: Message & { status: 'SENDING' } = {
+      _id: tempId,
+      chatId,
+      senderId: '',
+      content,
+      isRead: false,
+      createdAt: new Date().toISOString(),
+      status: 'SENDING',
+    };
+
+    queryClient.setQueryData(['messages', chatId], (oldData: any) => {
+      if (!oldData) return oldData;
+      const newPages = [...oldData.pages];
+      if (newPages.length > 0) {
+        newPages[0] = {
+          ...newPages[0],
+          messages: [tempMessage, ...newPages[0].messages],
+        };
+      }
+      return { ...oldData, pages: newPages };
+    });
+
+    socket.emit('chat:send_message', { chatId, content, tempId }, (response: any) => {
+      if (response?.error) {
+        // Failed — remove the optimistic temp message.
+        queryClient.setQueryData(['messages', chatId], (oldData: any) => {
+          if (!oldData) return oldData;
+          const newPages = oldData.pages.map((page: any) => ({
+            ...page,
+            messages: (page.messages || []).filter((m: any) => m?._id !== tempId),
+          }));
+          return { ...oldData, pages: newPages };
+        });
+        Alert.alert('Error', response.error);
+        return;
+      }
+
+      // Success — replace the temp message with the real saved message (if it
+      // isn't already present via the broadcast).
+      if (response?.message) {
+        const saved = response.message;
+        queryClient.setQueryData(['messages', chatId], (oldData: any) => {
+          if (!oldData) return oldData;
+          const newPages = oldData.pages.map((page: any) => {
+            const messages = page.messages || [];
+            const exists = messages.some((m: any) => m?._id === saved._id);
+            if (exists) return page;
+            return {
+              ...page,
+              messages: messages.map((m: any) => (m?._id === tempId ? saved : m)),
+            };
+          });
+          return { ...oldData, pages: newPages };
+        });
+      }
+    });
   };
 
   const emitTyping = (chatId: string, isTyping: boolean) => {

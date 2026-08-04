@@ -1,4 +1,4 @@
-import { Chat, Wallet, PlatformSetting } from '@/models';
+import { Chat, Wallet } from '@/models';
 import { ChatStatus } from '@/constants/enums.constant';
 import { settlementService } from './settlement.service';
 import logger from '@/config/logger.config';
@@ -73,9 +73,11 @@ class ChatSessionService {
   }
 
   /**
-   * Evaluates wallet balance and handles billing per message
+   * Cheap pre-check to determine if the sender is allowed to send a message.
+   * Girls always send free. Boys must have at least 1 coin in their wallet.
+   * Synchronous session lookup + a single wallet read (no writes).
    */
-  public async processMessageDeduction(chatId: string, senderId: string, io: Server): Promise<boolean> {
+  public async canSendMessage(chatId: string, senderId: string): Promise<boolean> {
     const session = this.sessions.get(chatId);
     if (!session) return false;
 
@@ -84,10 +86,26 @@ class ChatSessionService {
       return true; // Girl sends for free
     }
 
-    const boyWallet = await Wallet.findOne({ userId: new Types.ObjectId(session.boyId) });
+    const boyWallet = await Wallet.findOne({ userId: new Types.ObjectId(session.boyId) }).lean();
     if (!boyWallet || boyWallet.currentBalance < 1) {
-      io.to(`chat:${chatId}`).emit('chat:error', { message: 'Insufficient wallet balance to send a message.' });
       return false; // Cannot send
+    }
+
+    return true;
+  }
+
+  /**
+   * Evaluates wallet balance and handles billing per message.
+   * Runs AFTER the message is saved & broadcast. Uses the atomic `$gte` billing
+   * in settlement service to guarantee the balance never goes negative.
+   */
+  public async processMessageDeduction(chatId: string, senderId: string, io: Server): Promise<boolean> {
+    const session = this.sessions.get(chatId);
+    if (!session) return false;
+
+    // Only boys pay for messages in this model
+    if (senderId !== session.boyId) {
+      return true; // Girl sends for free
     }
 
     const result = await settlementService.processMessageSettlement(
@@ -106,13 +124,13 @@ class ChatSessionService {
       $inc: { durationInMinutes: 1, totalCost: 1 } // Using durationInMinutes temporarily as message count until model is updated
     }, { new: true });
 
-    // Fetch fresh balances for emission
-    const updatedBoyWallet = await Wallet.findOne({ userId: new Types.ObjectId(session.boyId) });
-    const updatedGirlWallet = await Wallet.findOne({ userId: new Types.ObjectId(session.girlId) });
+    // Reuse the balances already returned by processMessageSettlement (no extra DB reads)
+    const boyBalance = result.boyBalance;
+    const girlBalance = result.girlBalance;
 
-    if (updatedBoyWallet) {
+    if (boyBalance !== undefined) {
       io.to(`user:${session.boyId}`).emit('wallet:update', {
-        newBalance: updatedBoyWallet.currentBalance,
+        newBalance: boyBalance,
         delta: -1,
         reason: 'CHAT_DEBIT',
       });
@@ -120,13 +138,13 @@ class ChatSessionService {
       io.to(`chat:${chatId}`).emit('chat:stats_update', {
         chatId,
         messagesSent: updatedChat ? updatedChat.totalCost : 1, // Use the current chat's cost
-        remainingCoins: updatedBoyWallet.currentBalance
+        remainingCoins: boyBalance
       });
     }
     
-    if (updatedGirlWallet) {
+    if (girlBalance !== undefined) {
       io.to(`user:${session.girlId}`).emit('wallet:update', {
-        newBalance: updatedGirlWallet.currentBalance,
+        newBalance: girlBalance,
         delta: 1,
         reason: 'GIRL_EARNING',
       });

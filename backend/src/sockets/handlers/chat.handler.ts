@@ -16,7 +16,7 @@ export const registerChatHandlers = (io: Server, socket: AuthenticatedSocket) =>
     try {
       const { chatId } = payload;
       const chat = await Chat.findById(chatId);
-      
+
       if (!chat) {
         if (callback) callback({ error: 'Chat not found' });
         return;
@@ -53,12 +53,12 @@ export const registerChatHandlers = (io: Server, socket: AuthenticatedSocket) =>
     try {
       const { chatId } = payload;
       const chat = await Chat.findById(chatId);
-      
+
       if (!chat) {
         if (callback) callback({ error: 'Chat not found' });
         return;
       }
-      
+
       if (chat.girlId.toString() !== userId) {
         if (callback) callback({ error: 'Unauthorized: Only girls can end chat sessions' });
         return;
@@ -76,16 +76,21 @@ export const registerChatHandlers = (io: Server, socket: AuthenticatedSocket) =>
     try {
       const { chatId, content, tempId } = payload;
 
-      const canSend = await chatSessionService.processMessageDeduction(chatId, userId, io);
+      // Cheap pre-check: boys must have >= 1 coin, girls always send free.
+      // This is intentionally NOT the full billing — it just gates the send so we
+      // don't persist/broadcast a message the user can't pay for.
+      const canSend = await chatSessionService.canSendMessage(chatId, userId);
       if (!canSend) {
         if (callback) callback({ error: 'Insufficient coins to send a message', tempId });
         return;
       }
-      
-      // Validates against regex and persists
+
+      // Validates against regex and persists the message FIRST so delivery is
+      // not blocked by the (slower) wallet deduction / settlement logic.
       const message = await messageService.validateAndSaveMessage(chatId, userId, content);
 
-      // Broadcast to room (excluding sender)
+      // Broadcast to room (excluding sender — the sender shows the message via
+      // optimistic UI + the ack callback below).
       socket.to(`chat:${chatId}`).emit('chat:receive_message', {
         _id: message._id,
         chatId: message.chatId,
@@ -95,6 +100,14 @@ export const registerChatHandlers = (io: Server, socket: AuthenticatedSocket) =>
       });
 
       if (callback) callback({ success: true, message, tempId });
+
+      // Fire-and-forget billing. Runs asynchronously so it never blocks message
+      // delivery. The atomic $gte guard in settlement.service still guarantees
+      // the boy's balance never goes negative.
+      chatSessionService.processMessageDeduction(chatId, userId, io).catch((err: any) => {
+        const message = err?.message || err;
+        logger.error(`Async message billing failed for chat ${chatId}: ${message}`);
+      });
     } catch (error: any) {
       logger.error(`Message Error: ${error.message}`);
       if (callback) callback({ error: error.message, tempId: payload.tempId });

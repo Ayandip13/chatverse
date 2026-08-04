@@ -1,4 +1,4 @@
-import { Settlement, Wallet, WalletTransaction, PlatformSetting } from '@/models';
+import { Settlement, Wallet, WalletTransaction } from '@/models';
 import { TransactionType } from '@/constants/enums.constant';
 import { Types } from 'mongoose';
 import logger from '@/config/logger.config';
@@ -13,7 +13,7 @@ export class SettlementService {
     chatId: string,
     boyId: string,
     girlId: string
-  ): Promise<{ success: boolean; boyBalance?: number; girlEarnings?: number; error?: string }> {
+  ): Promise<{ success: boolean; boyBalance?: number; girlBalance?: number; error?: string }> {
     const coinsToDeduct = 1;
     const girlEarnings = 1;
 
@@ -40,51 +40,51 @@ export class SettlementService {
       { upsert: true, new: true }
     );
 
-    // 3. Create immutable Wallet Transactions
-    await WalletTransaction.create({
-      walletId: boyWallet._id,
-      userId: new Types.ObjectId(boyId),
-      type: TransactionType.CHAT_DEBIT,
-      amount: coinsToDeduct,
-      description: `Message billing for Chat ${chatId}`,
-      referenceId: new Types.ObjectId(chatId),
-    });
-
-    await WalletTransaction.create({
-      walletId: girlWallet._id,
-      userId: new Types.ObjectId(girlId),
-      type: TransactionType.GIRL_EARNING,
-      amount: girlEarnings,
-      description: `Message earnings for Chat ${chatId}`,
-      referenceId: new Types.ObjectId(chatId),
-    });
-
-    // 4. Update or Create Settlement Ledger Record
-    await Settlement.findOneAndUpdate(
-      { chatId: new Types.ObjectId(chatId) },
-      {
-        $set: {
-          boyId: new Types.ObjectId(boyId),
-          girlId: new Types.ObjectId(girlId),
-          status: 'COMPLETED',
-          settledAt: new Date(),
+    // 3 & 4. Create immutable Wallet Transactions and update Settlement Ledger.
+    // These writes are independent of each other, so run them in parallel.
+    await Promise.all([
+      WalletTransaction.create({
+        walletId: boyWallet._id,
+        userId: new Types.ObjectId(boyId),
+        type: TransactionType.CHAT_DEBIT,
+        amount: coinsToDeduct,
+        description: `Message billing for Chat ${chatId}`,
+        referenceId: new Types.ObjectId(chatId),
+      }),
+      WalletTransaction.create({
+        walletId: girlWallet._id,
+        userId: new Types.ObjectId(girlId),
+        type: TransactionType.GIRL_EARNING,
+        amount: girlEarnings,
+        description: `Message earnings for Chat ${chatId}`,
+        referenceId: new Types.ObjectId(chatId),
+      }),
+      Settlement.findOneAndUpdate(
+        { chatId: new Types.ObjectId(chatId) },
+        {
+          $set: {
+            boyId: new Types.ObjectId(boyId),
+            girlId: new Types.ObjectId(girlId),
+            status: 'COMPLETED',
+            settledAt: new Date(),
+          },
+          $inc: {
+            completedMessages: 1,
+            grossCoins: coinsToDeduct,
+            platformCommissionCoins: 0,
+            girlEarningsCoins: girlEarnings,
+          },
         },
-        $inc: {
-          completedMessages: 1,
-          grossCoins: coinsToDeduct,
-          platformCommissionCoins: 0,
-          girlEarningsCoins: girlEarnings,
-        },
-      },
-      { upsert: true, new: true }
-    );
+        { upsert: true, new: true }
+      ),
+    ]);
 
     logger.info(`Settled message for Chat ${chatId}: Boy ${boyId} (-${coinsToDeduct}), Girl ${girlId} (+${girlEarnings})`);
 
     return {
       success: true,
       boyBalance: boyWallet.currentBalance,
-      girlEarnings: girlWallet.currentBalance,
+      girlBalance: girlWallet.currentBalance,
     };
   }
 
