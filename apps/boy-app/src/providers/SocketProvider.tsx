@@ -3,6 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '../store/authStore';
 
 const SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_URL || 'http://192.168.0.105:5000';
+console.log('Connecting socket to:', SOCKET_URL);
 
 interface SocketContextType {
   socket: Socket | null;
