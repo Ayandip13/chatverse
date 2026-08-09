@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, RefreshCcw, AlertCircle, ShieldAlert, ShieldCheck, UserX } from 'lucide-react';
-import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
 import { safeFormatDate } from '../../utils/dateUtils';
