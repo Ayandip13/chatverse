@@ -10,6 +10,7 @@ export type AuthStackParamList = {
   PendingVerification: undefined;
   AccountRejected: undefined;
   AccountSuspended: undefined;
+  DevSettings: undefined;
 };
 
 export type AppStackParamList = {

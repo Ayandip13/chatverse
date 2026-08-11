@@ -29,8 +29,14 @@ export const SocketProvider = ({ children }: SocketProviderProps) => {
   const [isConnected, setIsConnected] = useState(false);
   const { accessToken, isAuthenticated } = useAuthStore();
 
-  const connect = async () => {
-    if (!accessToken || socket?.connected) return;
+  const connect = async (force: boolean = false) => {
+    if (!accessToken) return;
+    if (socket?.connected && !force) return;
+
+    if (socket) {
+      socket.disconnect();
+      setSocket(null);
+    }
 
     const socketUrl = await getSocketBaseUrl();
     console.log('Connecting socket to:', socketUrl);

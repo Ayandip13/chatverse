@@ -6,6 +6,7 @@ import ForgotPasswordScreen from '../screens/auth/forgot-password';
 import PendingVerificationScreen from '../screens/auth/pending-verification';
 import AccountRejectedScreen from '../screens/auth/account-rejected';
 import AccountSuspendedScreen from '../screens/auth/account-suspended';
+import DevSettingsScreen from '../screens/app/DevSettingsScreen';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
@@ -18,6 +19,7 @@ export function AuthNavigator() {
       <Stack.Screen name="PendingVerification" component={PendingVerificationScreen} />
       <Stack.Screen name="AccountRejected" component={AccountRejectedScreen} />
       <Stack.Screen name="AccountSuspended" component={AccountSuspendedScreen} />
+      <Stack.Screen name="DevSettings" component={DevSettingsScreen} />
     </Stack.Navigator>
   );
 }

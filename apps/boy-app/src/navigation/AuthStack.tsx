@@ -4,6 +4,7 @@ import LoginScreen from '../screens/auth/login';
 import RegisterScreen from '../screens/auth/register';
 import ForgotPasswordScreen from '../screens/auth/forgot-password';
 import ResetPasswordScreen from '../screens/auth/reset-password';
+import DevSettingsScreen from '../screens/app/DevSettingsScreen';
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
@@ -14,6 +15,7 @@ export function AuthNavigator() {
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+      <Stack.Screen name="DevSettings" component={DevSettingsScreen} />
     </Stack.Navigator>
   );
 }

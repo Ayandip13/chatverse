@@ -7,6 +7,7 @@ import { SplashScreen } from './src/components/ui/SplashScreen';
 import { StatusBar } from 'expo-status-bar';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { NavigationContainer } from '@react-navigation/native';
+import { initBackendConfig } from './src/config/backendConfig';
 
 import './global.css'; // NativeWind v4 requires this
 
@@ -15,6 +16,7 @@ export default function App() {
   const isLoading = useAuthStore((state) => state.isLoading);
 
   useEffect(() => {
+    initBackendConfig();
     hydrateAuth();
   }, []);
 

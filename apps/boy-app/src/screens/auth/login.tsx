@@ -9,7 +9,7 @@ import { Input } from '../../components/ui/Input';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react-native';
+import { Eye, EyeOff, Mail, Lock, User, Server } from 'lucide-react-native';
 import { theme } from '../../constants/theme';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
@@ -80,6 +80,15 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white dark:bg-gray-900">
+      <View className="px-6 pt-2 flex-row justify-end">
+        <TouchableOpacity
+          onPress={() => navigation.navigate('DevSettings')}
+          className="p-2.5 rounded-full bg-gray-100 dark:bg-gray-800 items-center justify-center border border-gray-200 dark:border-gray-700"
+          activeOpacity={0.7}
+        >
+          <Server size={18} color="#6366f1" />
+        </TouchableOpacity>
+      </View>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"

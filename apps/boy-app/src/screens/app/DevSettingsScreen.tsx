@@ -8,6 +8,8 @@ import {
   Alert,
   ActivityIndicator,
   Switch,
+  DevSettings,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -21,6 +23,7 @@ import {
   AlertCircle,
 } from 'lucide-react-native';
 import * as Updates from 'expo-updates';
+import apiClient from '../../api/apiClient';
 import {
   getBackendMode,
   getLocalHost,
@@ -30,6 +33,7 @@ import {
   BackendMode,
   PRODUCTION_API_URL,
   PRODUCTION_SOCKET_URL,
+  DEFAULT_LOCAL_HOST,
 } from '../../config/backendConfig';
 
 export default function DevSettingsScreen() {
@@ -55,7 +59,7 @@ export default function DevSettingsScreen() {
       const socketUrl = await getSocketBaseUrl();
 
       setMode(currentMode);
-      setLocalHostInput(savedHost || '192.168.1.106:5000');
+      setLocalHostInput(savedHost || DEFAULT_LOCAL_HOST);
       setActiveApiUrl(apiUrl);
       setActiveSocketUrl(socketUrl);
     } catch (err) {
@@ -71,34 +75,61 @@ export default function DevSettingsScreen() {
   };
 
   const handleSaveAndRestart = async () => {
-    if (mode === 'local' && !localHostInput.trim()) {
+    const targetHost = localHostInput.trim() || DEFAULT_LOCAL_HOST;
+    if (mode === 'local' && !targetHost) {
       Alert.alert('Validation Error', 'Please enter a local host (e.g. 192.168.1.106:5000).');
       return;
     }
 
     setSaving(true);
     try {
-      await setBackendMode(mode, localHostInput.trim());
+      await setBackendMode(mode, targetHost);
       
-      // Update displayed active URLs
+      // Update displayed active URLs & mode
+      const newMode = await getBackendMode();
       const newApiUrl = await getApiBaseUrl();
       const newSocketUrl = await getSocketBaseUrl();
+
+      setMode(newMode);
       setActiveApiUrl(newApiUrl);
       setActiveSocketUrl(newSocketUrl);
 
-      // Attempt Expo reload
-      if (Updates.reloadAsync) {
+      // Instantly update apiClient default baseURL
+      apiClient.defaults.baseURL = newApiUrl;
+
+      // Brief delay to allow storage write to finish
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.location.reload();
+        return;
+      }
+
+      // Attempt app reload (Expo Updates or RN DevSettings)
+      let reloaded = false;
+      if (Updates && typeof Updates.reloadAsync === 'function') {
         try {
           await Updates.reloadAsync();
+          reloaded = true;
           return;
         } catch (reloadErr) {
-          console.warn('Expo Updates.reloadAsync not available:', reloadErr);
+          console.warn('Expo Updates.reloadAsync fallback:', reloadErr);
+        }
+      }
+
+      if (!reloaded && DevSettings && typeof DevSettings.reload === 'function') {
+        try {
+          DevSettings.reload();
+          reloaded = true;
+          return;
+        } catch (devErr) {
+          console.warn('DevSettings.reload fallback:', devErr);
         }
       }
 
       Alert.alert(
         'Backend Settings Saved',
-        `Mode set to ${mode.toUpperCase()}.\n\nAPI: ${newApiUrl}\nSocket: ${newSocketUrl}\n\nPlease close and reopen the app manually to apply changes across all services.`,
+        `Environment set to ${mode.toUpperCase()}.\n\nAPI URL:\n${newApiUrl}\n\nSocket URL:\n${newSocketUrl}\n\nActive environment updated. Please reload your Expo app or dev server to connect.`,
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } catch (err: any) {

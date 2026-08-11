@@ -29,9 +29,15 @@ export const SocketProvider = ({ children }: SocketProviderProps) => {
   const [isConnected, setIsConnected] = useState(false);
   const { accessToken, isAuthenticated, user } = useAuthStore();
 
-  const connect = async () => {
+  const connect = async (force: boolean = false) => {
     // Connect only if authenticated and account status is APPROVED
-    if (!accessToken || socket?.connected || user?.status !== 'APPROVED') return;
+    if (!accessToken || user?.status !== 'APPROVED') return;
+    if (socket?.connected && !force) return;
+
+    if (socket) {
+      socket.disconnect();
+      setSocket(null);
+    }
 
     const socketUrl = await getSocketBaseUrl();
     console.log('Connecting socket to:', socketUrl);

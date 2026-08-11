@@ -9,7 +9,7 @@ import { Input } from '../../components/ui/Input';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
-import { Mail, Lock, Heart } from 'lucide-react-native';
+import { Mail, Lock, Heart, Server } from 'lucide-react-native';
 import { theme } from '../../constants/theme';
 
 const loginSchema = z.object({
@@ -68,6 +68,15 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50 dark:bg-slate-900">
+      <View className="px-6 pt-2 flex-row justify-end">
+        <TouchableOpacity
+          onPress={() => navigation.navigate('DevSettings')}
+          className="p-2.5 rounded-full bg-slate-200 dark:bg-slate-800 items-center justify-center border border-slate-300 dark:border-slate-700"
+          activeOpacity={0.7}
+        >
+          <Server size={18} color="#f43f5e" />
+        </TouchableOpacity>
+      </View>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"

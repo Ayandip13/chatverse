@@ -7,6 +7,7 @@ import { SplashScreen } from './src/components/ui/SplashScreen';
 import { StatusBar } from 'expo-status-bar';
 import { RootNavigator } from './src/navigation';
 import { NavigationContainer } from '@react-navigation/native';
+import { initBackendConfig } from './src/config/backendConfig';
 
 import './global.css'; // NativeWind v4 requires this
 
@@ -19,6 +20,7 @@ export default function App() {
 
   useEffect(() => {
     setColorScheme('light');
+    initBackendConfig();
     hydrateAuth();
   }, []);
 
