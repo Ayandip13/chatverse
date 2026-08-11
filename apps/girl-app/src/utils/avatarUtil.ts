@@ -1,3 +1,5 @@
+import { getCachedApiBaseUrl } from '../config/backendConfig';
+
 export const DEFAULT_BOY_AVATARS = [
   'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=500&auto=format&fit=crop&q=80',
   'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=500&auto=format&fit=crop&q=80',
@@ -26,7 +28,7 @@ export function getAvatarUrl(avatar?: string | null, name?: string, seedKey?: st
   ) {
     let cleanUrl = avatar.trim();
     if (cleanUrl.startsWith('/uploads') || cleanUrl.startsWith('uploads')) {
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.0.105:5000/api/v1';
+      const apiUrl = getCachedApiBaseUrl();
       const baseUrl = apiUrl.replace(/\/api\/v1\/?$/, '').replace(/\/+$/, '');
       const relativePath = cleanUrl.startsWith('/') ? cleanUrl : `/${cleanUrl}`;
       return `${baseUrl}${relativePath}`;

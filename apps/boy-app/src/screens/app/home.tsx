@@ -7,8 +7,6 @@ import { useNavigation } from '@react-navigation/native';
 import { HomeHeader } from '../../components/home/HomeHeader';
 import { WalletCard } from '../../components/home/WalletCard';
 import { SearchBar } from '../../components/home/SearchBar';
-import { QuickActions } from '../../components/home/QuickActions';
-import { PromotionalCarousel } from '../../components/home/PromotionalCarousel';
 import { SectionHeader } from '../../components/home/SectionHeader';
 import { GirlAvatarCard, GirlDetailCard } from '../../components/home/GirlCards';
 import { RecentChatCard } from '../../components/home/RecentChatCard';
@@ -102,10 +100,6 @@ export default function HomeScreen() {
         <WalletCard wallet={wallet} isLoading={isLoadingWallet} />
         
         <SearchBar />
-        
-        <QuickActions />
-        
-        <PromotionalCarousel />
 
         <View className="mb-8">
           <SectionHeader title="Online Now" actionText="See All" onAction={() => navigation.navigate('Search')} />

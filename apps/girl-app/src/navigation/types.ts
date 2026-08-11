@@ -19,4 +19,5 @@ export type AppStackParamList = {
   Wallet: undefined;
   WalletHistory: undefined;
   WalletWithdraw: undefined;
+  DevSettings: undefined;
 };

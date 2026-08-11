@@ -34,4 +34,5 @@ export type AppStackParamList = {
   EditProfile: undefined;
   ChatScreen: { id: string };
   GirlDetailScreen: { id: string };
+  DevSettings: undefined;
 };

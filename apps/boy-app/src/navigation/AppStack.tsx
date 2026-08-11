@@ -17,6 +17,7 @@ import ChatRequestsScreen from '../screens/app/chat-requests';
 import EditProfileScreen from '../screens/app/edit-profile';
 import ChatScreen from '../screens/app/ChatScreen';
 import GirlDetailScreen from '../screens/app/GirlDetailScreen';
+import DevSettingsScreen from '../screens/app/DevSettingsScreen';
 
 const Stack = createNativeStackNavigator<AppStackParamList>();
 
@@ -40,6 +41,7 @@ export function AppNavigator() {
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="ChatScreen" component={ChatScreen} />
       <Stack.Screen name="GirlDetailScreen" component={GirlDetailScreen} />
+      <Stack.Screen name="DevSettings" component={DevSettingsScreen} />
     </Stack.Navigator>
   );
 }

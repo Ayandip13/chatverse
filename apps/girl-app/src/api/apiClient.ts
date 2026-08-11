@@ -2,12 +2,12 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
+import { getApiBaseUrl, PRODUCTION_API_URL } from '../config/backendConfig';
+
 const getAuthStore = () => require('../store/authStore').useAuthStore;
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.0.105:5000/api/v1';
-
 const apiClient = axios.create({
-  baseURL: API_URL,
+  baseURL: PRODUCTION_API_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -33,6 +33,9 @@ const processQueue = (error: AxiosError | null, token: string | null = null) => 
 
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
+    const dynamicBaseUrl = await getApiBaseUrl();
+    config.baseURL = dynamicBaseUrl;
+
     const token = getAuthStore().getState().accessToken;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -73,7 +76,8 @@ apiClient.interceptors.response.use(
         }
 
         // Direct request to refresh endpoint
-        const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
+        const currentBaseUrl = await getApiBaseUrl();
+        const response = await axios.post(`${currentBaseUrl}/auth/refresh`, { refreshToken });
         const { accessToken } = response.data.data;
 
         await (Platform.OS === 'web'

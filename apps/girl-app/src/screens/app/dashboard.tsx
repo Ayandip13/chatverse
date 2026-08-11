@@ -36,6 +36,25 @@ export default function DashboardScreen() {
   const [incomingRequest, setIncomingRequest] = useState<any>(null);
   const [countdown, setCountdown] = useState<number>(60);
 
+  const [tapCount, setTapCount] = useState(0);
+  const lastTapRef = React.useRef<number>(0);
+
+  const handleVersionTap = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 2000) {
+      const newCount = tapCount + 1;
+      if (newCount >= 7) {
+        setTapCount(0);
+        navigation.navigate('DevSettings');
+      } else {
+        setTapCount(newCount);
+      }
+    } else {
+      setTapCount(1);
+    }
+    lastTapRef.current = now;
+  };
+
   // Toggle Online/Offline status
   const handleToggleOnline = (value: boolean) => {
     setIsOnline(value);
@@ -157,7 +176,7 @@ export default function DashboardScreen() {
 
         {/* Header */}
         <View className="flex-row items-center justify-between mb-6">
-          <View>
+          <TouchableOpacity onPress={handleVersionTap} activeOpacity={0.8}>
             <View className="flex-row items-center gap-2">
               <Text className="text-2xl font-extrabold text-slate-900 dark:text-white">ChatVerse</Text>
               <Text className="text-[10px] font-bold uppercase tracking-wider text-pink-500 bg-pink-500/10 px-2 py-0.5 rounded-full border border-pink-500/20">
@@ -167,7 +186,12 @@ export default function DashboardScreen() {
             <Text className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
               Welcome back, {user?.name}!
             </Text>
-          </View>
+            {tapCount > 2 && (
+              <Text className="text-[10px] text-pink-500 font-bold mt-1">
+                {7 - tapCount} tap{7 - tapCount === 1 ? '' : 's'} away from Developer Settings
+              </Text>
+            )}
+          </TouchableOpacity>
 
           <TouchableOpacity onPress={handleLogout} className="p-2.5 rounded-full bg-slate-200 dark:bg-slate-800">
             <LogOut color={theme.colors.text.secondary.light} size={18} />
@@ -412,6 +436,16 @@ export default function DashboardScreen() {
             </View>
           )}
         </View>
+
+        {/* Secret Version Tap Trigger for DevSettings */}
+        <TouchableOpacity onPress={handleVersionTap} activeOpacity={0.7} className="items-center py-6">
+          <Text className="text-xs text-slate-400 font-semibold tracking-wider uppercase">ChatVerse v1.0.0</Text>
+          {tapCount > 2 && (
+            <Text className="text-[10px] text-pink-500 font-bold mt-1">
+              {7 - tapCount} tap{7 - tapCount === 1 ? '' : 's'} away from Developer Settings
+            </Text>
+          )}
+        </TouchableOpacity>
 
       </ScrollView>
 

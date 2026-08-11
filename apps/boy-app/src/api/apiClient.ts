@@ -3,12 +3,10 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { useAuthStore } from '../store/authStore';
 
-// In Expo we need to handle localhost differently for Android emulator vs iOS simulator vs device
-// Default to standard local IP (change to your local IP address for physical devices)
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.0.105:5000/api/v1';
+import { getApiBaseUrl, PRODUCTION_API_URL } from '../config/backendConfig';
 
 const apiClient = axios.create({
-  baseURL: API_URL,
+  baseURL: PRODUCTION_API_URL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -34,6 +32,9 @@ const processQueue = (error: AxiosError | null, token: string | null = null) => 
 
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
+    const dynamicBaseUrl = await getApiBaseUrl();
+    config.baseURL = dynamicBaseUrl;
+
     const token = useAuthStore.getState().accessToken;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -71,8 +72,9 @@ apiClient.interceptors.response.use(
           throw new Error('No refresh token available');
         }
 
-        // Direct axios call to avoid interceptor loops
-        const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
+        // Direct axios call using active base URL to avoid interceptor loops
+        const currentBaseUrl = await getApiBaseUrl();
+        const response = await axios.post(`${currentBaseUrl}/auth/refresh`, { refreshToken });
         const { accessToken } = response.data.data;
 
         await (Platform.OS === 'web' ? getStorage.setItem('accessToken', accessToken) : (getStorage as typeof SecureStore).setItemAsync('accessToken', accessToken));

@@ -2,8 +2,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '../store/authStore';
 
-const SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_URL || 'http://192.168.0.105:5000';
-console.log('Connecting socket to:', SOCKET_URL);
+import { getSocketBaseUrl } from '../config/backendConfig';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -30,10 +29,13 @@ export const SocketProvider = ({ children }: SocketProviderProps) => {
   const [isConnected, setIsConnected] = useState(false);
   const { accessToken, isAuthenticated } = useAuthStore();
 
-  const connect = () => {
+  const connect = async () => {
     if (!accessToken || socket?.connected) return;
 
-    const newSocket = io(SOCKET_URL, {
+    const socketUrl = await getSocketBaseUrl();
+    console.log('Connecting socket to:', socketUrl);
+
+    const newSocket = io(socketUrl, {
       auth: { token: accessToken },
       reconnection: true,
       reconnectionDelay: 1000,

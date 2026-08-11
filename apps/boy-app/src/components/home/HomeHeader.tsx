@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, Image } from 'react-native';
-import { Bell, Search } from 'lucide-react-native';
+import { Bell } from 'lucide-react-native';
 import { useAuthStore } from '../../store/authStore';
 import { useNavigation } from '@react-navigation/native';
 import { useUnreadCount } from '../../hooks/useUser';
@@ -27,12 +27,6 @@ export function HomeHeader() {
         </View>
       </View>
       <View className="flex-row items-center space-x-4">
-        <TouchableOpacity 
-          onPress={() => navigation.navigate('Search')}
-          className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 items-center justify-center shadow-sm"
-        >
-          <Search size={20} color="#6b7280" />
-        </TouchableOpacity>
         <TouchableOpacity 
           onPress={() => navigation.navigate('Notifications')}
           className="w-10 h-10 rounded-full bg-white dark:bg-gray-800 items-center justify-center shadow-sm relative"

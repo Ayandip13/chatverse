@@ -27,9 +27,13 @@ export const errorHandler = (
     code = err.code || code;
   }
 
-  logger.error(`[${req.method}] ${req.originalUrl} >> StatusCode:: ${statusCode}, Message:: ${message}`);
-  if (envConfig.NODE_ENV === 'development') {
-    logger.error(err.stack);
+  if (statusCode >= 500) {
+    logger.error(`[${req.method}] ${req.originalUrl} >> StatusCode:: ${statusCode}, Message:: ${message}`);
+    if (envConfig.NODE_ENV === 'development' && err.stack) {
+      logger.error(err.stack);
+    }
+  } else {
+    logger.warn(`[${req.method}] ${req.originalUrl} >> StatusCode:: ${statusCode}, Message:: ${message}`);
   }
 
   res.status(statusCode).json({

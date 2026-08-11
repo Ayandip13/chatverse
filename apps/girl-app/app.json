@@ -6,6 +6,14 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "enabled": true,
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/51147b79-8bac-4920-adbe-61482be7d3bc"
+    },
     "ios": {
       "supportsTablet": true
     },
@@ -16,13 +24,20 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.chatverse.girl"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-web-browser"
-    ]
+      "expo-updates"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "51147b79-8bac-4920-adbe-61482be7d3bc"
+      }
+    },
+    "owner": "amit_roy23"
   }
 }

@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '../../store/authStore';
 import { useDeleteAccount } from '../../hooks/useUser';
 import { CustomModal } from '../../components/ui/CustomModal';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 export default function SettingsScreen() {
   const navigation = useNavigation<any>();
@@ -20,6 +20,25 @@ export default function SettingsScreen() {
     confirmText: string;
     onConfirm: () => void;
   } | null>(null);
+
+  const [tapCount, setTapCount] = useState(0);
+  const lastTapRef = useRef<number>(0);
+
+  const handleVersionTap = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 2000) {
+      const newCount = tapCount + 1;
+      if (newCount >= 7) {
+        setTapCount(0);
+        navigation.navigate('DevSettings');
+      } else {
+        setTapCount(newCount);
+      }
+    } else {
+      setTapCount(1);
+    }
+    lastTapRef.current = now;
+  };
 
   const handleLogout = () => {
     setModalConfig({
@@ -63,9 +82,11 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900" edges={['top']}>
-      <View className="px-6 py-6 pt-10">
-        <Text className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Profile</Text>
-        <Text className="text-gray-500 dark:text-gray-400 mt-1">Manage your account and preferences</Text>
+      <View className="px-6 py-6 pt-10 flex-row items-center justify-between">
+        <View>
+          <Text className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Settings</Text>
+          <Text className="text-gray-500 dark:text-gray-400 mt-1">Manage your account and preferences</Text>
+        </View>
       </View>
 
       <ScrollView className="flex-1 px-4 pt-2" contentContainerStyle={{ paddingBottom: 120 }}>
@@ -114,6 +135,16 @@ export default function SettingsScreen() {
         >
           <Trash2 size={20} color="#dc2626" className="mr-4" />
           <Text className="text-base font-bold text-red-600">Delete Account</Text>
+        </TouchableOpacity>
+
+        {/* Secret Version Tap Trigger for DevSettings */}
+        <TouchableOpacity onPress={handleVersionTap} activeOpacity={0.7} className="items-center py-8">
+          <Text className="text-xs text-gray-400 font-semibold tracking-wider uppercase">ChatVerse v1.0.0</Text>
+          {tapCount > 2 && (
+            <Text className="text-[10px] text-indigo-500 font-bold mt-1">
+              {7 - tapCount} tap{7 - tapCount === 1 ? '' : 's'} away from Developer Settings
+            </Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
 

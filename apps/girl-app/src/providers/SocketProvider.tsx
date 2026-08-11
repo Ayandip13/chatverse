@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '../store/authStore';
 
-const SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_URL || 'http://192.168.0.105:5000';
+import { getSocketBaseUrl } from '../config/backendConfig';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -29,11 +29,14 @@ export const SocketProvider = ({ children }: SocketProviderProps) => {
   const [isConnected, setIsConnected] = useState(false);
   const { accessToken, isAuthenticated, user } = useAuthStore();
 
-  const connect = () => {
+  const connect = async () => {
     // Connect only if authenticated and account status is APPROVED
     if (!accessToken || socket?.connected || user?.status !== 'APPROVED') return;
 
-    const newSocket = io(SOCKET_URL, {
+    const socketUrl = await getSocketBaseUrl();
+    console.log('Connecting socket to:', socketUrl);
+
+    const newSocket = io(socketUrl, {
       auth: { token: accessToken },
       reconnection: true,
       reconnectionDelay: 1000,
