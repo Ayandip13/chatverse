@@ -12,14 +12,12 @@ import { GirlAvatarCard, GirlDetailCard } from '../../components/home/GirlCards'
 import { RecentChatCard } from '../../components/home/RecentChatCard';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Skeleton } from '../../components/ui/Skeleton';
-import { Users, Search, MessageCircle, Star, UserPlus } from 'lucide-react-native';
+import { Users, Search } from 'lucide-react-native';
 
 import { 
   useWalletSummary, 
   useOnlineGirls, 
   useRecommendedGirls, 
-  usePopularGirls, 
-  useRecentlyJoinedGirls, 
   useRecentChats 
 } from '../../hooks/useHomeData';
 
@@ -31,9 +29,7 @@ export default function HomeScreen() {
   const { data: wallet, isLoading: isLoadingWallet } = useWalletSummary();
   const { data: onlineGirls, isLoading: isLoadingOnline } = useOnlineGirls();
   const { data: recommendedGirls, isLoading: isLoadingRec } = useRecommendedGirls();
-  const { data: popularGirls, isLoading: isLoadingPop } = usePopularGirls();
-  const { data: recentGirls, isLoading: isLoadingRecent } = useRecentlyJoinedGirls();
-  const { data: recentChats, isLoading: isLoadingChats } = useRecentChats();
+  const { data: recentChats } = useRecentChats();
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -58,7 +54,7 @@ export default function HomeScreen() {
       return (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="pl-6">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className={`mr-4 ${useGrid ? 'w-40 h-64 rounded-2xl' : 'w-16 h-16 rounded-full'}`} />
+            <Skeleton key={i} className={`mr-4 ${useGrid ? 'w-72 h-36 rounded-3xl' : 'w-18 h-18 rounded-full'}`} />
           ))}
         </ScrollView>
       );
@@ -66,7 +62,7 @@ export default function HomeScreen() {
 
     if (!data || data.length === 0) {
       return (
-        <View className="px-6 py-4">
+        <View className="px-6 py-2">
           <EmptyState icon={emptyIcon} title={emptyTitle} description={emptyDesc} />
         </View>
       );
@@ -80,8 +76,8 @@ export default function HomeScreen() {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingLeft: 24, paddingRight: 8 }}
-        initialNumToRender={4}
-        maxToRenderPerBatch={4}
+        initialNumToRender={5}
+        maxToRenderPerBatch={5}
         windowSize={3}
       />
     );
@@ -94,40 +90,72 @@ export default function HomeScreen() {
       <ScrollView 
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: 110 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4f46e5" />}
       >
+        {/* Wallet / Balance Banner */}
         <WalletCard wallet={wallet} isLoading={isLoadingWallet} />
         
+        {/* Search Input Bar */}
         <SearchBar />
 
-        <View className="mb-8">
-          <SectionHeader title="Online Now" actionText="See All" onAction={() => navigation.navigate('Search')} />
+        {/* Recent Conversations (if available) */}
+        {recentChats && recentChats.length > 0 && (
+          <View className="mb-7">
+            <SectionHeader 
+              title="Recent Chats" 
+              subtitle="Continue where you left off"
+              actionText="View All" 
+              onAction={() => navigation.navigate('Chats')} 
+            />
+            <FlatList
+              data={recentChats}
+              keyExtractor={(item) => item._id}
+              renderItem={({ item }) => <RecentChatCard chat={item} />}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingLeft: 24, paddingRight: 8 }}
+            />
+          </View>
+        )}
+
+        {/* Online Now Stories */}
+        <View className="mb-7">
+          <SectionHeader 
+            title="Online Now" 
+            subtitle="Active creators ready to connect"
+            actionText="See All" 
+            onAction={() => navigation.navigate('Search')} 
+          />
           {renderHorizontalList(
             onlineGirls || [], 
             isLoadingOnline, 
             GirlAvatarCard, 
-            "No one's online", 
-            "Check back later to see who's online.",
+            "No creators online", 
+            "Check back in a moment to see who comes online.",
             false,
-            <Users size={32} color="#9ca3af" />
+            <Users size={28} color="#9ca3af" />
           )}
         </View>
 
-        <View className="mb-8">
-          <SectionHeader title="Recommended for You" />
+        {/* Recommended for You */}
+        <View className="mb-7">
+          <SectionHeader 
+            title="Recommended for You" 
+            subtitle="Top creators picked for you"
+            actionText="Explore"
+            onAction={() => navigation.navigate('Search')}
+          />
           {renderHorizontalList(
             recommendedGirls || [], 
             isLoadingRec, 
             GirlDetailCard, 
-            "No recommendations", 
-            "We'll find matches for you soon.",
+            "No recommendations yet", 
+            "We'll find great matches for you shortly.",
             true,
-            <Search size={32} color="#9ca3af" />
+            <Search size={28} color="#9ca3af" />
           )}
         </View>
-
-
 
       </ScrollView>
     </SafeAreaView>

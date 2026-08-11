@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, Image, TouchableOpacity, Modal, ActivityIndicator, Alert, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../store/authStore';
-import { StatusBadge } from '../../components/ui/StatusBadge';
 import {
   LogOut, MessageCircle, Clock, Check, X,
   Edit3, Coins, Lock, TrendingUp, ArrowDownToLine,
-  ChevronRight, ShieldCheck,
-  MessageCircleHeart
+  ChevronRight, ShieldCheck, MessageCircleHeart,
+  Sparkles, Zap
 } from 'lucide-react-native';
 import { theme } from '../../constants/theme';
 import { useNavigation } from '@react-navigation/native';
@@ -24,10 +23,11 @@ export default function DashboardScreen() {
   const queryClient = useQueryClient();
 
   const [isOnline, setIsOnline] = useState<boolean>(true);
+  const [showTip, setShowTip] = useState<boolean>(true);
 
   // Queries
-  const { data: summaryData, isLoading: isSummaryLoading } = useWithdrawalSummary();
-  const { data: pendingRequests, refetch: refetchRequests, isLoading: isRequestsLoading } = useChatRequests('PENDING');
+  const { data: summaryData } = useWithdrawalSummary();
+  const { data: pendingRequests, refetch: refetchRequests } = useChatRequests('PENDING');
   const { data: recentChats, isLoading: isChatsLoading } = useRecentChats();
 
   const { mutateAsync: acceptRequest, isPending: isAccepting } = useAcceptChatRequest();
@@ -37,7 +37,15 @@ export default function DashboardScreen() {
   const [countdown, setCountdown] = useState<number>(60);
 
   const [tapCount, setTapCount] = useState(0);
-  const lastTapRef = React.useRef<number>(0);
+  const lastTapRef = useRef<number>(0);
+
+  // Dynamic time-based greeting
+  const getGreeting = () => {
+    const hours = new Date().getHours();
+    if (hours < 12) return 'Good Morning, 👋';
+    if (hours < 18) return 'Good Afternoon, 👋';
+    return 'Good Evening, 👋';
+  };
 
   const handleVersionTap = () => {
     const now = Date.now();
@@ -122,7 +130,7 @@ export default function DashboardScreen() {
       socket.off('chat_request:expired', onRequestExpired);
       socket.off('wallet:update', onWalletUpdate);
     };
-  }, [socket, isConnected, incomingRequest, isOnline, queryClient]);
+  }, [socket, isConnected, incomingRequest, isOnline, queryClient, refetchRequests]);
 
   // Handle local 60s countdown for incoming request modal
   useEffect(() => {
@@ -171,154 +179,231 @@ export default function DashboardScreen() {
   const senderInfo = activeRequest ? (activeRequest.sender || activeRequest.senderId) : null;
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50 dark:bg-slate-900">
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
+    <SafeAreaView className="flex-1 bg-slate-50 dark:bg-slate-950">
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 18, paddingTop: 12, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
 
-        {/* Header */}
-        <View className="flex-row items-center justify-between mb-6">
+        {/* --- 1. TOP NAVIGATION HEADER --- */}
+        <View className="flex-row items-center justify-between mb-5">
           <TouchableOpacity onPress={handleVersionTap} activeOpacity={0.8}>
             <View className="flex-row items-center gap-2">
-              <Text className="text-2xl font-extrabold text-slate-900 dark:text-white">ChatVerse</Text>
-              <Text className="text-[10px] font-bold uppercase tracking-wider text-pink-500 bg-pink-500/10 px-2 py-0.5 rounded-full border border-pink-500/20">
-                Creator Portal
-              </Text>
+              <Text className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">ChatVerse</Text>
+              <View className="bg-pink-500/10 dark:bg-pink-500/20 px-2 py-0.5 rounded-full border border-pink-500/30">
+                <Text className="text-[10px] font-extrabold uppercase text-pink-600 dark:text-pink-300">Creator Portal</Text>
+              </View>
             </View>
-            <Text className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">
-              Welcome back, {user?.name}!
-            </Text>
             {tapCount > 2 && (
-              <Text className="text-[10px] text-pink-500 font-bold mt-1">
-                {7 - tapCount} tap{7 - tapCount === 1 ? '' : 's'} away from Developer Settings
+              <Text className="text-[10px] text-pink-500 font-bold mt-0.5">
+                {7 - tapCount} tap{7 - tapCount === 1 ? '' : 's'} to Dev Tools
               </Text>
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleLogout} className="p-2.5 rounded-full bg-slate-200 dark:bg-slate-800">
-            <LogOut color={theme.colors.text.secondary.light} size={18} />
-          </TouchableOpacity>
+          {/* Right Header Buttons */}
+          <View className="flex-row items-center gap-2">
+            <TouchableOpacity 
+              onPress={handleLogout} 
+              className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 items-center justify-center border border-slate-200 dark:border-slate-800 shadow-sm"
+              activeOpacity={0.7}
+            >
+              <LogOut size={16} color="#94a3b8" />
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Profile Summary & Availability Card */}
-        <View className="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm mb-6">
-          <View className="flex-row items-center justify-between mb-4">
+        {/* --- 2. CREATOR HERO & AVAILABILITY STATUS CARD --- */}
+        <View className="bg-slate-900 dark:bg-slate-900 p-5 rounded-3xl border border-slate-800 shadow-xl mb-6 relative overflow-hidden">
+          {/* Ambient Decorative Glow */}
+          <View className="absolute -top-12 -right-12 w-36 h-36 bg-pink-500/20 rounded-full blur-2xl pointer-events-none" />
+          <View className="absolute -bottom-12 -left-12 w-36 h-36 bg-rose-600/10 rounded-full blur-2xl pointer-events-none" />
+
+          <View className="flex-row items-center justify-between mb-4 relative z-10">
             <View className="flex-row items-center gap-3">
-              <View className="w-14 h-14 rounded-full bg-pink-500/10 items-center justify-center border-2 border-pink-500/30 overflow-hidden">
-                <Image source={{ uri: getAvatarUrl(user?.avatar, user?.name, user?._id) }} className="w-full h-full" />
+              <View className="w-14 h-14 rounded-full p-0.5 border-2 border-pink-500/80 bg-slate-800 overflow-hidden shadow-lg">
+                <Image source={{ uri: getAvatarUrl(user?.avatar, user?.name, user?._id) }} className="w-full h-full rounded-full" />
               </View>
 
               <View>
                 <View className="flex-row items-center gap-1.5">
-                  <Text className="text-lg font-bold text-slate-900 dark:text-white">{user?.name}</Text>
-                  <ShieldCheck size={16} color="#10b981" />
+                  <Text className="text-lg font-extrabold text-white tracking-tight">{user?.name}</Text>
+                  <ShieldCheck size={18} color="#10b981" />
                 </View>
-                <Text className="text-slate-500 dark:text-slate-400 text-xs">{user?.email}</Text>
+                <Text className="text-slate-400 text-xs mt-0.5">{user?.email || 'Verified Creator'}</Text>
               </View>
             </View>
 
             <TouchableOpacity
               onPress={() => navigation.navigate('EditProfile')}
-              className="p-2.5 rounded-full bg-pink-50 dark:bg-pink-900/30 border border-pink-200 dark:border-pink-800"
+              className="px-3 py-1.5 rounded-full bg-pink-500/20 border border-pink-500/40 flex-row items-center gap-1.5"
+              activeOpacity={0.8}
             >
-              <Edit3 size={16} color="#e11d48" />
+              <Edit3 size={14} color="#f43f5e" />
+              <Text className="text-xs font-bold text-pink-300">Edit</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Availability Toggle */}
-          <View className="bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-2xl flex-row items-center justify-between border border-slate-100 dark:border-slate-800">
-            <View className="flex-row items-center gap-2">
-              <View className={`w-3 h-3 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-              <Text className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                Status: {isOnline ? 'ONLINE & VISIBLE' : 'OFFLINE'}
-              </Text>
-            </View>
+          {/* Interactive Availability Toggle Banner */}
+          <View className={`p-4 rounded-2xl border transition-all duration-300 ${
+            isOnline 
+              ? 'bg-rose-950/40 border-rose-500/40' 
+              : 'bg-slate-800/60 border-slate-700/60'
+          }`}>
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center gap-2.5 flex-1 mr-2">
+                <View className="relative">
+                  <View className={`w-3.5 h-3.5 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-slate-500'}`} />
+                </View>
 
-            <Switch
-              value={isOnline}
-              onValueChange={handleToggleOnline}
-              trackColor={{ false: '#cbd5e1', true: '#f43f5e' }}
-              thumbColor="#ffffff"
-            />
+                <View>
+                  <Text className="text-xs font-extrabold tracking-wide text-white uppercase">
+                    {isOnline ? 'Active & Receiving Chats' : 'Status: Offline'}
+                  </Text>
+                  <Text className="text-[11px] text-slate-400 mt-0.5" numberOfLines={1}>
+                    {isOnline ? 'You appear online to users searching for creators' : 'Switch online to start getting new chat requests'}
+                  </Text>
+                </View>
+              </View>
+
+              <Switch
+                value={isOnline}
+                onValueChange={handleToggleOnline}
+                trackColor={{ false: '#475569', true: '#f43f5e' }}
+                thumbColor="#ffffff"
+              />
+            </View>
           </View>
         </View>
 
-        {/* Financial KPI Summary Section */}
+        {/* --- 3. CREATOR GROWTH TIP BANNER (DISMISSIBLE) --- */}
+        {showTip && (
+          <View className="bg-pink-500/10 dark:bg-pink-500/15 p-4 rounded-2xl border border-pink-500/20 flex-row items-center justify-between mb-6">
+            <View className="flex-row items-center gap-3 flex-1 mr-2">
+              <View className="w-9 h-9 rounded-xl bg-pink-500/20 items-center justify-center border border-pink-500/30">
+                <Zap size={18} color="#f43f5e" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-xs font-bold text-slate-900 dark:text-white">Earnings Boost Tip 💡</Text>
+                <Text className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 leading-snug">
+                  Staying online between 8 PM - 12 AM brings up to <Text className="font-extrabold text-pink-600 dark:text-pink-400">3x more chat requests</Text>!
+                </Text>
+              </View>
+            </View>
+            <TouchableOpacity onPress={() => setShowTip(false)} className="p-1">
+              <X size={16} color="#94a3b8" />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* --- 4. FINANCIAL KPI SUMMARY SECTION --- */}
         <View className="mb-6">
           <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-base font-bold text-slate-900 dark:text-white">Earnings Overview</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Wallet')}>
-              <Text className="text-xs font-bold text-pink-600 dark:text-pink-400">Manage Wallet</Text>
+            <View className="flex-row items-center gap-2">
+              <Sparkles size={16} color="#f43f5e" />
+              <Text className="text-base font-black text-slate-900 dark:text-white tracking-tight">
+                Earnings Overview
+              </Text>
+            </View>
+            <TouchableOpacity 
+              onPress={() => navigation.navigate('Wallet')}
+              className="flex-row items-center gap-0.5"
+            >
+              <Text className="text-xs font-extrabold text-pink-600 dark:text-pink-400">Wallet Details</Text>
+              <ChevronRight size={14} color="#f43f5e" />
             </TouchableOpacity>
           </View>
 
-          <View className="flex-row gap-3 mb-3">
-            {/* Available Balance */}
-            <View className="flex-1 bg-rose-700 p-4 rounded-2xl border border-rose-400/30">
-              <View className="flex-row items-center justify-between mb-1">
-                <Text className="text-rose-100 text-[10px] font-bold uppercase tracking-wider">Available Balance</Text>
-                <Coins size={16} color="#ffffff" />
+          {/* Hero Available Balance Card */}
+          <View className="bg-rose-600 dark:bg-rose-700 p-5 rounded-3xl shadow-lg border border-rose-500/30 mb-3 relative overflow-hidden">
+            <View className="absolute -right-8 -bottom-8 w-28 h-28 bg-white/10 rounded-full" />
+            <View className="flex-row items-center justify-between mb-2">
+              <Text className="text-rose-100 text-[11px] font-extrabold uppercase tracking-widest">Available Balance</Text>
+              <View className="w-8 h-8 rounded-full bg-white/20 items-center justify-center border border-white/30">
+                <Coins size={18} color="#ffffff" />
               </View>
-              <Text className="text-white text-2xl font-extrabold font-mono">
-                ₹{(summaryData?.availableBalance || 0).toLocaleString()}
-              </Text>
             </View>
+            <View className="flex-row items-baseline gap-1.5">
+              <Text className="text-white text-3xl font-black font-mono tracking-tight">
+                {(summaryData?.availableBalance || 0).toLocaleString()}
+              </Text>
+              <Text className="text-rose-200 text-xs font-bold uppercase">Coins</Text>
+            </View>
+          </View>
 
+          {/* Secondary Financial KPI Grid */}
+          <View className="flex-row gap-3 mb-3">
             {/* Total Lifetime Earnings */}
-            <View className="flex-1 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
-              <View className="flex-row items-center justify-between mb-1">
-                <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Total Earnings</Text>
+            <View className="flex-1 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <View className="flex-row items-center justify-between mb-1.5">
+                <Text className="text-slate-400 dark:text-slate-500 text-[10px] font-extrabold uppercase tracking-wider">Total Lifetime</Text>
                 <TrendingUp size={16} color="#10b981" />
               </View>
-              <Text className="text-slate-900 dark:text-white text-2xl font-extrabold font-mono">
+              <Text className="text-slate-900 dark:text-white text-xl font-extrabold font-mono">
                 ₹{(summaryData?.lifetimeEarnings || 0).toLocaleString()}
               </Text>
             </View>
-          </View>
 
-          <View className="flex-row gap-3">
-            {/* Pending Withdrawal */}
-            <View className="flex-1 bg-white dark:bg-slate-800 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 flex-row items-center justify-between">
-              <View>
-                <Text className="text-[10px] text-slate-400 font-semibold">Locked / Pending</Text>
-                <Text className="text-base font-bold text-amber-600 font-mono">
-                  ₹{(summaryData?.lockedBalance || 0).toLocaleString()}
-                </Text>
+            {/* Locked / Pending Balance */}
+            <View className="flex-1 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <View className="flex-row items-center justify-between mb-1.5">
+                <Text className="text-slate-400 dark:text-slate-500 text-[10px] font-extrabold uppercase tracking-wider">Locked / Pending</Text>
+                <Lock size={16} color="#f59e0b" />
               </View>
-              <Lock size={16} color="#f59e0b" />
+              <Text className="text-amber-600 dark:text-amber-400 text-xl font-extrabold font-mono">
+                ₹{(summaryData?.lockedBalance || 0).toLocaleString()}
+              </Text>
             </View>
-
-            {/* Quick Withdraw CTA */}
-            <TouchableOpacity
-              onPress={() => navigation.navigate('WalletWithdraw')}
-              className="flex-1 bg-rose-50 dark:bg-rose-900/30 p-3.5 rounded-2xl border border-rose-200 dark:border-rose-800 flex-row items-center justify-center gap-2"
-            >
-              <ArrowDownToLine size={16} color="#e11d48" />
-              <Text className="text-rose-600 dark:text-rose-400 font-bold text-xs">Request Payout</Text>
-            </TouchableOpacity>
           </View>
+
+          {/* Quick Payout Call-To-Action Button */}
+          <TouchableOpacity
+            onPress={() => navigation.navigate('WalletWithdraw')}
+            className="bg-pink-500/10 dark:bg-pink-500/20 p-3.5 rounded-2xl border border-pink-500/30 flex-row items-center justify-center gap-2"
+            activeOpacity={0.8}
+          >
+            <ArrowDownToLine size={18} color="#f43f5e" />
+            <Text className="text-pink-600 dark:text-pink-300 font-extrabold text-xs">Request Quick Payout</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Incoming Chat Requests Section */}
+        {/* --- 5. INCOMING CHAT REQUESTS SECTION --- */}
         <View className="mb-6">
-          <Text className="text-base font-bold text-slate-900 dark:text-white mb-3">
-            Incoming Requests {pendingRequests && pendingRequests.length > 0 ? `(${pendingRequests.length})` : ''}
-          </Text>
+          <View className="flex-row items-center justify-between mb-3">
+            <Text className="text-base font-black text-slate-900 dark:text-white tracking-tight">
+              Incoming Chat Requests
+            </Text>
+            {pendingRequests && pendingRequests.length > 0 ? (
+              <View className="bg-pink-500 px-2.5 py-0.5 rounded-full">
+                <Text className="text-white text-[11px] font-extrabold">
+                  {pendingRequests.length} Pending
+                </Text>
+              </View>
+            ) : null}
+          </View>
 
           {activeRequest ? (
-            <View className="bg-pink-500 p-5 rounded-3xl shadow-lg border border-pink-400/30">
+            <View className="bg-pink-600 p-5 rounded-3xl shadow-xl border border-pink-400/30 relative">
               <View className="flex-row items-center justify-between mb-4">
                 <View className="flex-row items-center gap-3">
-                  <View className="w-12 h-12 rounded-full bg-white/20 items-center justify-center border border-white/30 overflow-hidden">
-                    <Image source={{ uri: getAvatarUrl(senderInfo?.avatar, senderInfo?.name, senderInfo?._id, 'BOY') }} className="w-full h-full" />
+                  <View className="w-12 h-12 rounded-full bg-white/20 items-center justify-center border-2 border-white/40 overflow-hidden shadow-sm">
+                    <Image 
+                      source={{ uri: getAvatarUrl(senderInfo?.avatar, senderInfo?.name, senderInfo?._id, 'BOY') }} 
+                      className="w-full h-full rounded-full" 
+                    />
                   </View>
                   <View>
-                    <Text className="text-white text-base font-extrabold">{senderInfo?.name || 'User'}</Text>
-                    <Text className="text-white/80 text-xs mt-0.5">Chat session request (+1 coin/msg)</Text>
+                    <Text className="text-white text-base font-black tracking-tight">{senderInfo?.name || 'User'}</Text>
+                    <View className="flex-row items-center gap-1 mt-0.5">
+                      <Text className="text-pink-100 text-xs font-semibold">Wants to chat</Text>
+                      <View className="bg-white/20 px-2 py-0.5 rounded-full">
+                        <Text className="text-white text-[10px] font-extrabold">+1 coin/msg</Text>
+                      </View>
+                    </View>
                   </View>
                 </View>
 
-                {/* Countdown timer badge */}
-                <View className="bg-white/20 px-2.5 py-1 rounded-full border border-white/30">
-                  <Text className="text-white font-extrabold text-xs font-mono">
+                {/* Countdown Timer Badge */}
+                <View className="bg-white/20 px-3 py-1.5 rounded-full border border-white/30 flex-row items-center gap-1">
+                  <Clock size={12} color="#ffffff" />
+                  <Text className="text-white font-black text-xs font-mono">
                     {countdown}s
                   </Text>
                 </View>
@@ -329,14 +414,15 @@ export default function DashboardScreen() {
                 <TouchableOpacity
                   onPress={() => handleReject(activeRequestId)}
                   disabled={isRejecting || isAccepting}
-                  className="flex-1 bg-white/20 py-3 rounded-2xl flex-row items-center justify-center border border-white/30"
+                  className="flex-1 bg-white/20 py-3.5 rounded-2xl flex-row items-center justify-center border border-white/30"
+                  activeOpacity={0.8}
                 >
                   {isRejecting ? (
                     <ActivityIndicator color="#ffffff" size="small" />
                   ) : (
                     <>
-                      <X color="#ffffff" size={16} className="mr-1" />
-                      <Text className="text-white font-bold text-xs">Decline</Text>
+                      <X color="#ffffff" size={18} className="mr-1.5" />
+                      <Text className="text-white font-extrabold text-xs">Decline</Text>
                     </>
                   )}
                 </TouchableOpacity>
@@ -344,53 +430,65 @@ export default function DashboardScreen() {
                 <TouchableOpacity
                   onPress={() => handleAccept(activeRequestId)}
                   disabled={isAccepting || isRejecting}
-                  className="flex-1 bg-white py-3 rounded-2xl flex-row items-center justify-center shadow-md"
+                  className="flex-1 bg-white py-3.5 rounded-2xl flex-row items-center justify-center shadow-lg"
+                  activeOpacity={0.9}
                 >
                   {isAccepting ? (
                     <ActivityIndicator color="#e11d48" size="small" />
                   ) : (
                     <>
-                      <Check color="#e11d48" size={16} className="mr-1" />
-                      <Text className="text-rose-600 font-extrabold text-xs">Accept & Chat</Text>
+                      <Check color="#e11d48" size={18} className="mr-1.5" />
+                      <Text className="text-rose-600 font-black text-xs">Accept & Chat</Text>
                     </>
                   )}
                 </TouchableOpacity>
               </View>
             </View>
           ) : (
-            <View className="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-slate-700 items-center justify-center">
-              <MessageCircleHeart color={theme.colors.text.secondary.light} size={28} className="mb-2" />
-              <Text className="text-slate-800 dark:text-slate-200 font-bold text-sm">
-                No Pending Requests
+            <View className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 items-center justify-center text-center shadow-sm">
+              <View className="w-12 h-12 rounded-2xl bg-pink-500/10 items-center justify-center mb-2.5">
+                <MessageCircleHeart color="#f43f5e" size={26} />
+              </View>
+              <Text className="text-slate-900 dark:text-white font-extrabold text-sm">
+                No Incoming Requests Right Now
               </Text>
-              <Text className="text-slate-400 dark:text-slate-500 text-xs text-center mt-0.5">
-                When a user requests a chat session, it will appear here in real time.
+              <Text className="text-slate-500 dark:text-slate-400 text-xs text-center mt-1 leading-relaxed">
+                When a user initiates a chat session with you, it will show up here in real time.
               </Text>
             </View>
           )}
         </View>
 
-        {/* Recent Conversations Section */}
+        {/* --- 6. RECENT CONVERSATIONS FEED --- */}
         <View className="mb-6">
-          <Text className="text-base font-bold text-slate-900 dark:text-white mb-3">
-            Recent Conversations
-          </Text>
+          <View className="flex-row items-center justify-between mb-3">
+            <Text className="text-base font-black text-slate-900 dark:text-white tracking-tight">
+              Recent Conversations
+            </Text>
+            {recentChats && recentChats.length > 0 ? (
+              <Text className="text-xs font-bold text-slate-400">
+                {recentChats.length} Total
+              </Text>
+            ) : null}
+          </View>
 
           {isChatsLoading ? (
-            <ActivityIndicator color="#e11d48" className="py-6" />
+            <ActivityIndicator color="#f43f5e" className="py-8" />
           ) : !recentChats || recentChats.length === 0 ? (
-            <View className="bg-white dark:bg-slate-800 p-5 rounded-3xl border border-slate-200 dark:border-slate-700 items-center justify-center">
-              <MessageCircle color="#94a3b8" size={28} className="mb-2" />
-              <Text className="text-slate-800 dark:text-slate-200 font-bold text-sm">No Recent Conversations</Text>
-              <Text className="text-slate-400 text-xs text-center mt-0.5">
-                All your past and active conversations will remain visible here.
+            <View className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 items-center justify-center shadow-sm">
+              <View className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 items-center justify-center mb-2.5">
+                <MessageCircle color="#94a3b8" size={26} />
+              </View>
+              <Text className="text-slate-900 dark:text-white font-extrabold text-sm">No Conversations Yet</Text>
+              <Text className="text-slate-500 dark:text-slate-400 text-xs text-center mt-1">
+                Your past and active chat sessions will be listed here.
               </Text>
             </View>
           ) : (
-            <View className="space-y-3">
+            <View className="gap-3">
               {recentChats.map((chat: any) => {
                 const otherUser = chat.otherParticipant || (typeof chat.boyId === 'object' ? chat.boyId : undefined);
-                const isOnline = otherUser?.isOnline;
+                const isOtherOnline = otherUser?.isOnline;
                 const isActive = chat.status === 'ACTIVE';
                 const lastMsg = chat.lastMessage?.content || 'No messages yet';
                 const timeStr = chat.updatedAt ? new Date(chat.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
@@ -399,22 +497,26 @@ export default function DashboardScreen() {
                   <TouchableOpacity
                     key={chat._id}
                     onPress={() => navigation.navigate('ChatScreen', { id: chat._id })}
-                    className="bg-white dark:bg-slate-800 p-4 rounded-3xl border border-slate-200 dark:border-slate-700 flex-row items-center justify-between"
+                    className="bg-white dark:bg-slate-900 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 flex-row items-center justify-between shadow-sm"
+                    activeOpacity={0.8}
                   >
-                    <View className="flex-row items-center gap-3 flex-1 mr-2">
-                      <View className="relative w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600">
-                        <Image source={{ uri: getAvatarUrl(otherUser?.avatar, otherUser?.name, otherUser?._id, 'BOY') }} className="w-full h-full rounded-full" />
-                        {isOnline && (
-                          <View className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-800" />
+                    <View className="flex-row items-center gap-3.5 flex-1 mr-2">
+                      <View className="relative w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        <Image 
+                          source={{ uri: getAvatarUrl(otherUser?.avatar, otherUser?.name, otherUser?._id, 'BOY') }} 
+                          className="w-full h-full rounded-full" 
+                        />
+                        {isOtherOnline && (
+                          <View className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-slate-900" />
                         )}
                       </View>
 
                       <View className="flex-1">
                         <View className="flex-row items-center justify-between">
-                          <Text className="text-sm font-bold text-slate-900 dark:text-white" numberOfLines={1}>
+                          <Text className="text-sm font-extrabold text-slate-900 dark:text-white" numberOfLines={1}>
                             {otherUser?.name || 'User'}
                           </Text>
-                          {timeStr ? <Text className="text-[10px] text-slate-400 font-medium">{timeStr}</Text> : null}
+                          {timeStr ? <Text className="text-[10px] text-slate-400 font-semibold">{timeStr}</Text> : null}
                         </View>
 
                         <Text className="text-xs text-slate-500 dark:text-slate-400 mt-0.5" numberOfLines={1}>
@@ -423,12 +525,19 @@ export default function DashboardScreen() {
                       </View>
                     </View>
 
-                    <View className={`px-2.5 py-1 rounded-full border ${isActive ? 'bg-emerald-50 border-emerald-200' : 'bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600'
+                    <View className="flex-row items-center gap-1.5">
+                      <View className={`px-2.5 py-1 rounded-full border ${
+                        isActive 
+                          ? 'bg-emerald-500/10 border-emerald-500/30' 
+                          : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700'
                       }`}>
-                      <Text className={`text-[10px] font-bold ${isActive ? 'text-emerald-600' : 'text-slate-500 dark:text-slate-300'
+                        <Text className={`text-[10px] font-extrabold ${
+                          isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'
                         }`}>
-                        {isActive ? 'ACTIVE' : 'ENDED'}
-                      </Text>
+                          {isActive ? 'ACTIVE' : 'ENDED'}
+                        </Text>
+                      </View>
+                      <ChevronRight size={16} color="#94a3b8" />
                     </View>
                   </TouchableOpacity>
                 );
@@ -437,11 +546,11 @@ export default function DashboardScreen() {
           )}
         </View>
 
-        {/* Secret Version Tap Trigger for DevSettings */}
+        {/* --- 7. SECRET TAP & APP VERSION FOOTER --- */}
         <TouchableOpacity onPress={handleVersionTap} activeOpacity={0.7} className="items-center py-6">
-          <Text className="text-xs text-slate-400 font-semibold tracking-wider uppercase">ChatVerse v1.0.0</Text>
+          <Text className="text-xs text-slate-400 font-bold tracking-widest uppercase">ChatVerse Host v1.0.0</Text>
           {tapCount > 2 && (
-            <Text className="text-[10px] text-pink-500 font-bold mt-1">
+            <Text className="text-[10px] text-pink-500 font-extrabold mt-1">
               {7 - tapCount} tap{7 - tapCount === 1 ? '' : 's'} away from Developer Settings
             </Text>
           )}
@@ -449,34 +558,37 @@ export default function DashboardScreen() {
 
       </ScrollView>
 
-      {/* Realtime Incoming Request Modal Alert */}
+      {/* --- 8. REALTIME INCOMING CHAT REQUEST MODAL --- */}
       <Modal visible={!!incomingRequest} transparent animationType="slide">
-        <View className="flex-1 bg-black/60 items-center justify-end">
-          <View className="bg-white dark:bg-slate-800 w-full p-6 rounded-t-3xl border-t border-slate-200 dark:border-slate-700 shadow-2xl">
+        <View className="flex-1 bg-black/70 items-center justify-end">
+          <View className="bg-white dark:bg-slate-900 w-full p-6 rounded-t-3xl border-t border-slate-200 dark:border-slate-800 shadow-2xl">
             <View className="flex-row items-center justify-between mb-4">
               <View className="flex-row items-center gap-2">
                 <View className="w-3 h-3 rounded-full bg-pink-500" />
-                <Text className="text-xs font-extrabold uppercase tracking-wider text-pink-500">
+                <Text className="text-xs font-black uppercase tracking-wider text-pink-600 dark:text-pink-400">
                   New Incoming Chat Request
                 </Text>
               </View>
-              <View className="bg-pink-100 dark:bg-pink-900/40 px-3 py-1 rounded-full">
-                <Text className="text-pink-600 dark:text-pink-300 font-bold text-xs font-mono">
+              <View className="bg-pink-500/10 dark:bg-pink-500/20 px-3 py-1 rounded-full border border-pink-500/30">
+                <Text className="text-pink-600 dark:text-pink-300 font-extrabold text-xs font-mono">
                   {countdown}s remaining
                 </Text>
               </View>
             </View>
 
             <View className="flex-row items-center gap-4 mb-6">
-              <View className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-700 items-center justify-center overflow-hidden border-2 border-pink-500">
-                <Image source={{ uri: getAvatarUrl(incomingRequest?.sender?.avatar, incomingRequest?.sender?.name, incomingRequest?.sender?._id, 'BOY') }} className="w-full h-full" />
+              <View className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 items-center justify-center overflow-hidden border-2 border-pink-500 shadow-md">
+                <Image 
+                  source={{ uri: getAvatarUrl(incomingRequest?.sender?.avatar, incomingRequest?.sender?.name, incomingRequest?.sender?._id, 'BOY') }} 
+                  className="w-full h-full rounded-full" 
+                />
               </View>
 
               <View className="flex-1">
-                <Text className="text-slate-800 dark:text-white text-xl font-black">{incomingRequest?.sender?.name || 'User'}</Text>
-                <Text className="text-slate-500 dark:text-slate-400 text-sm mt-1">wants to start a chat session</Text>
-                <View className="flex-row items-center mt-2 bg-pink-100 dark:bg-pink-500/20 px-3 py-1 rounded-full self-start">
-                  <Text className="text-pink-600 dark:text-pink-400 text-xs font-bold">+1 coin/msg</Text>
+                <Text className="text-slate-900 dark:text-white text-xl font-black">{incomingRequest?.sender?.name || 'User'}</Text>
+                <Text className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Wants to start a chat session with you</Text>
+                <View className="flex-row items-center mt-2 bg-pink-500/10 dark:bg-pink-500/20 px-3 py-1 rounded-full self-start border border-pink-500/30">
+                  <Text className="text-pink-600 dark:text-pink-400 text-xs font-extrabold">+1 coin/msg</Text>
                 </View>
               </View>
             </View>
@@ -485,14 +597,14 @@ export default function DashboardScreen() {
               <TouchableOpacity
                 onPress={() => handleReject(incomingRequest.requestId || incomingRequest._id)}
                 disabled={isRejecting || isAccepting}
-                className="flex-1 bg-slate-100 dark:bg-slate-700 py-4 rounded-2xl items-center flex-row justify-center"
+                className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl items-center flex-row justify-center border border-slate-200 dark:border-slate-700"
               >
                 {isRejecting ? (
                   <ActivityIndicator color="#64748b" />
                 ) : (
                   <>
-                    <X color="#64748b" size={20} className="mr-1" />
-                    <Text className="text-slate-700 dark:text-slate-300 font-bold text-base">Decline</Text>
+                    <X color="#64748b" size={20} className="mr-1.5" />
+                    <Text className="text-slate-700 dark:text-slate-300 font-extrabold text-base">Decline</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -500,14 +612,14 @@ export default function DashboardScreen() {
               <TouchableOpacity
                 onPress={() => handleAccept(incomingRequest.requestId || incomingRequest._id)}
                 disabled={isAccepting || isRejecting}
-                className="flex-1 bg-pink-600 py-4 rounded-2xl items-center flex-row justify-center shadow-lg shadow-pink-500/30"
+                className="flex-1 bg-pink-600 py-4 rounded-2xl items-center flex-row justify-center shadow-lg shadow-pink-500/40"
               >
                 {isAccepting ? (
                   <ActivityIndicator color="#ffffff" />
                 ) : (
                   <>
-                    <Check color="#ffffff" size={20} className="mr-1" />
-                    <Text className="text-white font-bold text-base">Accept Request</Text>
+                    <Check color="#ffffff" size={20} className="mr-1.5" />
+                    <Text className="text-white font-black text-base">Accept Request</Text>
                   </>
                 )}
               </TouchableOpacity>

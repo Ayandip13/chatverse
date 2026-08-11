@@ -1,7 +1,6 @@
-import { useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, TextInput } from 'react-native';
+import { View, Text, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, MessageCircle, Search } from 'lucide-react-native';
+import { MessageCircle } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useChats } from '../../hooks/useMessaging';
 import { RecentChatCard } from '../../components/home/RecentChatCard';
@@ -10,55 +9,48 @@ import { Skeleton } from '../../components/ui/Skeleton';
 
 export default function ChatsScreen() {
   const navigation = useNavigation<any>();
-  const [search, setSearch] = useState('');
   const { data: chats, isLoading, refetch, isRefetching } = useChats();
 
-  const filteredChats = chats?.filter(c => 
-    c.otherParticipant.name.toLowerCase().includes(search.toLowerCase())
-  );
-
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-gray-900" edges={['top']}>
-      <View className="px-6 py-6 pt-10">
-        <Text className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">Messages</Text>
-        <Text className="text-gray-500 dark:text-gray-400 mt-1">Connect with your favorite creators</Text>
-      </View>
-
-      <View className="px-6 pb-4">
-        <View className="flex-row items-center bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 h-12 border border-gray-200 dark:border-gray-700">
-          <Search size={20} color="#9ca3af" className="mr-2" />
-          <TextInput
-            className="flex-1 text-gray-900 dark:text-white"
-            placeholder="Search conversations..."
-            placeholderTextColor="#9ca3af"
-            value={search}
-            onChangeText={setSearch}
-          />
+    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900" edges={['top']}>
+      {/* Header Bar */}
+      <View className="px-6 py-4 flex-row items-center justify-between border-b border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
+        <View>
+          <Text className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Messages</Text>
+          <Text className="text-xs font-semibold text-gray-400 dark:text-gray-400">Connect with your favorite creators</Text>
+        </View>
+        <View className="bg-indigo-50 dark:bg-indigo-950/60 px-3 py-1.5 rounded-full border border-indigo-100 dark:border-indigo-900/40 flex-row items-center">
+          <View className="mr-1.5 items-center justify-center">
+            <MessageCircle size={14} color="#6366f1" />
+          </View>
+          <Text className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400">
+            {chats?.length || 0} Chats
+          </Text>
         </View>
       </View>
 
       {isLoading ? (
-        <View className="px-6 space-y-4">
+        <View className="px-6 pt-4 space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (
-            <View key={i} className="flex-row items-center p-4 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700">
-              <Skeleton className="w-14 h-14 rounded-full mr-4" />
+            <View key={i} className="flex-row items-center p-3.5 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700/80 mb-3">
+              <Skeleton className="w-12 h-12 rounded-full mr-3.5" />
               <View className="flex-1">
                 <View className="flex-row justify-between mb-2">
                   <Skeleton className="w-24 h-4 rounded-md" />
                   <Skeleton className="w-12 h-3 rounded-md" />
                 </View>
-                <Skeleton className="w-48 h-3 rounded-md" />
+                <Skeleton className="w-44 h-3 rounded-md" />
               </View>
             </View>
           ))}
         </View>
       ) : (
         <FlatList
-          data={filteredChats || []}
+          data={chats || []}
           keyExtractor={(item) => item._id}
-          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 120 }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 }}
           renderItem={({ item }) => (
-            <View className="mb-4">
+            <View className="mb-3">
               <RecentChatCard chat={item} />
             </View>
           )}
@@ -66,9 +58,9 @@ export default function ChatsScreen() {
           onRefresh={refetch}
           ListEmptyComponent={
             <EmptyState 
-              icon={<MessageCircle size={48} color="#9ca3af" />}
+              icon={<MessageCircle size={44} color="#9ca3af" />}
               title="No messages yet" 
-              description="Start a chat with someone to see it here." 
+              description="Start a chat with a creator to see your conversations here." 
             />
           }
         />

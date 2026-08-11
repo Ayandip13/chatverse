@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Sparkles, User, Camera } from 'lucide-react-native';
+import { ArrowLeft, Sparkles, User, Camera, Mail, FileText, Check } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuthStore } from '../../store/authStore';
@@ -89,7 +89,7 @@ export default function EditProfileScreen() {
 
     updateProfile({ name: name.trim(), bio: bio.trim(), avatar: finalAvatar }, {
       onSuccess: () => {
-        Alert.alert('Profile Saved', 'Your profile and picture have been updated!');
+        Alert.alert('Profile Saved', 'Your profile details have been updated!');
         navigation.goBack();
       },
       onError: (err: any) => {
@@ -104,104 +104,157 @@ export default function EditProfileScreen() {
   const isLoadingState = isPending || isSaving;
 
   return (
-    <SafeAreaView className="flex-1 bg-white dark:bg-gray-900" edges={['top']}>
-      <View className="flex-row items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900" edges={['top']}>
+      {/* Header Bar */}
+      <View className="flex-row items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
         <View className="flex-row items-center">
-          <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
-            <ArrowLeft size={24} color="#374151" />
+          <TouchableOpacity onPress={() => navigation.goBack()} className="mr-3 p-1.5 -ml-1 rounded-full active:bg-gray-100 dark:active:bg-gray-800">
+            <View className="items-center justify-center">
+              <ArrowLeft size={22} color="#374151" />
+            </View>
           </TouchableOpacity>
-          <Text className="text-xl font-bold text-gray-900 dark:text-white">Edit Profile</Text>
+          <View>
+            <Text className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Edit Profile</Text>
+            <Text className="text-xs font-semibold text-gray-400 dark:text-gray-400">Personal information</Text>
+          </View>
         </View>
-        <TouchableOpacity onPress={handleSave} disabled={isLoadingState}>
+        
+        <TouchableOpacity 
+          onPress={handleSave} 
+          disabled={isLoadingState}
+          className="bg-indigo-600 active:bg-indigo-700 px-4 py-2 rounded-full shadow-sm shadow-indigo-500/20"
+        >
           {isLoadingState ? (
-            <ActivityIndicator size="small" color="#4f46e5" />
+            <ActivityIndicator size="small" color="#ffffff" />
           ) : (
-            <Text className="text-indigo-600 dark:text-indigo-400 font-bold text-base">Save</Text>
+            <Text className="text-white font-extrabold text-xs tracking-wide uppercase">Save</Text>
           )}
         </TouchableOpacity>
       </View>
 
-      <ScrollView className="flex-1 px-6 py-6" showsVerticalScrollIndicator={false}>
-        {/* Avatar Edit with Custom Photo Upload */}
-        <View className="items-center mb-6">
+      <ScrollView className="flex-1 px-6 pt-6" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+        {/* Avatar Uploader Hero Card */}
+        <View className="items-center mb-6 bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700/80 shadow-sm shadow-gray-200/50 dark:shadow-none">
           <TouchableOpacity 
             onPress={pickImage} 
-            activeOpacity={0.8}
-            className="relative w-28 h-28 rounded-full border-4 border-indigo-500/40 overflow-hidden shadow-lg bg-gray-200 dark:bg-gray-800"
+            activeOpacity={0.85}
+            className="relative w-28 h-28 rounded-full p-0.5 border-4 border-indigo-500 bg-gradient-to-tr from-indigo-500 via-rose-500 to-amber-400 shadow-xl shadow-indigo-500/25 mb-4 items-center justify-center"
           >
-            <Image source={{ uri: avatar }} className="w-full h-full" />
-            <View className="absolute inset-0 bg-black/20 items-center justify-center">
-              <View className="bg-indigo-600 p-2 rounded-full shadow border border-white">
-                <Camera size={18} color="#ffffff" />
-              </View>
+            <View className="w-full h-full rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700">
+              <Image source={{ uri: avatar }} className="w-full h-full rounded-full" style={{ borderRadius: 9999 }} />
+            </View>
+            <View className="absolute bottom-0 right-0 bg-indigo-600 p-2 rounded-full border-2 border-white dark:border-gray-900 shadow-md">
+              <Camera size={16} color="#ffffff" />
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={pickImage} className="mt-2.5 flex-row items-center gap-1.5 bg-indigo-50 dark:bg-indigo-900/30 px-3.5 py-1.5 rounded-full border border-indigo-200 dark:border-indigo-800">
-            <Camera size={14} color="#4f46e5" />
-            <Text className="text-xs font-bold text-indigo-600 dark:text-indigo-400">Upload Custom Photo</Text>
+          <TouchableOpacity 
+            onPress={pickImage} 
+            className="flex-row items-center bg-indigo-50 dark:bg-indigo-950/60 px-4 py-2 rounded-full border border-indigo-100 dark:border-indigo-900/40"
+            activeOpacity={0.7}
+          >
+            <View className="mr-1.5 items-center justify-center">
+              <Camera size={14} color="#6366f1" />
+            </View>
+            <Text className="text-xs font-black text-indigo-600 dark:text-indigo-400">Upload Custom Photo</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Preset Selector */}
-        <View className="mb-6 bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl border border-gray-100 dark:border-gray-700">
-          <View className="flex-row items-center gap-2 mb-3">
-            <Sparkles size={16} color="#4f46e5" />
-            <Text className="text-sm font-bold text-gray-900 dark:text-white">Or Select Avatar Preset</Text>
+        {/* Preset Avatar Selector */}
+        <View className="mb-6 bg-white dark:bg-gray-800 p-4.5 rounded-3xl border border-gray-100 dark:border-gray-700/80 shadow-sm shadow-gray-200/50 dark:shadow-none">
+          <View className="flex-row items-center mb-3">
+            <View className="mr-2 items-center justify-center">
+              <Sparkles size={16} color="#6366f1" />
+            </View>
+            <Text className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-wider">Or Select Preset Avatar</Text>
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {(BOY_AVATAR_PRESETS || []).map((url, idx) => (
-              <TouchableOpacity
-                key={url || idx}
-                onPress={() => {
-                  setCustomAvatarUri(null);
-                  setAvatar(url);
-                }}
-                style={avatar === url ? { transform: [{ scale: 1.05 }] } : undefined}
-                className={`mr-3 w-14 h-14 rounded-full border-2 overflow-hidden ${
-                  avatar === url ? 'border-indigo-600' : 'border-transparent opacity-70'
-                }`}
-              >
-                <Image source={{ uri: url }} className="w-full h-full" />
-              </TouchableOpacity>
-            ))}
+          
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="py-1">
+            {(BOY_AVATAR_PRESETS || []).map((url, idx) => {
+              const isSelected = avatar === url;
+              return (
+                <TouchableOpacity
+                  key={url || idx}
+                  onPress={() => {
+                    setCustomAvatarUri(null);
+                    setAvatar(url);
+                  }}
+                  activeOpacity={0.8}
+                  className={`mr-3 relative w-14 h-14 rounded-full p-0.5 border-2 ${
+                    isSelected ? 'border-indigo-600 scale-105' : 'border-gray-200 dark:border-gray-700 opacity-60'
+                  }`}
+                >
+                  <View className="w-full h-full rounded-full overflow-hidden">
+                    <Image source={{ uri: url }} className="w-full h-full rounded-full" style={{ borderRadius: 9999 }} />
+                  </View>
+                  {isSelected && (
+                    <View className="absolute bottom-0 right-0 bg-indigo-600 w-4 h-4 rounded-full items-center justify-center border border-white">
+                      <Check size={10} color="#ffffff" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         </View>
 
-        {/* Form */}
-        <View className="mb-4">
-          <Text className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Display Name</Text>
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder="Enter your name"
-            placeholderTextColor="#9ca3af"
-            className="w-full bg-gray-50 dark:bg-gray-800 rounded-2xl px-4 h-14 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700"
-          />
-        </View>
+        {/* Form Input Fields */}
+        <View className="space-y-4">
+          {/* Display Name */}
+          <View className="mb-4">
+            <Text className="text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2 px-1">
+              Display Name
+            </Text>
+            <View className="flex-row items-center bg-white dark:bg-gray-800 rounded-2xl px-4 h-14 border border-gray-100 dark:border-gray-700/80 shadow-xs">
+              <View className="mr-3 items-center justify-center">
+                <User size={18} color="#6366f1" />
+              </View>
+              <TextInput
+                value={name}
+                onChangeText={setName}
+                placeholder="Enter your display name"
+                placeholderTextColor="#9ca3af"
+                className="flex-1 text-gray-900 dark:text-white text-base font-extrabold"
+              />
+            </View>
+          </View>
 
-        <View className="mb-4">
-          <Text className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Email Address</Text>
-          <TextInput
-            value={user?.email}
-            editable={false}
-            className="w-full bg-gray-100 dark:bg-gray-800/50 rounded-2xl px-4 h-14 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700"
-          />
-          <Text className="text-xs text-gray-400 mt-1 ml-1">Email cannot be changed.</Text>
-        </View>
+          {/* Email Address (Read Only) */}
+          <View className="mb-4">
+            <Text className="text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2 px-1">
+              Email Address
+            </Text>
+            <View className="flex-row items-center bg-gray-100/70 dark:bg-gray-800/40 rounded-2xl px-4 h-14 border border-gray-200/60 dark:border-gray-700/60">
+              <View className="mr-3 items-center justify-center">
+                <Mail size={18} color="#9ca3af" />
+              </View>
+              <TextInput
+                value={user?.email}
+                editable={false}
+                className="flex-1 text-gray-500 dark:text-gray-400 text-base font-semibold"
+              />
+            </View>
+            <Text className="text-[11px] font-medium text-gray-400 mt-1.5 ml-1">Email cannot be changed.</Text>
+          </View>
 
-        <View className="mb-8">
-          <Text className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Bio</Text>
-          <TextInput
-            value={bio}
-            onChangeText={setBio}
-            placeholder="Tell us a little about yourself"
-            placeholderTextColor="#9ca3af"
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
-            className="w-full bg-gray-50 dark:bg-gray-800 rounded-2xl px-4 py-4 min-h-[120px] text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700"
-          />
+          {/* Bio Text Area */}
+          <View className="mb-8">
+            <Text className="text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2 px-1">
+              Bio
+            </Text>
+            <View className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700/80 shadow-xs">
+              <TextInput
+                value={bio}
+                onChangeText={setBio}
+                placeholder="Tell creators a little bit about yourself..."
+                placeholderTextColor="#9ca3af"
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+                className="w-full text-gray-900 dark:text-white text-sm font-medium min-h-[100px]"
+              />
+            </View>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>

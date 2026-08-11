@@ -23,25 +23,29 @@ export function CoinMessageCard({ chat, chatStats, lowBalanceWarning }: CoinMess
   const messagesSent = chatStats?.messagesSent || chat.totalCost || 0;
 
   return (
-    <View className="bg-amber-50 dark:bg-amber-900/20 px-4 py-2 border-b border-amber-100 dark:border-amber-900/50">
+    <View className="bg-amber-50/80 dark:bg-amber-950/40 px-4 py-2 border-b border-amber-100 dark:border-amber-900/50">
       <View className="flex-row justify-between items-center">
         {/* Messages Billed */}
-        <View className="flex-row items-center gap-2">
-          <View className="flex-row items-center bg-amber-100/50 dark:bg-amber-900/40 px-2 py-1 rounded-lg">
-            <MessageSquare size={14} color="#d97706" className="mr-1.5" />
-            <Text className="text-amber-800 dark:text-amber-400 font-mono font-bold text-xs">
+        <View className="flex-row items-center">
+          <View className="flex-row items-center bg-amber-100/70 dark:bg-amber-900/50 px-2.5 py-1 rounded-xl mr-2">
+            <View className="mr-1.5 items-center justify-center">
+              <MessageSquare size={13} color="#d97706" />
+            </View>
+            <Text className="text-amber-900 dark:text-amber-300 font-mono font-black text-xs">
               {messagesSent} msgs sent
             </Text>
           </View>
-          <Text className="text-amber-600 dark:text-amber-500 text-xs font-medium">
-            (1 coin/msg)
+          <Text className="text-amber-700 dark:text-amber-400 text-xs font-extrabold">
+            (1 Coin = 1 Min Talk)
           </Text>
         </View>
 
         {/* Balance Badge */}
-        <View className="flex-row items-center bg-white dark:bg-amber-900/40 px-3 py-1 rounded-full shadow-sm border border-amber-200 dark:border-amber-800">
-          <Coins size={14} color="#fbbf24" className="mr-1" />
-          <Text className="text-amber-800 dark:text-amber-300 text-xs font-extrabold font-mono">
+        <View className="flex-row items-center bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-xs border border-amber-200/80 dark:border-amber-800/60">
+          <View className="mr-1.5 items-center justify-center">
+            <Coins size={14} color="#f59e0b" fill="#fbbf24" />
+          </View>
+          <Text className="text-amber-800 dark:text-amber-300 text-xs font-black font-mono">
             {balance.toLocaleString()}
           </Text>
         </View>
@@ -49,9 +53,11 @@ export function CoinMessageCard({ chat, chatStats, lowBalanceWarning }: CoinMess
 
       {/* Low Balance Alert Banner */}
       {lowBalanceWarning && (
-        <View className="flex-row items-center bg-red-100 dark:bg-red-900/40 px-3 py-1.5 rounded-xl mt-2 border border-red-200 dark:border-red-800">
-          <AlertTriangle size={14} color="#ef4444" className="mr-1.5" />
-          <Text className="text-red-700 dark:text-red-300 text-xs font-bold flex-1" numberOfLines={1}>
+        <View className="flex-row items-center bg-rose-100 dark:bg-rose-950/60 px-3 py-1.5 rounded-xl mt-2 border border-rose-200 dark:border-rose-900/40">
+          <View className="mr-1.5 items-center justify-center">
+            <AlertTriangle size={14} color="#ef4444" />
+          </View>
+          <Text className="text-rose-700 dark:text-rose-300 text-xs font-bold flex-1" numberOfLines={1}>
             {lowBalanceWarning}
           </Text>
         </View>

@@ -41,10 +41,10 @@ export function MessageBubble({ message, isOwnMessage, onReply }: MessageBubbleP
   return (
     <View className={`mb-3 w-full flex-row ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
       <View 
-        className={`max-w-[80%] rounded-2xl p-3 shadow-sm ${
+        className={`max-w-[78%] rounded-3xl p-3.5 ${
           isOwnMessage 
-            ? 'bg-indigo-600 rounded-tr-xs' 
-            : 'bg-white dark:bg-gray-800 rounded-tl-xs border border-gray-100 dark:border-gray-700'
+            ? 'bg-indigo-600 rounded-br-xs shadow-md shadow-indigo-500/20' 
+            : 'bg-white dark:bg-gray-800 rounded-bl-xs border border-gray-100 dark:border-gray-700/80 shadow-xs'
         }`}
       >
         {/* Reply Action Header if onReply provided */}
@@ -84,13 +84,13 @@ export function MessageBubble({ message, isOwnMessage, onReply }: MessageBubbleP
         )}
 
         {/* Footer: Timestamp & Read/Delivery Checkmarks */}
-        <View className="flex-row items-center justify-end gap-1 mt-1">
-          <Text className={`text-[10px] ${isOwnMessage ? 'text-indigo-200' : 'text-gray-400'}`}>
+        <View className="flex-row items-center justify-end flex-row gap-1 mt-1.5">
+          <Text className={`text-[10px] font-medium ${isOwnMessage ? 'text-indigo-200' : 'text-gray-400'}`}>
             {formatTime(message.createdAt)}
           </Text>
 
           {isOwnMessage && (
-            <View className="ml-1">
+            <View className="ml-1 items-center justify-center">
               {message.status === 'READ' ? (
                 <CheckCheck size={14} color="#60a5fa" />
               ) : (

@@ -147,23 +147,29 @@ export function ChatInput({
         <TouchableOpacity
           onPress={() => setShowEmojiPicker(prev => !prev)}
           className="p-2 mr-1"
+          activeOpacity={0.7}
         >
-          <Smile
-            size={24}
-            color={showEmojiPicker ? '#6366f1' : '#6b7280'}
-          />
+          <View className="items-center justify-center">
+            <Smile
+              size={22}
+              color={showEmojiPicker ? '#6366f1' : '#6b7280'}
+            />
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity
           onPress={() => setShowImageModal(true)}
           className="p-2 mr-2"
+          activeOpacity={0.7}
         >
-          <ImageIcon size={24} color="#6b7280" />
+          <View className="items-center justify-center">
+            <ImageIcon size={22} color="#6b7280" />
+          </View>
         </TouchableOpacity>
 
         <View className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-3xl px-4 py-2 min-h-[44px] max-h-24 justify-center border border-gray-200 dark:border-gray-700">
           <TextInput
-            className="text-gray-900 dark:text-white text-base max-h-24"
+            className="text-gray-900 dark:text-white text-base max-h-24 font-medium"
             placeholder="Type a message..."
             placeholderTextColor="#9ca3af"
             value={text}
@@ -175,9 +181,9 @@ export function ChatInput({
         <TouchableOpacity
           onPress={handleSend}
           disabled={text.trim().length === 0}
-          className={`ml-3 w-11 h-11 rounded-full items-center justify-center ${
+          className={`ml-2.5 w-11 h-11 rounded-full items-center justify-center ${
             text.trim().length > 0
-              ? 'bg-indigo-600'
+              ? 'bg-indigo-600 active:bg-indigo-700'
               : 'bg-gray-200 dark:bg-gray-800'
           }`}
           style={
@@ -195,10 +201,12 @@ export function ChatInput({
               : undefined
           }
         >
-          <SendHorizontal
-            size={20}
-            color={text.trim().length > 0 ? '#ffffff' : '#9ca3af'}
-          />
+          <View className="items-center justify-center ml-0.5">
+            <SendHorizontal
+              size={19}
+              color={text.trim().length > 0 ? '#ffffff' : '#9ca3af'}
+            />
+          </View>
         </TouchableOpacity>
       </View>
 
