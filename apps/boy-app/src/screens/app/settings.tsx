@@ -1,10 +1,11 @@
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { 
   ArrowLeft, 
   LogOut, 
   Trash2, 
   Moon, 
+  Sun,
   Bell, 
   ChevronRight, 
   Globe, 
@@ -13,11 +14,14 @@ import {
 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '../../store/authStore';
+import { useThemeStore } from '../../store/themeStore';
 import { useDeleteAccount } from '../../hooks/useUser';
 import { CustomModal } from '../../components/ui/CustomModal';
 import { useRef, useState } from 'react';
 
 export default function SettingsScreen() {
+  const theme = useThemeStore(state => state.theme);
+  const toggleTheme = useThemeStore(state => state.toggleTheme);
   const navigation = useNavigation<any>();
   const logout = useAuthStore(state => state.logout);
   const { mutate: deleteAccount } = useDeleteAccount();
@@ -113,20 +117,25 @@ export default function SettingsScreen() {
             Preferences
           </Text>
           <View className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-sm shadow-gray-200/60 dark:shadow-none border border-gray-100 dark:border-gray-700/80">
-            {/* Dark Mode */}
+            {/* Dark Mode Toggle */}
             <View className="p-4 flex-row items-center justify-between border-b border-gray-100 dark:border-gray-700/60">
               <View className="flex-row items-center">
                 <View className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 items-center justify-center mr-3.5 border border-indigo-100 dark:border-indigo-900/40">
-                  <Moon size={18} color="#6366f1" />
+                  {theme === 'dark' ? <Moon size={18} color="#818cf8" /> : <Sun size={18} color="#6366f1" />}
                 </View>
                 <View>
-                  <Text className="text-sm font-extrabold text-gray-900 dark:text-gray-100">Appearance</Text>
-                  <Text className="text-xs font-medium text-gray-400">Theme mode</Text>
+                  <Text className="text-sm font-extrabold text-gray-900 dark:text-gray-100">Dark Theme</Text>
+                  <Text className="text-xs font-medium text-gray-400">
+                    {theme === 'dark' ? 'Dark mode enabled' : 'Light mode enabled'}
+                  </Text>
                 </View>
               </View>
-              <Text className="text-xs font-bold text-gray-400 bg-gray-100 dark:bg-gray-700/60 px-3 py-1 rounded-full">
-                System Default
-              </Text>
+              <Switch
+                value={theme === 'dark'}
+                onValueChange={toggleTheme}
+                trackColor={{ false: '#e5e7eb', true: '#4f46e5' }}
+                thumbColor="#ffffff"
+              />
             </View>
 
             {/* Push Notifications */}

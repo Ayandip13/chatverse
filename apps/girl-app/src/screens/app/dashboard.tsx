@@ -6,13 +6,14 @@ import {
   LogOut, MessageCircle, Clock, Check, X,
   Edit3, Coins, Lock, TrendingUp, ArrowDownToLine,
   ChevronRight, ShieldCheck, MessageCircleHeart,
-  Sparkles, Zap
+  Sparkles, Zap, Sun, Moon
 } from 'lucide-react-native';
 import { theme } from '../../constants/theme';
 import { useNavigation } from '@react-navigation/native';
 import { useSocket } from '../../providers/SocketProvider';
 import { useAcceptChatRequest, useRejectChatRequest, useChatRequests, useRecentChats } from '../../hooks/useMessaging';
 import { useQueryClient } from '@tanstack/react-query';
+import { useThemeStore } from '../../store/themeStore';
 import { useWithdrawalSummary } from '../../hooks/useWithdrawals';
 import { getAvatarUrl } from '../../utils/avatarUtil';
 
@@ -21,6 +22,8 @@ export default function DashboardScreen() {
   const { user, logout } = useAuthStore();
   const { socket, isConnected } = useSocket();
   const queryClient = useQueryClient();
+  const appTheme = useThemeStore((state) => state.theme);
+  const toggleTheme = useThemeStore((state) => state.toggleTheme);
 
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [showTip, setShowTip] = useState<boolean>(true);
@@ -200,6 +203,13 @@ export default function DashboardScreen() {
 
           {/* Right Header Buttons */}
           <View className="flex-row items-center gap-2">
+            <TouchableOpacity 
+              onPress={toggleTheme} 
+              className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 items-center justify-center border border-slate-200 dark:border-slate-800 shadow-sm"
+              activeOpacity={0.7}
+            >
+              {appTheme === 'dark' ? <Sun size={18} color="#fbbf24" /> : <Moon size={18} color="#e11d48" />}
+            </TouchableOpacity>
             <TouchableOpacity 
               onPress={handleLogout} 
               className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 items-center justify-center border border-slate-200 dark:border-slate-800 shadow-sm"

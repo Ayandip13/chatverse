@@ -12,27 +12,45 @@ import { initBackendConfig } from './src/config/backendConfig';
 import './global.css'; // NativeWind v4 requires this
 
 import { useColorScheme } from 'nativewind';
+import { useThemeStore } from './src/store/themeStore';
 
-export default function App() {
-  const { setColorScheme } = useColorScheme();
+function MainAppContent() {
+  const { colorScheme, setColorScheme } = useColorScheme();
+  const theme = useThemeStore((state) => state.theme);
+  const hydrateTheme = useThemeStore((state) => state.hydrateTheme);
   const hydrateAuth = useAuthStore((state) => state.hydrateAuth);
-  const isLoading = useAuthStore((state) => state.isLoading);
 
   useEffect(() => {
-    setColorScheme('light');
     initBackendConfig();
     hydrateAuth();
+    hydrateTheme().then((initialTheme) => {
+      setColorScheme(initialTheme);
+    });
   }, []);
 
+  useEffect(() => {
+    if (colorScheme !== theme) {
+      setColorScheme(theme);
+    }
+  }, [theme, colorScheme]);
+
+  return (
+    <View style={{ flex: 1 }}>
+      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+      <NavigationContainer>
+        <View style={{ flex: 1 }}>
+          <RootNavigator />
+        </View>
+      </NavigationContainer>
+    </View>
+  );
+}
+
+export default function App() {
   return (
     <QueryProvider>
       <SocketProvider>
-        <StatusBar style="auto" />
-        <NavigationContainer>
-          <View style={{ flex: 1 }}>
-            <RootNavigator />
-          </View>
-        </NavigationContainer>
+        <MainAppContent />
       </SocketProvider>
     </QueryProvider>
   );

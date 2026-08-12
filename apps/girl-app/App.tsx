@@ -11,29 +11,52 @@ import { initBackendConfig } from './src/config/backendConfig';
 
 import './global.css'; // NativeWind v4 requires this
 
-export default function App() {
+import { useColorScheme } from 'nativewind';
+import { useThemeStore } from './src/store/themeStore';
+
+function MainAppContent() {
+  const { colorScheme, setColorScheme } = useColorScheme();
+  const theme = useThemeStore((state) => state.theme);
+  const hydrateTheme = useThemeStore((state) => state.hydrateTheme);
   const hydrateAuth = useAuthStore((state) => state.hydrateAuth);
   const isLoading = useAuthStore((state) => state.isLoading);
 
   useEffect(() => {
     initBackendConfig();
     hydrateAuth();
+    hydrateTheme().then((initialTheme) => {
+      setColorScheme(initialTheme);
+    });
   }, []);
 
+  useEffect(() => {
+    if (colorScheme !== theme) {
+      setColorScheme(theme);
+    }
+  }, [theme, colorScheme]);
+
+  return (
+    <View style={{ flex: 1 }}>
+      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+      <NavigationContainer>
+        <View style={{ flex: 1 }}>
+          <RootNavigator />
+          {isLoading && (
+            <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, zIndex: 999 }}>
+              <SplashScreen />
+            </View>
+          )}
+        </View>
+      </NavigationContainer>
+    </View>
+  );
+}
+
+export default function App() {
   return (
     <QueryProvider>
       <SocketProvider>
-        <StatusBar style="auto" />
-        <NavigationContainer>
-          <View style={{ flex: 1 }}>
-            <RootNavigator />
-            {isLoading && (
-              <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, zIndex: 999 }}>
-                <SplashScreen />
-              </View>
-            )}
-          </View>
-        </NavigationContainer>
+        <MainAppContent />
       </SocketProvider>
     </QueryProvider>
   );

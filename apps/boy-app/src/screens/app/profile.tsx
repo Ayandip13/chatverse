@@ -12,10 +12,13 @@ import {
   ShieldCheck, 
   LogOut, 
   Coins, 
-  MessageCircle 
+  MessageCircle,
+  Sun,
+  Moon
 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '../../store/authStore';
+import { useThemeStore } from '../../store/themeStore';
 import { useProfile } from '../../hooks/useUser';
 import { useWalletSummary, useRecentChats } from '../../hooks/useHomeData';
 import { useFavorites } from '../../hooks/useDiscovery';
@@ -68,21 +71,33 @@ export default function ProfileScreen() {
     { title: 'About ChatVerse', subtitle: 'App details & version', icon: Info, route: 'Legal', params: { type: 'about' }, color: '#6b7280' },
   ];
 
+  const theme = useThemeStore((state) => state.theme);
+  const toggleTheme = useThemeStore((state) => state.toggleTheme);
+
   return (
     <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900" edges={['top']}>
       {/* Screen Header */}
       <View className="px-6 py-4 flex-row items-center justify-between bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-md">
         <Text className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Profile</Text>
-        <TouchableOpacity 
-          onPress={() => navigation.navigate('EditProfile')}
-          className="flex-row items-center bg-indigo-50 dark:bg-indigo-950/60 px-3.5 py-1.5 rounded-full border border-indigo-100 dark:border-indigo-900/40"
-          activeOpacity={0.7}
-        >
-          <View className="mr-1.5 items-center justify-center">
-            <Edit3 size={14} color="#6366f1" />
-          </View>
-          <Text className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400">Edit Profile</Text>
-        </TouchableOpacity>
+        <View className="flex-row items-center gap-2">
+          <TouchableOpacity
+            onPress={toggleTheme}
+            className="w-9 h-9 rounded-full bg-white dark:bg-gray-800 items-center justify-center border border-gray-200 dark:border-gray-700 shadow-xs"
+            activeOpacity={0.7}
+          >
+            {theme === 'dark' ? <Sun size={16} color="#fbbf24" /> : <Moon size={16} color="#6366f1" />}
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => navigation.navigate('EditProfile')}
+            className="flex-row items-center bg-indigo-50 dark:bg-indigo-950/60 px-3.5 py-1.5 rounded-full border border-indigo-100 dark:border-indigo-900/40"
+            activeOpacity={0.7}
+          >
+            <View className="mr-1.5 items-center justify-center">
+              <Edit3 size={14} color="#6366f1" />
+            </View>
+            <Text className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400">Edit Profile</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>

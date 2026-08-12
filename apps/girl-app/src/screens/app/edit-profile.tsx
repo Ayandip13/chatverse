@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Check, Sparkles, Globe, Phone, ShieldCheck, Camera, User, Mail, Heart, Plus } from 'lucide-react-native';
+import { ArrowLeft, Check, Sparkles, Globe, Phone, ShieldCheck, Camera, User, Mail, Heart, Plus, Sun, Moon } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuthStore } from '../../store/authStore';
+import { useThemeStore } from '../../store/themeStore';
 import { DEFAULT_GIRL_AVATARS, getAvatarUrl } from '../../utils/avatarUtil';
 import { useQueryClient } from '@tanstack/react-query';
 import apiClient from '../../api/apiClient';
@@ -135,6 +136,9 @@ export default function EditProfileScreen() {
     }
   };
 
+  const appTheme = useThemeStore((state) => state.theme);
+  const toggleTheme = useThemeStore((state) => state.toggleTheme);
+
   return (
     <SafeAreaView className="flex-1 bg-slate-50 dark:bg-slate-950" edges={['top']}>
       {/* --- TOP HEADER --- */}
@@ -153,13 +157,22 @@ export default function EditProfileScreen() {
           </View>
         </View>
 
-        <TouchableOpacity 
-          onPress={handleSave} 
-          disabled={isSaving}
-          className="bg-pink-600 px-4 py-2 rounded-full flex-row items-center gap-1.5 shadow-md shadow-pink-600/30"
-          activeOpacity={0.9}
-        >
-          {isSaving ? (
+        <View className="flex-row items-center gap-2">
+          <TouchableOpacity
+            onPress={toggleTheme}
+            className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 items-center justify-center border border-slate-200 dark:border-slate-700"
+            activeOpacity={0.7}
+          >
+            {appTheme === 'dark' ? <Sun size={16} color="#fbbf24" /> : <Moon size={16} color="#e11d48" />}
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            onPress={handleSave} 
+            disabled={isSaving}
+            className="bg-pink-600 px-4 py-2 rounded-full flex-row items-center gap-1.5 shadow-md shadow-pink-600/30"
+            activeOpacity={0.9}
+          >
+            {isSaving ? (
             <ActivityIndicator size="small" color="#ffffff" />
           ) : (
             <>
@@ -169,6 +182,7 @@ export default function EditProfileScreen() {
           )}
         </TouchableOpacity>
       </View>
+    </View>
 
       <ScrollView className="flex-1 px-5 py-6" showsVerticalScrollIndicator={false}>
         
