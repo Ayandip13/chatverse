@@ -6,6 +6,7 @@ import ChatScreen from '../screens/app/ChatScreen';
 import WalletScreen from '../screens/app/wallet/index';
 import WalletHistoryScreen from '../screens/app/wallet/history';
 import WalletWithdrawScreen from '../screens/app/wallet/withdraw';
+import NotificationsScreen from '../screens/app/notifications';
 import DevSettingsScreen from '../screens/app/DevSettingsScreen';
 
 const Stack = createNativeStackNavigator<AppStackParamList>();
@@ -19,6 +20,7 @@ export function AppNavigator() {
       <Stack.Screen name="Wallet" component={WalletScreen} />
       <Stack.Screen name="WalletHistory" component={WalletHistoryScreen} />
       <Stack.Screen name="WalletWithdraw" component={WalletWithdrawScreen} />
+      <Stack.Screen name="Notifications" component={NotificationsScreen} />
       <Stack.Screen name="DevSettings" component={DevSettingsScreen} />
     </Stack.Navigator>
   );

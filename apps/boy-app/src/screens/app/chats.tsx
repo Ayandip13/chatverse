@@ -1,5 +1,5 @@
 import { View, Text, FlatList } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MessageCircle } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useChats } from '../../hooks/useMessaging';
@@ -8,6 +8,7 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { Skeleton } from '../../components/ui/Skeleton';
 
 export default function ChatsScreen() {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const { data: chats, isLoading, refetch, isRefetching } = useChats();
 
@@ -48,7 +49,7 @@ export default function ChatsScreen() {
         <FlatList
           data={chats || []}
           keyExtractor={(item) => item._id}
-          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 120 + insets.bottom }}
           renderItem={({ item }) => (
             <View className="mb-3">
               <RecentChatCard chat={item} />

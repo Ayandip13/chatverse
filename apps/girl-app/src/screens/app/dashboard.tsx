@@ -6,7 +6,7 @@ import {
   LogOut, MessageCircle, Clock, Check, X,
   Edit3, Coins, Lock, TrendingUp, ArrowDownToLine,
   ChevronRight, ShieldCheck, MessageCircleHeart,
-  Sparkles, Zap, Sun, Moon
+  Sparkles, Zap, Sun, Moon, Bell
 } from 'lucide-react-native';
 import { theme } from '../../constants/theme';
 import { useNavigation } from '@react-navigation/native';
@@ -15,6 +15,7 @@ import { useAcceptChatRequest, useRejectChatRequest, useChatRequests, useRecentC
 import { useQueryClient } from '@tanstack/react-query';
 import { useThemeStore } from '../../store/themeStore';
 import { useWithdrawalSummary } from '../../hooks/useWithdrawals';
+import { useUnreadCount } from '../../hooks/useNotifications';
 import { getAvatarUrl } from '../../utils/avatarUtil';
 
 export default function DashboardScreen() {
@@ -24,6 +25,7 @@ export default function DashboardScreen() {
   const queryClient = useQueryClient();
   const appTheme = useThemeStore((state) => state.theme);
   const toggleTheme = useThemeStore((state) => state.toggleTheme);
+  const { data: unreadCount = 0 } = useUnreadCount();
 
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [showTip, setShowTip] = useState<boolean>(true);
@@ -203,6 +205,19 @@ export default function DashboardScreen() {
 
           {/* Right Header Buttons */}
           <View className="flex-row items-center gap-2">
+            <TouchableOpacity 
+              onPress={() => navigation.navigate('Notifications')} 
+              className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 items-center justify-center border border-slate-200 dark:border-slate-800 shadow-sm relative"
+              activeOpacity={0.7}
+            >
+              <Bell size={18} color={appTheme === 'dark' ? '#cbd5e1' : '#475569'} />
+              {unreadCount > 0 && (
+                <View className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-pink-500 rounded-full items-center justify-center border-2 border-white dark:border-slate-900">
+                  <Text className="text-[9px] font-black text-white">{unreadCount > 9 ? '9+' : unreadCount}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+
             <TouchableOpacity 
               onPress={toggleTheme} 
               className="w-10 h-10 rounded-full bg-white dark:bg-slate-900 items-center justify-center border border-slate-200 dark:border-slate-800 shadow-sm"

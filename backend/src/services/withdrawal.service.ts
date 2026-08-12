@@ -27,8 +27,8 @@ export class WithdrawalService {
       );
     }
 
-    const settings = (await PlatformSetting.findOne()) || { minimumWithdrawalAmount: 500 };
-    const minAmount = settings.minimumWithdrawalAmount || 500;
+    const settings = (await PlatformSetting.findOne()) || { minimumWithdrawalAmount: 150 };
+    const minAmount = settings.minimumWithdrawalAmount || 150;
 
     if (data.amount < minAmount) {
       throw new ApiError(

@@ -5,14 +5,14 @@ import { ArrowLeft, Check, ArrowRight, ShieldCheck, Coins, CreditCard, Zap, Buil
 import { useNavigation } from '@react-navigation/native';
 import { useWithdrawalSummary, useRequestWithdrawal } from '../../../hooks/useWithdrawals';
 
-const PRESETS = [500, 1000, 2000, 5000];
+const PRESETS = [150, 500, 1000, 2000];
 
 export default function RequestWithdrawalScreen() {
   const navigation = useNavigation<any>();
   const { data: summary } = useWithdrawalSummary();
   const { mutate: submitRequest, isPending } = useRequestWithdrawal();
 
-  const [amount, setAmount] = useState<string>('500');
+  const [amount, setAmount] = useState<string>('150');
   const [paymentMethod, setPaymentMethod] = useState<'UPI' | 'BANK_TRANSFER'>('UPI');
   const [upiId, setUpiId] = useState<string>('');
   
@@ -30,8 +30,8 @@ export default function RequestWithdrawalScreen() {
   const netAmount = Math.max(0, parsedAmount - platformFee);
 
   const handleSubmit = () => {
-    if (parsedAmount < 500) {
-      Alert.alert('Validation Error', 'Minimum withdrawal amount is 500 Coins (₹500).');
+    if (parsedAmount < 150) {
+      Alert.alert('Validation Error', 'Minimum withdrawal amount is 150 Coins (₹150).');
       return;
     }
 
@@ -109,7 +109,7 @@ export default function RequestWithdrawalScreen() {
 
           <View className="bg-pink-500/10 dark:bg-pink-500/20 px-3 py-1.5 rounded-full border border-pink-500/30 flex-row items-center gap-1">
             <Coins size={14} color="#f43f5e" />
-            <Text className="text-xs font-black text-pink-600 dark:text-pink-300">Min 500 Coins</Text>
+            <Text className="text-xs font-black text-pink-600 dark:text-pink-300">Min 150 Coins</Text>
           </View>
         </View>
 

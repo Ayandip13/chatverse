@@ -6,7 +6,7 @@ const PlatformSettingSchema = new Schema<IPlatformSetting>(
     commissionPercentage: { type: Number, required: true, min: 0, max: 100, default: 20 },
     coinConversionRate: { type: Number, required: true, default: 1 },
     coinsPerMinute: { type: Number, required: true, default: 10 },
-    minimumWithdrawalAmount: { type: Number, required: true, default: 500 },
+    minimumWithdrawalAmount: { type: Number, required: true, default: 150 },
     maximumRechargeAmount: { type: Number, required: true, default: 100000 },
     isMaintenanceMode: { type: Boolean, required: true, default: false },
     isRegistrationEnabled: { type: Boolean, required: true, default: true },

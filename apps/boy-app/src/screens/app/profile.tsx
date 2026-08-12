@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { 
   Settings, 
   Wallet, 
@@ -26,6 +26,7 @@ import { getAvatarUrl } from '../../utils/avatarUtil';
 import { Skeleton } from '../../components/ui/Skeleton';
 
 export default function ProfileScreen() {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const authUser = useAuthStore(state => state.user);
   const logout = useAuthStore(state => state.logout);
@@ -100,7 +101,7 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+      <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 + insets.bottom }}>
         {/* User Hero Card */}
         <View className="items-center p-6 bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700/80 shadow-md shadow-gray-200/50 dark:shadow-none my-4">
           <View className="relative w-28 h-28 mb-4 p-0.5 rounded-full bg-gradient-to-tr from-indigo-500 via-rose-500 to-amber-400 shadow-md">

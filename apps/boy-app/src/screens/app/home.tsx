@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { ScrollView, RefreshControl, View, FlatList } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigation } from '@react-navigation/native';
 
@@ -22,6 +22,7 @@ import {
 } from '../../hooks/useHomeData';
 
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
@@ -54,7 +55,7 @@ export default function HomeScreen() {
       return (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="pl-6">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className={`mr-4 ${useGrid ? 'w-72 h-36 rounded-3xl' : 'w-18 h-18 rounded-full'}`} />
+            <Skeleton key={i} className={`mr-4 ${useGrid ? 'w-[300px] h-32 rounded-2xl' : 'w-18 h-18 rounded-full'}`} />
           ))}
         </ScrollView>
       );
@@ -90,7 +91,7 @@ export default function HomeScreen() {
       <ScrollView 
         className="flex-1"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 110 }}
+        contentContainerStyle={{ paddingBottom: 120 + insets.bottom }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4f46e5" />}
       >
         {/* Wallet / Balance Banner */}
