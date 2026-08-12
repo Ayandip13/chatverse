@@ -78,7 +78,7 @@ export default function ChatScreen() {
     <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900" edges={['bottom']}>
       <KeyboardAvoidingView 
         style={{ flex: 1 }} 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ChatHeader chat={chat} onRate={() => setShowRating(true)} />
         {chat.status === 'ACTIVE' && (
