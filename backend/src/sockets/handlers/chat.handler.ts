@@ -3,7 +3,7 @@ import { AuthenticatedSocket } from '@/middlewares/socketAuth.middleware';
 import { messageService } from '@/services/message.service';
 import { chatSessionService } from '@/services/chatSession.service';
 import logger from '@/config/logger.config';
-import { Chat } from '@/models';
+import { Chat, Message } from '@/models';
 import { ChatStatus } from '@/constants/enums.constant';
 
 export const registerChatHandlers = (io: Server, socket: AuthenticatedSocket) => {
@@ -77,33 +77,37 @@ export const registerChatHandlers = (io: Server, socket: AuthenticatedSocket) =>
       const { chatId, content, tempId } = payload;
 
       // Cheap pre-check: boys must have >= 1 coin, girls always send free.
-      // This is intentionally NOT the full billing — it just gates the send so we
-      // don't persist/broadcast a message the user can't pay for.
       const canSend = await chatSessionService.canSendMessage(chatId, userId);
       if (!canSend) {
         if (callback) callback({ error: 'Insufficient coins to send a message', tempId });
         return;
       }
 
-      // Validates against regex and persists the message FIRST so delivery is
-      // not blocked by the (slower) wallet deduction / settlement logic.
+      // Validates against regex and persists the message FIRST
       const message = await messageService.validateAndSaveMessage(chatId, userId, content);
 
-      // Broadcast to room (excluding sender — the sender shows the message via
-      // optimistic UI + the ack callback below).
+      // Check if recipient is online in this chat room
+      const room = io.sockets.adapter.rooms.get(`chat:${chatId}`);
+      const isRecipientInRoom = room && room.size > 1;
+      const initialStatus: 'SENT' | 'DELIVERED' = isRecipientInRoom ? 'DELIVERED' : 'SENT';
+
+      if (isRecipientInRoom) {
+        await Message.findByIdAndUpdate(message._id, { status: 'DELIVERED' });
+      }
+
+      // Broadcast to room
       socket.to(`chat:${chatId}`).emit('chat:receive_message', {
         _id: message._id,
         chatId: message.chatId,
         senderId: message.senderId,
         content: message.content,
+        status: initialStatus,
         createdAt: message.createdAt,
       });
 
-      if (callback) callback({ success: true, message, tempId });
+      if (callback) callback({ success: true, message: { ...message.toObject(), status: initialStatus }, tempId });
 
-      // Fire-and-forget billing. Runs asynchronously so it never blocks message
-      // delivery. The atomic $gte guard in settlement.service still guarantees
-      // the boy's balance never goes negative.
+      // Fire-and-forget billing
       chatSessionService.processMessageDeduction(chatId, userId, io).catch((err: any) => {
         const message = err?.message || err;
         logger.error(`Async message billing failed for chat ${chatId}: ${message}`);
@@ -122,8 +126,27 @@ export const registerChatHandlers = (io: Server, socket: AuthenticatedSocket) =>
     socket.to(`chat:${payload.chatId}`).emit('chat:typing_stop', { chatId: payload.chatId, userId });
   });
 
-  socket.on('chat:read', (payload: { chatId: string; messageId: string }) => {
-    socket.to(`chat:${payload.chatId}`).emit('chat:read_receipt', { chatId: payload.chatId, messageId: payload.messageId, userId });
+  socket.on('chat:read', async (payload: { chatId: string; messageId?: string }) => {
+    try {
+      const { chatId, messageId } = payload;
+      if (messageId) {
+        await Message.findByIdAndUpdate(messageId, { status: 'READ' });
+      } else {
+        await Message.updateMany(
+          { chatId, senderId: { $ne: userId }, status: { $ne: 'READ' } },
+          { status: 'READ' }
+        );
+      }
+
+      io.to(`chat:${chatId}`).emit('chat:message_status_update', {
+        chatId,
+        messageId,
+        status: 'READ',
+        readBy: userId,
+      });
+    } catch (error: any) {
+      logger.error(`Read status error: ${error.message}`);
+    }
   });
 
   // Handle socket disconnect for active rooms

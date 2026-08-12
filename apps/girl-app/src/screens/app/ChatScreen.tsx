@@ -9,6 +9,7 @@ import { useChatSocket } from '../../hooks/useChatSocket';
 import { theme } from '../../constants/theme';
 import { getAvatarUrl } from '../../utils/avatarUtil';
 import { Message } from '../../api/messagingApi';
+import { MessageStatusTicks } from '../../components/chat/MessageStatusTicks';
 
 const QUICK_EMOJIS = ['❤️', '🔥', '👍', '😂', '😍', '🎉', '💯', '✨'];
 
@@ -240,9 +241,16 @@ export default function GirlChatScreen() {
                     </Text>
                   )}
 
-                  <Text className={`text-[10px] mt-1 text-right ${isOwn ? 'text-rose-100' : 'text-slate-400'}`}>
-                    {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </Text>
+                  <View className="flex-row items-center justify-end gap-1 mt-1">
+                    <Text className={`text-[10px] ${isOwn ? 'text-rose-100' : 'text-slate-400'}`}>
+                      {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </Text>
+                    {isOwn && (
+                      <View className="ml-0.5">
+                        <MessageStatusTicks status={item.status || 'SENT'} size={14} />
+                      </View>
+                    )}
+                  </View>
                 </View>
               </View>
             );

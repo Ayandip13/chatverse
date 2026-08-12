@@ -8,20 +8,11 @@ const Stack = createNativeStackNavigator();
 
 export function RootNavigator() {
   const user = useAuthStore((state) => state.user);
-  const isLoading = useAuthStore((state) => state.isLoading); // 👈 Add your loading state
+  const isLoading = useAuthStore((state) => state.isLoading);
 
-  // Block screen rendering until auth state is restored
   if (isLoading) {
     return <SplashScreen />;
   }
 
-  return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {user ? (
-        <Stack.Screen name="App" component={AppNavigator} />
-      ) : (
-        <Stack.Screen name="Auth" component={AuthNavigator} />
-      )}
-    </Stack.Navigator>
-  );
+  return user ? <AppNavigator /> : <AuthNavigator />;
 }

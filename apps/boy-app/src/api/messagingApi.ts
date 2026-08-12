@@ -19,7 +19,8 @@ export interface Message {
   chatId: string;
   senderId: string;
   content: string;
-  isRead: boolean;
+  status?: 'SENDING' | 'SENT' | 'DELIVERED' | 'READ';
+  isRead?: boolean;
   createdAt: string;
 }
 

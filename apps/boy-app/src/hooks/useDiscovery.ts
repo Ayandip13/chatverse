@@ -1,7 +1,7 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchDiscoveryGirls, fetchGirlDetails, toggleFavorite, GirlProfile } from '../api/homeApi';
 
-export const useSearchGirls = (filters: Record<string, any>) => {
+export const useSearchGirls = (filters: Record<string, any>, options?: { enabled?: boolean }) => {
   return useInfiniteQuery({
     queryKey: ['girls', 'search', filters],
     queryFn: async ({ pageParam = 1 }) => {
@@ -12,6 +12,7 @@ export const useSearchGirls = (filters: Record<string, any>) => {
       return lastPage.length === 20 ? allPages.length + 1 : undefined;
     },
     staleTime: 60000,
+    enabled: options?.enabled ?? true,
   });
 };
 

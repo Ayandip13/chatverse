@@ -31,11 +31,6 @@ export default function App() {
         <NavigationContainer>
           <View style={{ flex: 1 }}>
             <RootNavigator />
-            {isLoading && (
-              <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, zIndex: 999 }}>
-                <SplashScreen />
-              </View>
-            )}
           </View>
         </NavigationContainer>
       </SocketProvider>

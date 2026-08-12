@@ -93,6 +93,7 @@ export interface IMessage extends Document {
   chatId: Types.ObjectId;
   senderId: Types.ObjectId;
   content: string;
+  status: 'SENT' | 'DELIVERED' | 'READ';
   createdAt: Date;
   updatedAt: Date;
 }

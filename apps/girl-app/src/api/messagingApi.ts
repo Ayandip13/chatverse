@@ -42,6 +42,7 @@ export interface Message {
   chatId: string;
   senderId: string;
   content: string;
+  status?: 'SENDING' | 'SENT' | 'DELIVERED' | 'READ';
   createdAt: string;
 }
 

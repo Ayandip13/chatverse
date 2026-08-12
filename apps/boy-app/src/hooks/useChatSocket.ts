@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSocket } from '../providers/SocketProvider';
 import { useQueryClient } from '@tanstack/react-query';
 import { useChatStore } from '../store/chatStore';
+import { useAuthStore } from '../store/authStore';
 import { Message } from '../api/messagingApi';
 import { Alert } from 'react-native';
 
@@ -27,6 +28,7 @@ export interface DisconnectState {
 export const useChatSocket = (chatId?: string) => {
   const { socket, isConnected } = useSocket();
   const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?._id);
   const setTyping = useChatStore((state) => state.setTyping);
 
   const [chatStats, setChatStats] = useState<ChatStatsData | null>(null);
@@ -41,15 +43,14 @@ export const useChatSocket = (chatId?: string) => {
 
     if (chatId) {
       socket.emit('chat:join', { chatId });
+      socket.emit('chat:read', { chatId });
     }
 
     const onMessage = (message: Message) => {
       queryClient.setQueryData(['messages', message.chatId], (oldData: any) => {
         if (!oldData) return oldData;
 
-        // Dedupe: if this message already exists in the cache (e.g. the sender's
-        // optimistic temp message was already reconciled by the ack, or the
-        // broadcast arrived before the ack), don't double-render it.
+        // Dedupe: if this message already exists in the cache
         const exists = oldData.pages.some((page: any) =>
           (page.messages || []).some((m: any) => m?._id === message._id)
         );
@@ -65,6 +66,36 @@ export const useChatSocket = (chatId?: string) => {
         return { ...oldData, pages: newPages };
       });
       queryClient.invalidateQueries({ queryKey: ['chats'] });
+
+      // If user is actively inside this chat room screen, mark as read after a 1.5s view delay
+      if (chatId && message.chatId === chatId && message.senderId && message.senderId !== userId) {
+        setTimeout(() => {
+          socket.emit('chat:read', { chatId, messageId: message._id });
+        }, 1500);
+      }
+    };
+
+    const onStatusUpdate = (data: { chatId: string; messageId?: string; status: 'SENT' | 'DELIVERED' | 'READ'; readBy?: string }) => {
+      // If status read event was triggered by current user, don't alter own tick UI
+      if (data.readBy && data.readBy === userId) return;
+
+      queryClient.setQueryData(['messages', data.chatId], (oldData: any) => {
+        if (!oldData) return oldData;
+        const newPages = oldData.pages.map((page: any) => ({
+          ...page,
+          messages: (page.messages || []).map((m: any) => {
+            // Update status only for messages sent by current user
+            if (m.senderId === userId || !m.senderId || m._id?.startsWith('temp-')) {
+              const matchesTarget = !data.messageId || m._id === data.messageId;
+              if (matchesTarget) {
+                return { ...m, status: data.status };
+              }
+            }
+            return m;
+          }),
+        }));
+        return { ...oldData, pages: newPages };
+      });
     };
 
     const onTypingStart = ({ chatId: typedChatId }: any) => setTyping(typedChatId, true);
@@ -127,6 +158,7 @@ export const useChatSocket = (chatId?: string) => {
     };
 
     socket.on('chat:receive_message', onMessage);
+    socket.on('chat:message_status_update', onStatusUpdate);
     socket.on('chat:typing_start', onTypingStart);
     socket.on('chat:typing_stop', onTypingStop);
     socket.on('chat:stats_update', onStatsUpdate);
@@ -141,6 +173,7 @@ export const useChatSocket = (chatId?: string) => {
       if (graceTimer) clearInterval(graceTimer);
       if (chatId) socket.emit('chat:leave', { chatId });
       socket.off('chat:receive_message', onMessage);
+      socket.off('chat:message_status_update', onStatusUpdate);
       socket.off('chat:typing_start', onTypingStart);
       socket.off('chat:typing_stop', onTypingStop);
       socket.off('chat:stats_update', onStatsUpdate);
@@ -161,7 +194,7 @@ export const useChatSocket = (chatId?: string) => {
     const tempMessage: Message & { status: 'SENDING' } = {
       _id: tempId,
       chatId,
-      senderId: '',
+      senderId: userId || '',
       content,
       isRead: false,
       createdAt: new Date().toISOString(),

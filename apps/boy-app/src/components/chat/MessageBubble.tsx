@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, Modal } from 'react-native';
-import { Check, CheckCheck, Reply, X } from 'lucide-react-native';
+import { Reply, X } from 'lucide-react-native';
 import { Message } from '../../api/messagingApi';
+import { MessageStatusTicks } from './MessageStatusTicks';
 
 const formatTime = (dateString: string) => {
   if (!dateString) return '';
@@ -84,18 +85,14 @@ export function MessageBubble({ message, isOwnMessage, onReply }: MessageBubbleP
         )}
 
         {/* Footer: Timestamp & Read/Delivery Checkmarks */}
-        <View className="flex-row items-center justify-end flex-row gap-1 mt-1.5">
+        <View className="flex-row items-center justify-end gap-1 mt-1.5">
           <Text className={`text-[10px] font-medium ${isOwnMessage ? 'text-indigo-200' : 'text-gray-400'}`}>
             {formatTime(message.createdAt)}
           </Text>
 
           {isOwnMessage && (
             <View className="ml-1 items-center justify-center">
-              {message.status === 'READ' ? (
-                <CheckCheck size={14} color="#60a5fa" />
-              ) : (
-                <Check size={14} color="#a5b4fc" />
-              )}
+              <MessageStatusTicks status={message.status || (message.isRead ? 'READ' : 'SENT')} size={14} />
             </View>
           )}
         </View>

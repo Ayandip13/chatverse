@@ -76,7 +76,8 @@ export default function EditProfileScreen() {
         } as any);
 
         const avatarRes = await apiClient.post('/users/avatar', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
+          transformRequest: (data) => data,
+          headers: { 'Accept': 'application/json' },
         });
 
         if (avatarRes.data?.data?.avatar) {

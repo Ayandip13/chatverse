@@ -89,14 +89,15 @@ export default function EditProfileScreen() {
           } as any);
 
           const avatarRes = await apiClient.post('/users/avatar', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
+            transformRequest: (data) => data,
+            headers: { 'Accept': 'application/json' },
           });
 
           if (avatarRes.data?.data?.avatar) {
             finalAvatar = avatarRes.data.data.avatar;
           }
-        } catch (uploadError) {
-          console.warn('Avatar upload failed during edit save:', uploadError);
+        } catch (uploadError: any) {
+          console.warn('Avatar upload failed during edit save:', uploadError?.response?.data || uploadError?.message);
         }
       }
 

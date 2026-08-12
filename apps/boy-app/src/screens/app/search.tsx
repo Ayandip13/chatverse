@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, ActivityIndicator, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search as SearchIcon, ArrowLeft, SlidersHorizontal } from 'lucide-react-native';
+import { Search as SearchIcon, ArrowLeft, SlidersHorizontal, Sparkles } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSearchGirls } from '../../hooks/useDiscovery';
 import { GirlDetailCard } from '../../components/home/GirlCards';
@@ -16,8 +16,10 @@ export default function SearchScreen() {
 
   const handleSearch = (text: string) => {
     setSearchTerm(text);
-    setTimeout(() => setDebouncedSearch(text), 500);
+    setTimeout(() => setDebouncedSearch(text), 300);
   };
+
+  const hasActiveFilterOrQuery = !!debouncedSearch.trim() || filters.online || filters.popular || filters.recommended;
 
   const {
     data,
@@ -27,12 +29,15 @@ export default function SearchScreen() {
     hasNextPage,
     refetch,
     isRefetching
-  } = useSearchGirls({ 
-    search: debouncedSearch || undefined,
-    online: filters.online || undefined,
-    popular: filters.popular || undefined,
-    recommended: filters.recommended || undefined
-  });
+  } = useSearchGirls(
+    { 
+      search: debouncedSearch.trim() || undefined,
+      online: filters.online || undefined,
+      popular: filters.popular || undefined,
+      recommended: filters.recommended || undefined
+    },
+    { enabled: hasActiveFilterOrQuery }
+  );
 
   const allGirls = data?.pages.flat() || [];
 
@@ -42,6 +47,7 @@ export default function SearchScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900" edges={['top']}>
+      {/* Header Search Bar */}
       <View className="flex-row items-center px-6 py-4">
         <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
           <ArrowLeft size={24} color="#374151" />
@@ -50,7 +56,7 @@ export default function SearchScreen() {
           <SearchIcon size={20} color="#9ca3af" className="mr-2" />
           <TextInput
             className="flex-1 text-gray-900 dark:text-white"
-            placeholder="Search for girls..."
+            placeholder="Search by name..."
             placeholderTextColor="#9ca3af"
             value={searchTerm}
             onChangeText={handleSearch}
@@ -59,6 +65,7 @@ export default function SearchScreen() {
         </View>
       </View>
 
+      {/* Filter Chips Bar */}
       <View className="px-6 mb-4 flex-row items-center space-x-3">
         <SlidersHorizontal size={20} color="#6b7280" />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-1 ml-2">
@@ -82,7 +89,20 @@ export default function SearchScreen() {
         </ScrollView>
       </View>
 
-      {isLoading ? (
+      {/* Main Body Content */}
+      {!hasActiveFilterOrQuery ? (
+        <View className="flex-1 justify-center items-center px-8 pb-20">
+          <View className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/30 rounded-full items-center justify-center mb-4">
+            <Sparkles size={28} color="#6366f1" />
+          </View>
+          <Text className="text-lg font-bold text-gray-900 dark:text-white text-center mb-1">
+            Search Profiles
+          </Text>
+          <Text className="text-sm text-gray-500 dark:text-gray-400 text-center leading-relaxed">
+            Type a name above or select a filter (Online, Popular, Recommended) to start searching.
+          </Text>
+        </View>
+      ) : isLoading ? (
         <View className="flex-row flex-wrap justify-between px-6">
           {[1, 2, 3, 4].map(i => <Skeleton key={i} className="w-[47%] h-64 rounded-2xl mb-4" />)}
         </View>
