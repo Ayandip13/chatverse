@@ -28,7 +28,7 @@ export const initializeSocket = (server: HttpServer): void => {
     pingTimeout: 20000,
     connectionStateRecovery: {
       maxDisconnectionDuration: 2 * 60 * 1000,
-      skipMiddlewares: true,
+      skipMiddlewares: false,
     }
   });
 
@@ -36,7 +36,13 @@ export const initializeSocket = (server: HttpServer): void => {
   io.use(socketAuthMiddleware);
 
   io.on('connection', (socket: AuthenticatedSocket) => {
-    logger.info(`Authenticated Socket Connected: ${socket.id} for User: ${socket.user?.userId}`);
+    if (!socket.user?.userId) {
+      logger.warn(`Unauthenticated socket connection rejected: ${socket.id}`);
+      socket.disconnect(true);
+      return;
+    }
+
+    logger.info(`Authenticated Socket Connected: ${socket.id} for User: ${socket.user.userId}`);
 
     // Register Handlers
     registerPresenceHandlers(io, socket);

@@ -4,7 +4,8 @@ import { User } from '@/models';
 import logger from '@/config/logger.config';
 
 export const registerPresenceHandlers = (io: Server, socket: AuthenticatedSocket) => {
-  const userId = socket.user!.userId;
+  const userId = socket.user?.userId;
+  if (!userId) return;
 
   // Personal room for direct updates (like wallet)
   socket.join(`user:${userId}`);

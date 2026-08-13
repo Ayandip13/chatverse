@@ -7,7 +7,8 @@ import { Chat, Message } from '@/models';
 import { ChatStatus } from '@/constants/enums.constant';
 
 export const registerChatHandlers = (io: Server, socket: AuthenticatedSocket) => {
-  const userId = socket.user!.userId;
+  const userId = socket.user?.userId;
+  if (!userId) return;
 
   // Track joined chat rooms for disconnect handling
   const joinedRooms = new Set<string>();
@@ -72,6 +73,18 @@ export const registerChatHandlers = (io: Server, socket: AuthenticatedSocket) =>
     }
   });
 
+  socket.on('chat:deduct_session_coins', async (payload: { chatId: string }, callback) => {
+    try {
+      const { chatId } = payload;
+      logger.info(`User ${userId} 2-minute chat session complete for ${chatId}, deducting 2 coins...`);
+      await chatSessionService.processTwoMinuteDeduction(chatId, io);
+      if (callback) callback({ success: true });
+    } catch (error: any) {
+      logger.error(`Session coin deduction failed: ${error.message}`);
+      if (callback) callback({ error: error.message });
+    }
+  });
+
   socket.on('chat:send_message', async (payload: { chatId: string; content: string; tempId?: string }, callback) => {
     try {
       const { chatId, content, tempId } = payload;
@@ -106,12 +119,6 @@ export const registerChatHandlers = (io: Server, socket: AuthenticatedSocket) =>
       });
 
       if (callback) callback({ success: true, message: { ...message.toObject(), status: initialStatus }, tempId });
-
-      // Fire-and-forget billing
-      chatSessionService.processMessageDeduction(chatId, userId, io).catch((err: any) => {
-        const message = err?.message || err;
-        logger.error(`Async message billing failed for chat ${chatId}: ${message}`);
-      });
     } catch (error: any) {
       logger.error(`Message Error: ${error.message}`);
       if (callback) callback({ error: error.message, tempId: payload.tempId });

@@ -261,5 +261,11 @@ export const useChatSocket = (chatId?: string) => {
     }
   };
 
-  return { sendMessage, emitTyping, endChatSession, chatStats, lowBalanceWarning, endedSummary, disconnectState };
+  const deductSessionCoins = (chatId: string) => {
+    if (socket && isConnected) {
+      socket.emit('chat:deduct_session_coins', { chatId });
+    }
+  };
+
+  return { sendMessage, emitTyping, endChatSession, deductSessionCoins, chatStats, lowBalanceWarning, endedSummary, disconnectState };
 };

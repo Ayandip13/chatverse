@@ -15,6 +15,7 @@ interface SessionState {
   completedMinutes: number;
   boyDisconnectedAt: Date | null;
   girlDisconnectedAt: Date | null;
+  lastDeductionAt?: number;
 }
 
 class ChatSessionService {
@@ -146,6 +147,65 @@ class ChatSessionService {
       io.to(`user:${session.girlId}`).emit('wallet:update', {
         newBalance: girlBalance,
         delta: 1,
+        reason: 'GIRL_EARNING',
+      });
+    }
+
+    return true;
+  }
+
+  /**
+   * Evaluates wallet balance and handles 2-coin deduction per 2-minute chat session completion.
+   */
+  public async processTwoMinuteDeduction(chatId: string, io: Server): Promise<boolean> {
+    const session = this.sessions.get(chatId);
+    if (!session) return false;
+
+    const now = Date.now();
+    if (session.lastDeductionAt && now - session.lastDeductionAt < 10000) {
+      logger.warn(`Skipping duplicate 2-coin deduction for Chat ${chatId} within cooldown window`);
+      return false;
+    }
+    session.lastDeductionAt = now;
+
+    const result = await settlementService.processSessionSettlement(
+      session.chatId,
+      session.boyId,
+      session.girlId,
+      2 // 2 coins for 2 minutes talk
+    );
+
+    if (!result.success) {
+      io.to(`chat:${chatId}`).emit('chat:error', { message: 'Failed to process payment for chat session.' });
+      return false;
+    }
+
+    // Update Chat model with duration & total cost
+    const updatedChat = await Chat.findByIdAndUpdate(chatId, {
+      $inc: { durationInMinutes: 2, totalCost: 2 }
+    }, { new: true });
+
+    const boyBalance = result.boyBalance;
+    const girlBalance = result.girlBalance;
+
+    if (boyBalance !== undefined) {
+      io.to(`user:${session.boyId}`).emit('wallet:update', {
+        newBalance: boyBalance,
+        delta: -2,
+        reason: 'CHAT_DEBIT',
+      });
+      // Emit stats update to update chat stats on frontend
+      io.to(`chat:${chatId}`).emit('chat:stats_update', {
+        chatId,
+        messagesSent: updatedChat ? updatedChat.totalCost : 2,
+        remainingCoins: boyBalance
+      });
+    }
+
+    if (girlBalance !== undefined) {
+      io.to(`user:${session.girlId}`).emit('wallet:update', {
+        newBalance: girlBalance,
+        delta: 2,
         reason: 'GIRL_EARNING',
       });
     }

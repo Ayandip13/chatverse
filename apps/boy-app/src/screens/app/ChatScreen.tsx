@@ -33,7 +33,7 @@ export default function ChatScreen() {
     isFetchingNextPage
   } = useChatMessages(id);
 
-  const { sendMessage, emitTyping, endChatSession, chatStats, lowBalanceWarning, endedSummary } = useChatSocket(id);
+  const { sendMessage, emitTyping, endChatSession, deductSessionCoins, chatStats, lowBalanceWarning, endedSummary } = useChatSocket(id);
   
   const typingUsers = useChatStore(state => state.typingUsers);
   const isOtherUserTyping = typingUsers[id];
@@ -78,6 +78,7 @@ export default function ChatScreen() {
 
   const handleAdClose = () => {
     setShowAdModal(false);
+    useChatStore.getState().resetAdTimer();
     if (navigation.canGoBack()) {
       navigation.goBack();
     } else {
@@ -97,7 +98,10 @@ export default function ChatScreen() {
             chat={chat} 
             chatStats={chatStats} 
             lowBalanceWarning={lowBalanceWarning} 
-            onTimeLimitReached={() => setShowAdModal(true)}
+            onTimeLimitReached={() => {
+              deductSessionCoins(id);
+              setShowAdModal(true);
+            }}
           />
         )}
 

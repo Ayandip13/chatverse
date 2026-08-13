@@ -89,6 +89,107 @@ export class SettlementService {
   }
 
   /**
+   * Process completed 2-minute chat session settlement (2 coins deduction & payout).
+   */
+  public async processSessionSettlement(
+    chatId: string,
+    boyId: string,
+    girlId: string,
+    coinsToDeduct: number = 2
+  ): Promise<{ success: boolean; boyBalance?: number; girlBalance?: number; error?: string }> {
+    const girlEarnings = coinsToDeduct;
+
+    // 1. Atomic deduction from Boy's wallet (must have >= coinsToDeduct)
+    let boyWallet = await Wallet.findOneAndUpdate(
+      { userId: new Types.ObjectId(boyId), currentBalance: { $gte: coinsToDeduct } },
+      { 
+        $inc: { currentBalance: -coinsToDeduct, lifetimeSpent: coinsToDeduct } 
+      },
+      { new: true }
+    );
+
+    // Fallback if balance is < coinsToDeduct (deduct whatever balance remains)
+    if (!boyWallet) {
+      const fallbackWallet = await Wallet.findOne({ userId: new Types.ObjectId(boyId) });
+      const available = fallbackWallet?.currentBalance || 0;
+      if (available > 0) {
+        boyWallet = await Wallet.findOneAndUpdate(
+          { userId: new Types.ObjectId(boyId) },
+          { $inc: { currentBalance: -available, lifetimeSpent: available } },
+          { new: true }
+        );
+        const girlWallet = await Wallet.findOneAndUpdate(
+          { userId: new Types.ObjectId(girlId) },
+          { $inc: { currentBalance: available, lifetimeEarnings: available } },
+          { upsert: true, new: true }
+        );
+        return {
+          success: true,
+          boyBalance: boyWallet?.currentBalance || 0,
+          girlBalance: girlWallet?.currentBalance || 0,
+        };
+      }
+      logger.warn(`Insufficient balance for Boy ${boyId} in Chat ${chatId} for 2-min session`);
+      return { success: false, error: 'INSUFFICIENT_FUNDS' };
+    }
+
+    // 2. Credit Girl's wallet
+    const girlWallet = await Wallet.findOneAndUpdate(
+      { userId: new Types.ObjectId(girlId) },
+      { 
+        $inc: { currentBalance: girlEarnings, lifetimeEarnings: girlEarnings } 
+      },
+      { upsert: true, new: true }
+    );
+
+    // 3. Transactions & Ledger
+    await Promise.all([
+      WalletTransaction.create({
+        walletId: boyWallet._id,
+        userId: new Types.ObjectId(boyId),
+        type: TransactionType.CHAT_DEBIT,
+        amount: coinsToDeduct,
+        description: `2-minute chat session billing for Chat ${chatId}`,
+        referenceId: new Types.ObjectId(chatId),
+      }),
+      WalletTransaction.create({
+        walletId: girlWallet._id,
+        userId: new Types.ObjectId(girlId),
+        type: TransactionType.GIRL_EARNING,
+        amount: girlEarnings,
+        description: `2-minute chat session earnings for Chat ${chatId}`,
+        referenceId: new Types.ObjectId(chatId),
+      }),
+      Settlement.findOneAndUpdate(
+        { chatId: new Types.ObjectId(chatId) },
+        {
+          $set: {
+            boyId: new Types.ObjectId(boyId),
+            girlId: new Types.ObjectId(girlId),
+            status: 'COMPLETED',
+            settledAt: new Date(),
+          },
+          $inc: {
+            completedMessages: 1,
+            grossCoins: coinsToDeduct,
+            platformCommissionCoins: 0,
+            girlEarningsCoins: girlEarnings,
+          },
+        },
+        { upsert: true, new: true }
+      ),
+    ]);
+
+    logger.info(`Settled 2-min session for Chat ${chatId}: Boy ${boyId} (-${coinsToDeduct}), Girl ${girlId} (+${girlEarnings})`);
+
+    return {
+      success: true,
+      boyBalance: boyWallet.currentBalance,
+      girlBalance: girlWallet.currentBalance,
+    };
+  }
+
+  /**
    * Get financial summary metrics for Admin Panel
    */
   public async getFinancialSummary() {

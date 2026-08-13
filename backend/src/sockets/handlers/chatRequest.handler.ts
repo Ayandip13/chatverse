@@ -4,7 +4,8 @@ import { chatRequestService } from '@/services/chatRequest.service';
 import logger from '@/config/logger.config';
 
 export const registerChatRequestHandlers = (io: Server, socket: AuthenticatedSocket) => {
-  const userId = socket.user!.userId;
+  const userId = socket.user?.userId;
+  if (!userId) return;
 
   // chat_request:send
   socket.on('chat_request:send', async (payload: { targetId: string }, callback) => {

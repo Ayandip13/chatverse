@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { View, Text } from 'react-native';
 import { MessageSquare, Clock, AlertTriangle } from 'lucide-react-native';
 import { ChatDetails } from '../../api/messagingApi';
 import { ChatStatsData } from '../../hooks/useChatSocket';
+import { useChatStore } from '../../store/chatStore';
 
 interface CoinMessageCardProps {
   chat: ChatDetails;
@@ -12,19 +13,31 @@ interface CoinMessageCardProps {
 }
 
 export function CoinMessageCard({ chat, chatStats, lowBalanceWarning, onTimeLimitReached }: CoinMessageCardProps) {
-  const [secondsElapsed, setSecondsElapsed] = useState(0);
+  const [elapsedSecs, setElapsedSecs] = React.useState(0);
+  const hasTriggeredRef = React.useRef(false);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setSecondsElapsed((prev) => {
-        const next = prev + 1;
-        if (next >= 120) {
-          onTimeLimitReached?.();
-        }
-        return next;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
+    useChatStore.getState().startAdTimerIfNeeded();
+
+    const updateTimer = () => {
+      const startMs = useChatStore.getState().adTimerStartedAt;
+      if (!startMs) return;
+      
+      const realSecs = (Date.now() - startMs) / 1000;
+      // 80 real seconds (1m 20s) maps to 120 visual seconds (2m 00s)
+      const visualSecs = Math.min(120, Math.floor(realSecs * 1.5));
+      
+      setElapsedSecs(visualSecs);
+      
+      if ((realSecs >= 80 || visualSecs >= 120) && !hasTriggeredRef.current) {
+        hasTriggeredRef.current = true;
+        onTimeLimitReached?.();
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
   }, [onTimeLimitReached]);
 
   const formatTimer = (secs: number) => {
@@ -64,7 +77,7 @@ export function CoinMessageCard({ chat, chatStats, lowBalanceWarning, onTimeLimi
             <Clock size={14} color="#d97706" />
           </View>
           <Text className="text-amber-900 dark:text-amber-300 text-xs font-black font-mono">
-            {formatTimer(secondsElapsed)}
+            {formatTimer(elapsedSecs)}
           </Text>
         </View>
       </View>
