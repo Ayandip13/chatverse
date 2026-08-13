@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
+import path from 'path';
 import { asyncHandler } from '@/utils/asyncHandler.util';
 import { ApiResponse } from '@/utils/ApiResponse.util';
+import { ApiError } from '@/utils/ApiError.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
 import { chatService } from '../../services/chat.service';
 
@@ -50,3 +52,24 @@ export const endChat = asyncHandler(async (req: Request, res: Response) => {
 
   res.status(STATUS_CODES.OK).json(new ApiResponse(null, 'Chat ended successfully'));
 });
+
+export const uploadChatMedia = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.file) {
+    throw new ApiError(STATUS_CODES.BAD_REQUEST, 'No file uploaded or invalid file type');
+  }
+
+  const file = req.file as any;
+  let url = '';
+  if (file.secure_url) {
+    url = file.secure_url;
+  } else if (file.path && file.path.startsWith('http')) {
+    url = file.path;
+  } else if (file.filename) {
+    url = `/uploads/avatars/${file.filename}`;
+  } else {
+    url = `/uploads/avatars/${path.basename(file.path)}`;
+  }
+
+  res.status(STATUS_CODES.OK).json(new ApiResponse({ url }, 'Media uploaded successfully'));
+});
+

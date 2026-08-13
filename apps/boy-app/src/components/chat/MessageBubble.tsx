@@ -3,6 +3,8 @@ import { View, Text, Image, TouchableOpacity, Modal } from 'react-native';
 import { Reply, X } from 'lucide-react-native';
 import { Message } from '../../api/messagingApi';
 import { MessageStatusTicks } from './MessageStatusTicks';
+import { getMediaUrl } from '../../utils/avatarUtil';
+import { VoicePlayer } from './VoicePlayer';
 
 const formatTime = (dateString: string) => {
   if (!dateString) return '';
@@ -20,13 +22,28 @@ export function MessageBubble({ message, isOwnMessage, onReply }: MessageBubbleP
   const [imageModalUrl, setImageModalUrl] = useState<string | null>(null);
 
   const rawContent = message.content || '';
+  const isVoice = rawContent.startsWith('[VOICE');
   const isImage = rawContent.startsWith('[IMAGE]:');
   const isReply = rawContent.startsWith('[REPLY:');
+
+  let voiceUrl = '';
+  let voiceDuration = 0;
+  if (isVoice) {
+    const match = /^\[VOICE(?::(\d+))?\]:(.*)$/.exec(rawContent.trim());
+    if (match) {
+      voiceDuration = match[1] ? parseInt(match[1], 10) : 0;
+      voiceUrl = match[2].trim();
+    } else {
+      voiceUrl = rawContent.replace(/^\[VOICE.*?\]:/, '').trim();
+    }
+  }
 
   let imageUrl = '';
   if (isImage) {
     imageUrl = rawContent.replace('[IMAGE]:', '').trim();
   }
+
+  const resolvedImageUrl = getMediaUrl(imageUrl);
 
   let quotedText = '';
   let actualBody = rawContent;
@@ -42,7 +59,7 @@ export function MessageBubble({ message, isOwnMessage, onReply }: MessageBubbleP
   return (
     <View className={`mb-3 w-full flex-row ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
       <View 
-        className={`max-w-[78%] rounded-3xl p-3.5 ${
+        className={`max-w-[80%] rounded-3xl p-3.5 ${
           isOwnMessage 
             ? 'bg-indigo-600 rounded-br-xs shadow-md shadow-indigo-500/20' 
             : 'bg-white dark:bg-gray-800 rounded-bl-xs border border-gray-100 dark:border-gray-700/80 shadow-xs'
@@ -72,10 +89,12 @@ export function MessageBubble({ message, isOwnMessage, onReply }: MessageBubbleP
           </View>
         )}
 
-        {/* Image Message Body */}
-        {isImage ? (
-          <TouchableOpacity onPress={() => setImageModalUrl(imageUrl)} className="rounded-xl overflow-hidden mb-1">
-            <Image source={{ uri: imageUrl }} className="w-56 h-56 rounded-xl bg-gray-200" resizeMode="cover" />
+        {/* Message Body */}
+        {isVoice ? (
+          <VoicePlayer audioUrl={voiceUrl} durationSeconds={voiceDuration} isOwnMessage={isOwnMessage} />
+        ) : isImage ? (
+          <TouchableOpacity onPress={() => setImageModalUrl(resolvedImageUrl)} className="rounded-xl overflow-hidden mb-1">
+            <Image source={{ uri: resolvedImageUrl }} className="w-56 h-56 rounded-xl bg-gray-200" resizeMode="cover" />
           </TouchableOpacity>
         ) : (
           /* Text / Emoji Message Body */
@@ -83,6 +102,7 @@ export function MessageBubble({ message, isOwnMessage, onReply }: MessageBubbleP
             {actualBody}
           </Text>
         )}
+
 
         {/* Footer: Timestamp & Read/Delivery Checkmarks */}
         <View className="flex-row items-center justify-end gap-1 mt-1.5">
@@ -115,3 +135,4 @@ export function MessageBubble({ message, isOwnMessage, onReply }: MessageBubbleP
     </View>
   );
 }
+

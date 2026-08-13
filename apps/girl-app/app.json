@@ -32,7 +32,13 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-updates"
+      "expo-updates",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone for recording voice notes."
+        }
+      ]
     ],
     "extra": {
       "eas": {

@@ -37,3 +37,16 @@ export function getAvatarUrl(avatar?: string | null, name?: string, seedKey?: st
   const index = Math.abs(hash) % DEFAULT_GIRL_AVATARS.length;
   return DEFAULT_GIRL_AVATARS[index];
 }
+
+export function getMediaUrl(url?: string | null): string {
+  if (!url || typeof url !== 'string' || !url.trim()) return '';
+  let cleanUrl = url.trim();
+  if (cleanUrl.startsWith('/uploads') || cleanUrl.startsWith('uploads')) {
+    const apiUrl = getCachedApiBaseUrl();
+    const baseUrl = apiUrl.replace(/\/api\/v1\/?$/, '').replace(/\/+$/, '');
+    const relativePath = cleanUrl.startsWith('/') ? cleanUrl : `/${cleanUrl}`;
+    return `${baseUrl}${relativePath}`;
+  }
+  return cleanUrl;
+}
+

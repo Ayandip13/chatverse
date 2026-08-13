@@ -49,12 +49,18 @@ if (isCloudinaryConfigured) {
 
 export const uploadAvatar = multer({ 
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB limit
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    if (
+      file.mimetype.startsWith('image/') ||
+      file.mimetype.startsWith('audio/') ||
+      file.mimetype.includes('octet-stream') ||
+      file.mimetype.includes('video/mp4') ||
+      file.mimetype.includes('m4a')
+    ) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid image type. Only image files are allowed.'));
+      cb(new Error('Invalid file type. Only image and audio files are allowed.'));
     }
   }
 });
