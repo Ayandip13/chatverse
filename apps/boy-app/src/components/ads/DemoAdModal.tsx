@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, View, Text, TouchableOpacity } from 'react-native';
-import { X, ExternalLink, Sparkles } from 'lucide-react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { X, ExternalLink, Sparkles, ShieldCheck, Zap, Award, Star } from 'lucide-react-native';
 
 /**
- * DemoAdModal Component
+ * DemoAdModal Component (Full-Screen Interstitial Ad)
  * 
  * FUTURE ADMOB INTEGRATION GUIDE:
  * To integrate real Google AdMob Interstitial Ads in the future:
@@ -54,17 +55,16 @@ export function DemoAdModal({ visible, onClose }: DemoAdModalProps) {
   if (!visible) return null;
 
   return (
-    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent>
-      <View className="flex-1 bg-black/90 justify-center items-center px-5">
-        {/* Main Ad Card Container */}
-        <View className="w-full bg-gray-900 rounded-3xl overflow-hidden border border-gray-800 shadow-2xl">
-          {/* Header Bar */}
-          <View className="flex-row justify-between items-center px-5 py-4 bg-gray-950/80 border-b border-gray-800">
+    <Modal visible={visible} transparent={false} animationType="slide" statusBarTranslucent>
+      <View className="flex-1 bg-gray-950">
+        <SafeAreaView className="flex-1 justify-between">
+          {/* Top Bar */}
+          <View className="flex-row justify-between items-center px-6 py-4 border-b border-gray-850 bg-gray-900/60">
             <View className="flex-row items-center">
-              <View className="bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/40 mr-2">
-                <Text className="text-amber-400 text-[10px] font-black tracking-widest uppercase">AD</Text>
+              <View className="bg-amber-500/20 px-2.5 py-1 rounded-md border border-amber-500/40 mr-2">
+                <Text className="text-amber-400 text-xs font-black tracking-widest uppercase">AD</Text>
               </View>
-              <Text className="text-gray-400 text-xs font-semibold">Sponsored Ad</Text>
+              <Text className="text-gray-300 text-xs font-bold">Sponsored Ad</Text>
             </View>
 
             {/* Skip Ad Button */}
@@ -72,46 +72,72 @@ export function DemoAdModal({ visible, onClose }: DemoAdModalProps) {
               onPress={canSkip ? onClose : undefined}
               disabled={!canSkip}
               activeOpacity={0.8}
-              className={`px-3.5 py-1.5 rounded-full flex-row items-center ${
+              className={`px-4 py-2 rounded-full flex-row items-center shadow-md ${
                 canSkip ? 'bg-indigo-600 active:bg-indigo-700' : 'bg-gray-800 opacity-80'
               }`}
             >
-              <Text className="text-white text-xs font-bold mr-1">
+              <Text className="text-white text-xs font-black mr-1">
                 {canSkip ? 'Skip Ad' : `Skip in ${skipCountdown}s`}
               </Text>
               {canSkip && <X size={14} color="#ffffff" />}
             </TouchableOpacity>
           </View>
 
-          {/* Ad Banner Content */}
-          <View className="p-6 items-center">
-            {/* Promo Icon / Logo */}
-            <View className="w-20 h-20 bg-indigo-600/20 rounded-2xl border border-indigo-500/30 items-center justify-center mb-4">
-              <Sparkles size={40} color="#818cf8" />
+          {/* Full Screen Main Content */}
+          <View className="flex-1 justify-center items-center px-8 py-6">
+            {/* Ad Hero Logo Container */}
+            <View className="w-28 h-28 bg-indigo-600/30 rounded-3xl border-2 border-indigo-500/40 items-center justify-center mb-6 shadow-2xl shadow-indigo-500/20">
+              <Sparkles size={56} color="#a5b4fc" />
             </View>
 
-            <Text className="text-xl font-black text-white text-center mb-2">
+            {/* Badge */}
+            <View className="flex-row items-center bg-indigo-950/80 border border-indigo-800/60 px-3 py-1 rounded-full mb-3">
+              <View className="mr-1.5 justify-center items-center">
+                <Star size={12} color="#fbbf24" fill="#fbbf24" />
+              </View>
+              <Text className="text-indigo-300 text-xs font-extrabold tracking-wide uppercase">Featured Offer</Text>
+            </View>
+
+            <Text className="text-3xl font-black text-white text-center mb-3 leading-tight">
               ChatVerse VIP Pass
             </Text>
 
-            <Text className="text-gray-400 text-xs text-center mb-6 leading-5 px-2">
-              Unlock unlimited messages, priority matching, and exclusive VIP badges for your profile!
+            <Text className="text-gray-400 text-sm text-center mb-8 leading-6 max-w-xs">
+              Unlock unlimited messages, priority matching, instant chat boosts, and exclusive VIP badges for your profile!
             </Text>
 
-            {/* Demo CTA Button */}
+            {/* Highlights Grid */}
+            <View className="w-full bg-gray-900/90 rounded-2xl p-4 border border-gray-800 space-y-3">
+              <View className="flex-row items-center">
+                <Zap size={16} color="#6366f1" />
+                <Text className="text-gray-200 text-xs font-bold ml-2.5">Instant High-Priority Matchmaking</Text>
+              </View>
+              <View className="flex-row items-center mt-2.5">
+                <ShieldCheck size={16} color="#10b981" />
+                <Text className="text-gray-200 text-xs font-bold ml-2.5">Verified Profile Badge & Unlimited Reach</Text>
+              </View>
+              <View className="flex-row items-center mt-2.5">
+                <Award size={16} color="#f59e0b" />
+                <Text className="text-gray-200 text-xs font-bold ml-2.5">Bonus Daily Coins & Ad-Free Experience</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Bottom CTA Footer */}
+          <View className="px-6 pb-6 pt-2">
             <TouchableOpacity
               onPress={() => {}}
-              className="w-full bg-indigo-600 py-3.5 rounded-2xl flex-row items-center justify-center shadow-lg shadow-indigo-500/30 mb-3"
+              className="w-full bg-indigo-600 py-4 rounded-2xl flex-row items-center justify-center shadow-xl shadow-indigo-600/40 mb-3 active:bg-indigo-700"
             >
-              <Text className="text-white font-extrabold text-sm mr-2">Explore Premium Features</Text>
-              <ExternalLink size={16} color="#ffffff" />
+              <Text className="text-white font-black text-base mr-2">Get VIP Pass Now</Text>
+              <ExternalLink size={18} color="#ffffff" />
             </TouchableOpacity>
 
-            <Text className="text-gray-500 text-[10px] text-center">
-              AdMob Interstitial Demo • 2 min time limit reached
+            <Text className="text-gray-600 text-[10px] text-center font-medium">
+              Google AdMob Interstitial Ad • 2 Min Session Limit
             </Text>
           </View>
-        </View>
+        </SafeAreaView>
       </View>
     </Modal>
   );
