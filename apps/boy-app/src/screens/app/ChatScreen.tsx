@@ -13,6 +13,7 @@ import { CoinMessageCard } from '../../components/chat/CoinMessageCard';
 import { MessageBubble } from '../../components/chat/MessageBubble';
 import { ChatInput } from '../../components/chat/ChatInput';
 import { RatingModal } from '../../components/chat/RatingModal';
+import { DemoAdModal } from '../../components/ads/DemoAdModal';
 import { CheckCircle2, Clock, Coins, XCircle } from 'lucide-react-native';
 import { Message } from '../../api/messagingApi';
 import { submitRating } from '../../api/ratingApi';
@@ -39,6 +40,7 @@ export default function ChatScreen() {
 
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [showRating, setShowRating] = useState(false);
+  const [showAdModal, setShowAdModal] = useState(false);
 
   const flatListRef = useRef<FlatList>(null);
 
@@ -74,6 +76,15 @@ export default function ChatScreen() {
     navigation.replace('Home');
   };
 
+  const handleAdClose = () => {
+    setShowAdModal(false);
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.replace('Home');
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900" edges={['bottom']}>
       <KeyboardAvoidingView 
@@ -82,7 +93,12 @@ export default function ChatScreen() {
       >
         <ChatHeader chat={chat} onRate={() => setShowRating(true)} />
         {chat.status === 'ACTIVE' && (
-          <CoinMessageCard chat={chat} chatStats={chatStats} lowBalanceWarning={lowBalanceWarning} />
+          <CoinMessageCard 
+            chat={chat} 
+            chatStats={chatStats} 
+            lowBalanceWarning={lowBalanceWarning} 
+            onTimeLimitReached={() => setShowAdModal(true)}
+          />
         )}
 
         <FlatList
@@ -124,6 +140,12 @@ export default function ChatScreen() {
           onCancelReply={() => setReplyingTo(null)}
         />
       </KeyboardAvoidingView>
+
+      {/* Demo Interstitial Ad Modal (2-Minute Limit Reached) */}
+      <DemoAdModal
+        visible={showAdModal}
+        onClose={handleAdClose}
+      />
 
       {/* Session Ended Summary Modal */}
       <Modal visible={!!endedSummary} transparent animationType="slide">
