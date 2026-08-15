@@ -1,13 +1,14 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, Modal, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Bell, CheckCheck, Circle } from 'lucide-react-native';
+import { ArrowLeft, Bell, CheckCheck, Circle, X, Info, MessageSquare, Wallet } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useNotifications, useMarkRead, useMarkAllRead } from '../../hooks/useNotifications';
 import { Notification } from '../../api/notificationApi';
 
 export default function NotificationsScreen() {
   const navigation = useNavigation<any>();
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
   
   const { 
     data, 
@@ -24,10 +25,36 @@ export default function NotificationsScreen() {
 
   const allNotifications = data?.pages.flatMap(p => p.items) || [];
 
-  const handleMarkRead = (item: Notification) => {
-    if (!item.isRead) {
+  const isNotificationRead = (item: Notification) => {
+    return item.status === 'READ' || item.isRead === true;
+  };
+
+  const getNotificationMessage = (item: Notification) => {
+    return item.body || item.message || 'No additional details provided.';
+  };
+
+  const handleNotificationClick = (item: Notification) => {
+    if (!isNotificationRead(item)) {
       markRead(item._id);
     }
+
+    const messageText = getNotificationMessage(item);
+
+    // Contextual navigation if applicable
+    if (item.type === 'CHAT' && item.actionUrl) {
+      navigation.navigate('ChatScreen', { id: item.actionUrl });
+      return;
+    }
+    if (item.type === 'WALLET' || item.type === 'WITHDRAWAL') {
+      navigation.navigate('Wallet');
+      return;
+    }
+
+    // Default action: Open full message viewer modal
+    setSelectedNotification({
+      ...item,
+      body: messageText,
+    });
   };
 
   const formatDate = (dateStr: string) => {
@@ -64,7 +91,7 @@ export default function NotificationsScreen() {
           <Text className="text-xl font-black text-slate-900 dark:text-white">Notifications</Text>
         </View>
         
-        {allNotifications.some(n => !n.isRead) && (
+        {allNotifications.some(n => !isNotificationRead(n)) && (
           <TouchableOpacity 
             onPress={() => markAllRead()}
             className="bg-pink-50 dark:bg-pink-950/50 px-3 py-1.5 rounded-full border border-pink-200/60 dark:border-pink-900/40 flex-row items-center"
@@ -112,47 +139,108 @@ export default function NotificationsScreen() {
               </Text>
             </View>
           }
-          renderItem={({ item }) => (
-            <TouchableOpacity 
-              onPress={() => handleMarkRead(item)}
-              activeOpacity={0.8}
-              className={`p-4 mb-3 rounded-2xl border flex-row items-start ${
-                item.isRead 
-                  ? 'bg-white dark:bg-slate-900 border-slate-200/70 dark:border-slate-800' 
-                  : 'bg-pink-50/70 dark:bg-slate-900 border-pink-200 dark:border-pink-900/60'
-              }`}
-            >
-              <View className={`w-10 h-10 rounded-full items-center justify-center mr-3 ${
-                item.isRead ? 'bg-slate-100 dark:bg-slate-800' : 'bg-pink-100 dark:bg-pink-950/80'
-              }`}>
-                <Bell size={18} color={item.isRead ? '#94a3b8' : '#ec4899'} />
-              </View>
+          renderItem={({ item }) => {
+            const isRead = isNotificationRead(item);
+            const message = getNotificationMessage(item);
 
-              <View className="flex-1">
-                <View className="flex-row items-center justify-between mb-1">
-                  <Text className={`text-sm font-black ${
-                    item.isRead ? 'text-slate-900 dark:text-white' : 'text-pink-600 dark:text-pink-400'
-                  }`}>
-                    {item.title}
-                  </Text>
-                  <Text className="text-[10px] font-semibold text-slate-400">
-                    {formatDate(item.createdAt)}
+            return (
+              <TouchableOpacity 
+                onPress={() => handleNotificationClick(item)}
+                activeOpacity={0.8}
+                className={`p-4 mb-3 rounded-2xl border flex-row items-start ${
+                  isRead 
+                    ? 'bg-white dark:bg-slate-900 border-slate-200/70 dark:border-slate-800' 
+                    : 'bg-pink-50/70 dark:bg-slate-900 border-pink-200 dark:border-pink-900/60'
+                }`}
+              >
+                <View className={`w-10 h-10 rounded-full items-center justify-center mr-3 ${
+                  isRead ? 'bg-slate-100 dark:bg-slate-800' : 'bg-pink-100 dark:bg-pink-950/80'
+                }`}>
+                  <Bell size={18} color={isRead ? '#94a3b8' : '#ec4899'} />
+                </View>
+
+                <View className="flex-1">
+                  <View className="flex-row items-center justify-between mb-1">
+                    <Text className={`text-sm font-black ${
+                      isRead ? 'text-slate-900 dark:text-white' : 'text-pink-600 dark:text-pink-400'
+                    }`}>
+                      {item.title}
+                    </Text>
+                    <Text className="text-[10px] font-semibold text-slate-400">
+                      {formatDate(item.createdAt)}
+                    </Text>
+                  </View>
+                  <Text 
+                    className="text-xs font-medium text-slate-600 dark:text-slate-300 leading-relaxed"
+                    numberOfLines={2}
+                  >
+                    {message}
                   </Text>
                 </View>
-                <Text className="text-xs font-medium text-slate-600 dark:text-slate-300 leading-relaxed">
-                  {item.message}
-                </Text>
-              </View>
 
-              {!item.isRead && (
-                <View className="ml-2 mt-1">
-                  <Circle size={8} color="#ec4899" fill="#ec4899" />
-                </View>
-              )}
-            </TouchableOpacity>
-          )}
+                {!isRead && (
+                  <View className="ml-2 mt-1">
+                    <Circle size={8} color="#ec4899" fill="#ec4899" />
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          }}
         />
       )}
+
+      {/* Notification Message Detail Modal */}
+      <Modal
+        visible={!!selectedNotification}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedNotification(null)}
+      >
+        <Pressable 
+          className="flex-1 bg-black/60 justify-center items-center p-6"
+          onPress={() => setSelectedNotification(null)}
+        >
+          <Pressable 
+            className="w-full bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-xl border border-slate-200 dark:border-slate-800"
+            onPress={(e) => e.stopPropagation()}
+          >
+            <View className="flex-row items-center justify-between mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <View className="flex-row items-center flex-1 mr-2">
+                <View className="w-10 h-10 rounded-full bg-pink-100 dark:bg-pink-950/80 items-center justify-center mr-3">
+                  <Info size={20} color="#ec4899" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-base font-black text-slate-900 dark:text-white" numberOfLines={1}>
+                    {selectedNotification?.title}
+                  </Text>
+                  <Text className="text-xs font-semibold text-slate-400">
+                    {selectedNotification ? formatDate(selectedNotification.createdAt) : ''}
+                  </Text>
+                </View>
+              </View>
+
+              <TouchableOpacity 
+                onPress={() => setSelectedNotification(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 items-center justify-center"
+              >
+                <X size={18} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+
+            <Text className="text-sm font-medium text-slate-700 dark:text-slate-200 leading-relaxed mb-6">
+              {selectedNotification ? getNotificationMessage(selectedNotification) : ''}
+            </Text>
+
+            <TouchableOpacity
+              onPress={() => setSelectedNotification(null)}
+              className="w-full py-3.5 bg-pink-500 rounded-xl items-center justify-center shadow-sm"
+            >
+              <Text className="text-white font-extrabold text-base">Close</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
+

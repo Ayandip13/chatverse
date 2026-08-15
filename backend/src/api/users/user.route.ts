@@ -14,6 +14,7 @@ router.patch('/me', validate(updateProfileSchema), userController.updateMyProfil
 router.post('/avatar', uploadAvatar.single('avatar'), userController.uploadMyAvatar);
 router.delete('/avatar', userController.deleteMyAvatar);
 router.delete('/me', userController.deleteMyAccount);
+router.post('/push-token', userController.savePushToken);
 
 // Public route for finding a user by ID
 router.get('/:id/public', userController.getPublicProfile);

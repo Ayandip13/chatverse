@@ -13,8 +13,10 @@ import './global.css'; // NativeWind v4 requires this
 
 import { useColorScheme } from 'nativewind';
 import { useThemeStore } from './src/store/themeStore';
+import { usePushNotifications } from './src/hooks/usePushNotifications';
 
 function MainAppContent() {
+  usePushNotifications();
   const { colorScheme, setColorScheme } = useColorScheme();
   const theme = useThemeStore((state) => state.theme);
   const hydrateTheme = useThemeStore((state) => state.hydrateTheme);

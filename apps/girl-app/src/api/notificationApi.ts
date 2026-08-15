@@ -3,9 +3,12 @@ import apiClient from './apiClient';
 export interface Notification {
   _id: string;
   title: string;
-  message: string;
+  body?: string;
+  message?: string;
   type: string;
-  isRead: boolean;
+  status?: 'UNREAD' | 'READ' | string;
+  isRead?: boolean;
+  actionUrl?: string;
   createdAt: string;
 }
 

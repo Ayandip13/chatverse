@@ -44,6 +44,7 @@ const UserSchema = new Schema<IUser>(
     bio: { type: String, maxlength: 500 },
     languagePreference: { type: String, default: 'en' },
     notificationPreference: { type: Boolean, default: true },
+    expoPushToken: { type: String, default: null },
     tokenVersion: { type: Number, default: 0 },
     averageRating: { type: Number, default: 0 },
     totalRatings: { type: Number, default: 0 },

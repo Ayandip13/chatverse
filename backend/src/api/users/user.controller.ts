@@ -155,3 +155,24 @@ export const deleteMyAccount = async (req: Request, res: Response, next: NextFun
     next(error);
   }
 };
+
+export const savePushToken = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = req.user!.userId;
+    const { pushToken } = req.body;
+
+    if (!pushToken) {
+      throw new ApiError(400, 'pushToken is required');
+    }
+
+    const user = await userRepository.update(userId, { expoPushToken: pushToken });
+    if (!user) {
+      throw new ApiError(404, 'User not found');
+    }
+
+    logger.info(`Saved push token for User ${userId}`);
+    res.status(200).json(new ApiResponse(null, 'Push token saved successfully'));
+  } catch (error) {
+    next(error);
+  }
+};

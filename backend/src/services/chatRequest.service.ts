@@ -6,6 +6,7 @@ import { ApiError } from '@/utils/ApiError.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
 import { ChatRequestStatus, Role, GirlStatus, BoyStatus } from '@/constants/enums.constant';
 import { isUserOnline } from '@/sockets/handlers/presence.handler';
+import { pushNotificationService } from '@/services/pushNotification.service';
 import logger from '@/config/logger.config';
 
 const getSocketIO = () => {
@@ -94,6 +95,14 @@ class ChatRequestService {
       io.to(`user:${receiverId}`).emit('chat_request:new', payload);
     }
 
+    // Trigger push notification to Girl
+    pushNotificationService.sendPushNotification(
+      receiverId,
+      'New Chat Request 💌',
+      `${sender.name} sent you a chat request!`,
+      { type: 'CHAT_REQUEST', requestId: request._id.toString() }
+    ).catch((err) => logger.error(`Push notification failed: ${err.message}`));
+
     return request;
   }
 
@@ -146,6 +155,14 @@ class ChatRequestService {
       io.to(`user:${request.senderId.toString()}`).emit('chat:started', { chatId: activeChat._id.toString() });
       io.to(`user:${receiverId}`).emit('chat:started', { chatId: activeChat._id.toString() });
     }
+
+    // Trigger push notification to Boy
+    pushNotificationService.sendPushNotification(
+      request.senderId.toString(),
+      'Request Accepted! 🎉',
+      `${receiver?.name || 'Creator'} accepted your chat request!`,
+      { type: 'CHAT_ACCEPTED', chatId: activeChat._id.toString() }
+    ).catch((err) => logger.error(`Push notification failed: ${err.message}`));
 
     return { request: updatedRequest, chat: activeChat };
   }

@@ -2,8 +2,9 @@ import { Server } from 'socket.io';
 import { AuthenticatedSocket } from '@/middlewares/socketAuth.middleware';
 import { messageService } from '@/services/message.service';
 import { chatSessionService } from '@/services/chatSession.service';
+import { pushNotificationService } from '@/services/pushNotification.service';
 import logger from '@/config/logger.config';
-import { Chat, Message } from '@/models';
+import { Chat, Message, User } from '@/models';
 import { ChatStatus } from '@/constants/enums.constant';
 
 export const registerChatHandlers = (io: Server, socket: AuthenticatedSocket) => {
@@ -119,6 +120,22 @@ export const registerChatHandlers = (io: Server, socket: AuthenticatedSocket) =>
       });
 
       if (callback) callback({ success: true, message: { ...message.toObject(), status: initialStatus }, tempId });
+
+      // Trigger push notification if recipient is not active in this chat room
+      if (!isRecipientInRoom) {
+        const chatObj = await Chat.findById(chatId).lean();
+        if (chatObj) {
+          const recipientId = chatObj.boyId.toString() === userId ? chatObj.girlId.toString() : chatObj.boyId.toString();
+          const senderUser = await User.findById(userId).lean();
+          const senderName = senderUser?.name || 'Someone';
+          pushNotificationService.sendPushNotification(
+            recipientId,
+            `New message from ${senderName} 💬`,
+            content.length > 50 ? `${content.substring(0, 50)}...` : content,
+            { type: 'CHAT_MESSAGE', chatId }
+          ).catch((err) => logger.error(`Message push failed: ${err.message}`));
+        }
+      }
     } catch (error: any) {
       logger.error(`Message Error: ${error.message}`);
       if (callback) callback({ error: error.message, tempId: payload.tempId });

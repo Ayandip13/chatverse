@@ -24,6 +24,7 @@ export interface IUser extends Document {
   bio?: string;
   languagePreference?: string;
   notificationPreference?: boolean;
+  expoPushToken?: string;
   tokenVersion: number;
   averageRating: number;
   totalRatings: number;
