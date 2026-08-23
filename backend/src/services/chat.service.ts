@@ -253,7 +253,7 @@ class ChatService {
     chat.endTime = new Date();
     // Simplified logic: duration and cost should ideally be calculated cleanly
     // For this module scope, we just close it out
-    const diffMs = chat.endTime.getTime() - chat.startTime.getTime();
+    const diffMs = chat.startTime ? chat.endTime.getTime() - chat.startTime.getTime() : 0;
     const durationMins = Math.ceil(diffMs / 60000);
     chat.durationInMinutes = durationMins;
     

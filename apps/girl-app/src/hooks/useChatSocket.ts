@@ -7,8 +7,10 @@ import { Alert } from 'react-native';
 
 export interface ChatStatsData {
   chatId: string;
-  messagesSent: number;
-  remainingCoins: number;
+  messagesSent?: number;
+  totalCost?: number;
+  remainingCoins?: number;
+  elapsedSeconds?: number;
 }
 
 export interface ChatEndedSummary {
@@ -103,9 +105,19 @@ export const useChatSocket = (chatId?: string) => {
       if (typedChatId === chatId) setIsOtherUserTyping(false);
     };
 
+    const onTimerTick = (data: { chatId: string; elapsedSeconds: number }) => {
+      if (!chatId || data.chatId === chatId) {
+        setChatStats((prev) => ({
+          ...prev,
+          chatId: data.chatId,
+          elapsedSeconds: data.elapsedSeconds,
+        }));
+      }
+    };
+
     const onStatsUpdate = (data: ChatStatsData) => {
       if (!chatId || data.chatId === chatId) {
-        setChatStats(data);
+        setChatStats((prev) => ({ ...prev, ...data }));
       }
     };
 
@@ -159,15 +171,37 @@ export const useChatSocket = (chatId?: string) => {
       }
     };
 
+    const onChatStarted = (data: { chatId: string; startedAt?: any; elapsedSeconds?: number }) => {
+      if (!chatId || data.chatId === chatId) {
+        setEndedSummary(null);
+        setDisconnectState(null);
+        queryClient.setQueryData(['chat', chatId], (old: any) =>
+          old ? { ...old, status: 'ACTIVE', startTime: data.startedAt || old.startTime } : old
+        );
+        queryClient.invalidateQueries({ queryKey: ['chat', chatId] });
+        queryClient.invalidateQueries({ queryKey: ['chats'] });
+        if (data.elapsedSeconds !== undefined) {
+          setChatStats((prev) => ({
+            ...prev,
+            chatId: data.chatId,
+            elapsedSeconds: data.elapsedSeconds,
+          }));
+        }
+      }
+    };
+
     socket.on('chat:receive_message', onMessage);
     socket.on('chat:message_status_update', onStatusUpdate);
     socket.on('chat:typing_start', onTypingStart);
     socket.on('chat:typing_stop', onTypingStop);
+    socket.on('chat:started', onChatStarted);
+    socket.on('chat:timer_tick', onTimerTick);
     socket.on('chat:stats_update', onStatsUpdate);
     socket.on('chat:ended', onChatEnded);
     socket.on('chat:participant_disconnected', onParticipantDisconnected);
     socket.on('chat:participant_reconnected', onParticipantReconnected);
     socket.on('wallet:update', onWalletUpdate);
+    socket.on('chat:error', (data) => Alert.alert('Notice', data.message));
 
     return () => {
       if (graceTimer) clearInterval(graceTimer);
@@ -176,11 +210,14 @@ export const useChatSocket = (chatId?: string) => {
       socket.off('chat:message_status_update', onStatusUpdate);
       socket.off('chat:typing_start', onTypingStart);
       socket.off('chat:typing_stop', onTypingStop);
+      socket.off('chat:started', onChatStarted);
+      socket.off('chat:timer_tick', onTimerTick);
       socket.off('chat:stats_update', onStatsUpdate);
       socket.off('chat:ended', onChatEnded);
       socket.off('chat:participant_disconnected', onParticipantDisconnected);
       socket.off('chat:participant_reconnected', onParticipantReconnected);
       socket.off('wallet:update', onWalletUpdate);
+      socket.off('chat:error');
     };
   }, [socket, isConnected, chatId, queryClient]);
 

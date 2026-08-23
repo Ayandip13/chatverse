@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, FlatList, ActivityIndicator, Text, KeyboardAvoidingView, Platform, Modal, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, FlatList, ActivityIndicator, Text, Platform, Modal, TouchableOpacity, StatusBar } from 'react-native';
+import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { AppStackParamList } from '../../navigation/types';
 import { useAuthStore } from '../../store/authStore';
@@ -13,12 +14,13 @@ import { CoinMessageCard } from '../../components/chat/CoinMessageCard';
 import { MessageBubble } from '../../components/chat/MessageBubble';
 import { ChatInput } from '../../components/chat/ChatInput';
 import { RatingModal } from '../../components/chat/RatingModal';
-import { DemoAdModal } from '../../components/ads/DemoAdModal';
 import { CheckCircle2, Clock, Coins, XCircle } from 'lucide-react-native';
 import { Message } from '../../api/messagingApi';
 import { submitRating } from '../../api/ratingApi';
 
 export default function ChatScreen() {
+  const insets = useSafeAreaInsets();
+  const topInset = Platform.OS === 'android' ? Math.max(insets.top, StatusBar.currentHeight || 24) : insets.top;
   const route = useRoute<RouteProp<AppStackParamList, 'ChatScreen'>>();
   const { id } = route.params;
   const navigation = useNavigation<any>();
@@ -40,7 +42,15 @@ export default function ChatScreen() {
 
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [showRating, setShowRating] = useState(false);
-  const [showAdModal, setShowAdModal] = useState(false);
+  const [localSeconds, setLocalSeconds] = useState(0);
+
+  // Hardware-accelerated keyboard sync
+  const keyboard = useAnimatedKeyboard({ isStatusBarTranslucentAndroid: true });
+  const animatedContainerStyle = useAnimatedStyle(() => {
+    return {
+      paddingBottom: keyboard.height.value > 0 ? Math.max(keyboard.height.value - insets.bottom, 0) : 0,
+    };
+  });
 
   const flatListRef = useRef<FlatList>(null);
 
@@ -48,6 +58,29 @@ export default function ChatScreen() {
     useChatStore.getState().setActiveChatId(id);
     return () => useChatStore.getState().setActiveChatId(null);
   }, [id]);
+
+  useEffect(() => {
+    if (chatStats?.elapsedSeconds !== undefined) {
+      setLocalSeconds(chatStats.elapsedSeconds);
+    }
+  }, [chatStats?.elapsedSeconds]);
+
+  useEffect(() => {
+    if (chat?.status !== 'ACTIVE') return;
+
+    if (chat?.startTime) {
+      const elapsed = Math.floor((Date.now() - new Date(chat.startTime).getTime()) / 1000);
+      if (elapsed >= 0) {
+        setLocalSeconds(elapsed);
+      }
+    }
+
+    const interval = setInterval(() => {
+      setLocalSeconds((s) => s + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [chat?.status, chat?.startTime]);
 
   if (isChatLoading || isMessagesLoading) {
     return (
@@ -76,80 +109,91 @@ export default function ChatScreen() {
     navigation.replace('Home');
   };
 
-  const handleAdClose = () => {
-    setShowAdModal(false);
-    useChatStore.getState().resetAdTimer();
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigation.replace('Home');
-    }
-  };
-
   return (
-    <SafeAreaView className="flex-1 bg-gray-50 dark:bg-gray-900" edges={['bottom']}>
-      <KeyboardAvoidingView 
-        style={{ flex: 1 }} 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <ChatHeader chat={chat} onRate={() => setShowRating(true)} />
-        {chat.status === 'ACTIVE' && (
-          <CoinMessageCard 
-            chat={chat} 
-            chatStats={chatStats} 
-            lowBalanceWarning={lowBalanceWarning} 
-            onTimeLimitReached={() => {
-              deductSessionCoins(id);
-              setShowAdModal(true);
-            }}
+    <Animated.View 
+      className="flex-1 bg-gray-50 dark:bg-gray-900" 
+      style={[{ flex: 1 }, animatedContainerStyle]}
+    >
+      {/* Top Header with Safe Area Inset to clear status bar */}
+      <View style={{ paddingTop: topInset }} className="bg-white dark:bg-gray-900">
+        <ChatHeader 
+          chat={chat} 
+          onRate={() => setShowRating(true)} 
+          onEndChat={() => endChatSession(id)}
+        />
+      </View>
+
+      {chat.status === 'ACTIVE' && (
+        <CoinMessageCard 
+          chat={chat} 
+          chatStats={chatStats} 
+          lowBalanceWarning={lowBalanceWarning}
+          elapsedSeconds={localSeconds}
+        />
+      )}
+
+      <FlatList
+        ref={flatListRef}
+        data={allMessages}
+        keyExtractor={(item) => item._id}
+        inverted
+        showsVerticalScrollIndicator={false}
+        className="flex-1"
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 16 }}
+        renderItem={({ item }) => (
+          <MessageBubble 
+            message={item} 
+            isOwnMessage={item.senderId === userId} 
+            onReply={(msg) => setReplyingTo(msg)}
           />
         )}
-
-        <FlatList
-          ref={flatListRef}
-          data={allMessages}
-          keyExtractor={(item) => item._id}
-          inverted
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ padding: 16 }}
-          renderItem={({ item }) => (
-            <MessageBubble 
-              message={item} 
-              isOwnMessage={item.senderId === userId} 
-              onReply={(msg) => setReplyingTo(msg)}
-            />
-          )}
-          onEndReached={() => {
-            if (hasNextPage) fetchNextPage();
-          }}
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={
-            isFetchingNextPage ? <ActivityIndicator size="small" color="#4f46e5" className="my-4" /> : null
-          }
-          ListHeaderComponent={
-            isOtherUserTyping ? (
-              <View className="flex-row items-center mb-4">
-                <View className="bg-gray-200 dark:bg-gray-800 rounded-full px-3 py-2">
-                  <Text className="text-gray-500 dark:text-gray-400 text-xs italic">Typing...</Text>
-                </View>
+        onEndReached={() => {
+          if (hasNextPage) fetchNextPage();
+        }}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          isFetchingNextPage ? <ActivityIndicator size="small" color="#4f46e5" className="my-4" /> : null
+        }
+        ListHeaderComponent={
+          isOtherUserTyping ? (
+            <View className="flex-row items-center mb-4">
+              <View className="bg-gray-200 dark:bg-gray-800 rounded-full px-3 py-2">
+                <Text className="text-gray-500 dark:text-gray-400 text-xs italic">Typing...</Text>
               </View>
-            ) : null
-          }
-        />
+            </View>
+          ) : null
+        }
+      />
 
+      {chat.status === 'ACTIVE' ? (
         <ChatInput 
           onSend={handleSend} 
           onTyping={(isTyping) => emitTyping(id, isTyping)} 
           replyingTo={replyingTo}
           onCancelReply={() => setReplyingTo(null)}
+          bottomInset={insets.bottom}
         />
-      </KeyboardAvoidingView>
-
-      {/* Demo Interstitial Ad Modal (2-Minute Limit Reached) */}
-      <DemoAdModal
-        visible={showAdModal}
-        onClose={handleAdClose}
-      />
+      ) : (
+        <View 
+          className="bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 px-4 py-3 items-center justify-center flex-row gap-3"
+          style={{ paddingBottom: Math.max(insets.bottom, 12) }}
+        >
+          <Text className="text-gray-500 dark:text-gray-400 text-sm font-medium">This chat session has ended.</Text>
+          <TouchableOpacity
+            onPress={() => {
+              if (chat.otherParticipant?._id) {
+                navigation.navigate('GirlDetailScreen', { id: chat.otherParticipant._id });
+              } else {
+                navigation.navigate('Home');
+              }
+            }}
+            className="bg-indigo-600 px-4 py-2 rounded-full shadow-sm"
+          >
+            <Text className="text-white font-semibold text-xs">Request New Chat</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Session Ended Summary Modal */}
       <Modal visible={!!endedSummary} transparent animationType="slide">
@@ -205,6 +249,6 @@ export default function ChatScreen() {
         }}
         targetName={chat.otherParticipant.name}
       />
-    </SafeAreaView>
+    </Animated.View>
   );
 }

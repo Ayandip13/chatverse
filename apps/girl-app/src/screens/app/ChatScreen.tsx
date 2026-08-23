@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, FlatList, ActivityIndicator, KeyboardAvoidingView, Platform, TouchableOpacity, TextInput, Image, Alert, Modal } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, FlatList, ActivityIndicator, Platform, TouchableOpacity, TextInput, Image, Alert, Modal, StatusBar } from 'react-native';
+import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ArrowLeft, Send, User, Coins, PhoneOff, CheckCircle2, Clock, Sparkles, Smile, Image as ImageIcon, Reply, X, CornerDownRight, Upload, Mic, Trash2 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -18,6 +19,8 @@ import { useAudioRecorder, RecordingPresets, setAudioModeAsync, requestRecording
 const QUICK_EMOJIS = ['❤️', '🔥', '👍', '😂', '😍', '🎉', '💯', '✨'];
 
 export default function GirlChatScreen() {
+  const insets = useSafeAreaInsets();
+  const topInset = Platform.OS === 'android' ? Math.max(insets.top, StatusBar.currentHeight || 24) : insets.top;
   const route = useRoute<any>();
   const { id } = route.params;
   const navigation = useNavigation<any>();
@@ -43,6 +46,14 @@ export default function GirlChatScreen() {
   const [viewingImageUrl, setViewingImageUrl] = useState<string | null>(null);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
 
+  // Hardware-accelerated keyboard sync
+  const keyboard = useAnimatedKeyboard({ isStatusBarTranslucentAndroid: true });
+  const animatedContainerStyle = useAnimatedStyle(() => {
+    return {
+      paddingBottom: keyboard.height.value > 0 ? Math.max(keyboard.height.value - insets.bottom, 0) : 0,
+    };
+  });
+
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
@@ -50,6 +61,30 @@ export default function GirlChatScreen() {
   const timerRef = useRef<any>(null);
 
   const flatListRef = useRef<FlatList>(null);
+  const [localSeconds, setLocalSeconds] = useState(0);
+
+  useEffect(() => {
+    if (chatStats?.elapsedSeconds !== undefined) {
+      setLocalSeconds(chatStats.elapsedSeconds);
+    }
+  }, [chatStats?.elapsedSeconds]);
+
+  useEffect(() => {
+    if (chat?.status !== 'ACTIVE') return;
+
+    if (chat?.startTime) {
+      const elapsed = Math.floor((Date.now() - new Date(chat.startTime).getTime()) / 1000);
+      if (elapsed >= 0) {
+        setLocalSeconds(elapsed);
+      }
+    }
+
+    const interval = setInterval(() => {
+      setLocalSeconds((s) => s + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [chat?.status, chat?.startTime]);
 
   useEffect(() => {
     return () => {
@@ -274,11 +309,12 @@ export default function GirlChatScreen() {
   const otherUser = chat.otherParticipant || (typeof chat.boyId === 'object' ? chat.boyId : undefined);
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50 dark:bg-slate-900" edges={['bottom']}>
-      <KeyboardAvoidingView 
-        style={{ flex: 1 }} 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+    <Animated.View 
+      className="flex-1 bg-slate-50 dark:bg-slate-900" 
+      style={[{ flex: 1 }, animatedContainerStyle]}
+    >
+      {/* Top Header with Safe Area Inset to clear status bar */}
+      <View style={{ paddingTop: topInset }} className="bg-white dark:bg-slate-800">
         {/* Chat Header */}
         <View className="flex-row items-center justify-between px-6 py-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
           <View className="flex-row items-center gap-3">
@@ -306,24 +342,28 @@ export default function GirlChatScreen() {
             <PhoneOff size={18} color="#e11d48" />
           </TouchableOpacity>
         </View>
+      </View>
 
-        {/* Live Earnings Banner */}
-        {chat.status === 'ACTIVE' && (
-          <View className="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-2.5 flex-row items-center justify-between shadow-sm">
-            <View className="flex-row items-center gap-2">
-              <Sparkles size={16} color="#ffffff" />
-              <Text className="text-white text-xs font-mono font-bold">
-                {messagesBilled} Messages Billed (+1 coin/msg)
-              </Text>
-            </View>
-            <View className="flex-row items-center bg-white/20 px-3 py-1 rounded-full border border-white/30">
-              <Coins size={14} color="#ffffff" className="mr-1" />
-              <Text className="text-white text-xs font-extrabold font-mono">
-                {currentEarnings} Coins Earned
-              </Text>
-            </View>
+      {/* Live Earnings Banner */}
+      {chat.status === 'ACTIVE' && (
+        <View className="bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2.5 flex-row items-center justify-between shadow-sm">
+          <View className="flex-row items-center gap-2">
+            <Clock size={15} color="#ffffff" />
+            <Text className="text-white text-xs font-mono font-bold">
+              {formatTimer(localSeconds)}
+            </Text>
+            <Text className="text-emerald-100 text-[10px] font-medium">
+              (+1 coin/min)
+            </Text>
           </View>
-        )}
+          <View className="flex-row items-center bg-white/20 px-3 py-1 rounded-full border border-white/30">
+            <Coins size={13} color="#ffffff" className="mr-1" />
+            <Text className="text-white text-xs font-extrabold font-mono">
+              {currentEarnings} Coins Earned
+            </Text>
+          </View>
+        </View>
+      )}
 
         {/* Disconnect Reconnection Banner */}
         {disconnectState && (
@@ -341,6 +381,8 @@ export default function GirlChatScreen() {
           keyExtractor={(item) => item._id}
           inverted
           showsVerticalScrollIndicator={false}
+          className="flex-1"
+          style={{ flex: 1 }}
           contentContainerStyle={{ padding: 16 }}
           renderItem={({ item }) => {
             const isOwn = item.senderId === userId;
@@ -478,75 +520,80 @@ export default function GirlChatScreen() {
           </View>
         )}
 
-        {/* Input Bar */}
-        {isRecording ? (
-          /* Active Voice Recording Bar */
-          <View className="px-4 py-3 flex-row items-center justify-between bg-rose-50 dark:bg-rose-950/40 border-t border-rose-200 dark:border-rose-900">
-            <View className="flex-row items-center gap-3">
-              <View className="w-3 h-3 rounded-full bg-rose-600 animate-pulse" />
-              <Text className="text-sm font-bold text-rose-600 dark:text-rose-400 font-mono">
-                Recording... {formatTimer(recordingDuration)}
-              </Text>
+        {/* Bottom Input Area with Safe Area Background */}
+        <View className="bg-white dark:bg-slate-800" style={{ paddingBottom: insets.bottom }}>
+          {chat.status !== 'ACTIVE' ? (
+            <View className="px-4 py-4 items-center justify-center border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+              <Text className="text-slate-500 dark:text-slate-400 text-sm font-medium">This chat session has ended.</Text>
             </View>
+          ) : isRecording ? (
+            /* Active Voice Recording Bar */
+            <View className="px-4 py-3 flex-row items-center justify-between bg-rose-50 dark:bg-rose-950/40 border-t border-rose-200 dark:border-rose-900">
+              <View className="flex-row items-center gap-3">
+                <View className="w-3 h-3 rounded-full bg-rose-600 animate-pulse" />
+                <Text className="text-sm font-bold text-rose-600 dark:text-rose-400 font-mono">
+                  Recording... {formatTimer(recordingDuration)}
+                </Text>
+              </View>
 
-            <View className="flex-row items-center gap-2">
-              <TouchableOpacity
-                onPress={cancelRecording}
-                className="p-2.5 rounded-full bg-slate-200 dark:bg-slate-700"
-              >
-                <Trash2 size={18} color="#ef4444" />
+              <View className="flex-row items-center gap-2">
+                <TouchableOpacity
+                  onPress={cancelRecording}
+                  className="p-2.5 rounded-full bg-slate-200 dark:bg-slate-700"
+                >
+                  <Trash2 size={18} color="#ef4444" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={stopAndSendRecording}
+                  className="px-4 py-2.5 rounded-full bg-pink-600 flex-row items-center gap-1.5 shadow-md shadow-pink-500/30"
+                >
+                  <Send size={16} color="#ffffff" />
+                  <Text className="text-white font-bold text-xs">Send Voice</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            /* Standard Input Bar */
+            <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 gap-2">
+              <TouchableOpacity onPress={() => setShowEmojiBar((prev) => !prev)} className="p-1">
+                <Smile size={22} color={showEmojiBar ? '#e11d48' : '#94a3b8'} />
               </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={stopAndSendRecording}
-                className="px-4 py-2.5 rounded-full bg-pink-600 flex-row items-center gap-1.5 shadow-md shadow-pink-500/30"
-              >
-                <Send size={16} color="#ffffff" />
-                <Text className="text-white font-bold text-xs">Send Voice</Text>
+              <TouchableOpacity onPress={handlePickAndSendImage} disabled={isUploadingImage} className="p-1">
+                {isUploadingImage ? (
+                  <ActivityIndicator size="small" color="#e11d48" />
+                ) : (
+                  <ImageIcon size={22} color="#94a3b8" />
+                )}
               </TouchableOpacity>
-            </View>
-          </View>
-        ) : (
-          /* Standard Input Bar */
-          <View className="flex-row items-center px-4 py-3 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 gap-2">
-            <TouchableOpacity onPress={() => setShowEmojiBar((prev) => !prev)} className="p-1">
-              <Smile size={22} color={showEmojiBar ? '#e11d48' : '#94a3b8'} />
-            </TouchableOpacity>
 
-            <TouchableOpacity onPress={handlePickAndSendImage} disabled={isUploadingImage} className="p-1">
-              {isUploadingImage ? (
-                <ActivityIndicator size="small" color="#e11d48" />
+              <TextInput
+                value={inputMessage}
+                onChangeText={handleTextChange}
+                placeholder="Type a message..."
+                placeholderTextColor="#94a3b8"
+                className="flex-1 bg-slate-100 dark:bg-slate-900 px-4 py-3 rounded-full text-slate-900 dark:text-white text-sm"
+              />
+              {inputMessage.trim() ? (
+                <TouchableOpacity 
+                  onPress={handleSend}
+                  className="w-11 h-11 rounded-full items-center justify-center bg-pink-600 shadow-md shadow-pink-500/30"
+                >
+                  <Send size={18} color="#ffffff" />
+                </TouchableOpacity>
               ) : (
-                <ImageIcon size={22} color="#94a3b8" />
+                <TouchableOpacity 
+                  onPress={startRecording}
+                  disabled={isUploadingImage}
+                  className="w-11 h-11 rounded-full items-center justify-center bg-pink-600 shadow-md shadow-pink-500/30"
+                >
+                  <Mic size={20} color="#ffffff" />
+                </TouchableOpacity>
               )}
-            </TouchableOpacity>
-
-            <TextInput
-              value={inputMessage}
-              onChangeText={handleTextChange}
-              placeholder="Type a message..."
-              placeholderTextColor="#94a3b8"
-              className="flex-1 bg-slate-100 dark:bg-slate-900 px-4 py-3 rounded-full text-slate-900 dark:text-white text-sm"
-            />
-            {inputMessage.trim() ? (
-              <TouchableOpacity 
-                onPress={handleSend}
-                className="w-11 h-11 rounded-full items-center justify-center bg-pink-600 shadow-md shadow-pink-500/30"
-              >
-                <Send size={18} color="#ffffff" />
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity 
-                onPress={startRecording}
-                disabled={isUploadingImage}
-                className="w-11 h-11 rounded-full items-center justify-center bg-pink-600 shadow-md shadow-pink-500/30"
-              >
-                <Mic size={20} color="#ffffff" />
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
-      </KeyboardAvoidingView>
+            </View>
+          )}
+        </View>
 
 
       {/* Expandable Image Modal */}
@@ -661,6 +708,6 @@ export default function GirlChatScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </Animated.View>
   );
 }

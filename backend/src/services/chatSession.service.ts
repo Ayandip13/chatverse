@@ -5,6 +5,9 @@ import logger from '@/config/logger.config';
 import { Server } from 'socket.io';
 import { Types } from 'mongoose';
 
+export const BILLING_CYCLE_SECONDS = 60; // 1 completed minute = 60 seconds
+export const COINS_PER_CYCLE = 1;
+
 interface SessionState {
   chatId: string;
   boyId: string;
@@ -12,7 +15,8 @@ interface SessionState {
   boyJoined: boolean;
   girlJoined: boolean;
   startedAt: Date | null;
-  completedMinutes: number;
+  elapsedSeconds: number;
+  timerHandle?: NodeJS.Timeout;
   boyDisconnectedAt: Date | null;
   girlDisconnectedAt: Date | null;
   lastDeductionAt?: number;
@@ -31,6 +35,10 @@ class ChatSessionService {
       const chat = await Chat.findById(chatId);
       if (!chat || chat.status !== ChatStatus.ACTIVE) return;
 
+      const elapsed = chat.startTime 
+        ? Math.floor((Date.now() - new Date(chat.startTime).getTime()) / 1000)
+        : 0;
+
       session = {
         chatId,
         boyId: chat.boyId.toString(),
@@ -38,7 +46,7 @@ class ChatSessionService {
         boyJoined: false,
         girlJoined: false,
         startedAt: chat.startTime || null,
-        completedMinutes: chat.durationInMinutes || 0,
+        elapsedSeconds: Math.max(0, elapsed),
         boyDisconnectedAt: null,
         girlDisconnectedAt: null,
       };
@@ -57,132 +65,92 @@ class ChatSessionService {
       session.girlDisconnectedAt = null;
     }
 
-    // Users joined or reconnected
+    // Notify room of participant presence
     if (isBoy || isGirl) {
       io.to(`chat:${chatId}`).emit('chat:participant_reconnected', { chatId, userId });
     }
 
-    // Both users must enter the room
-    if (session.boyJoined && session.girlJoined) {
-      if (!session.startedAt) {
-        session.startedAt = new Date();
-        await Chat.findByIdAndUpdate(chatId, { startTime: session.startedAt });
-      }
-      logger.info(`Both participants present for chat ${chatId}`);
-      io.to(`chat:${chatId}`).emit('chat:started', { chatId, startedAt: session.startedAt });
-    }
-  }
-
-  /**
-   * Cheap pre-check to determine if the sender is allowed to send a message.
-   * Girls always send free. Boys must have at least 1 coin in their wallet.
-   * Synchronous session lookup + a single wallet read (no writes).
-   */
-  public async canSendMessage(chatId: string, senderId: string): Promise<boolean> {
-    const session = this.sessions.get(chatId);
-    if (!session) return false;
-
-    // Only boys pay for messages in this model
-    if (senderId !== session.boyId) {
-      return true; // Girl sends for free
-    }
-
-    const boyWallet = await Wallet.findOne({ userId: new Types.ObjectId(session.boyId) }).lean();
-    if (!boyWallet || boyWallet.currentBalance < 1) {
-      return false; // Cannot send
-    }
-
-    return true;
-  }
-
-  /**
-   * Evaluates wallet balance and handles billing per message.
-   * Runs AFTER the message is saved & broadcast. Uses the atomic `$gte` billing
-   * in settlement service to guarantee the balance never goes negative.
-   */
-  public async processMessageDeduction(chatId: string, senderId: string, io: Server): Promise<boolean> {
-    const session = this.sessions.get(chatId);
-    if (!session) return false;
-
-    // Only boys pay for messages in this model
-    if (senderId !== session.boyId) {
-      return true; // Girl sends for free
-    }
-
-    const result = await settlementService.processMessageSettlement(
-      session.chatId,
-      session.boyId,
-      session.girlId
-    );
-
-    if (!result.success) {
-      io.to(`chat:${chatId}`).emit('chat:error', { message: 'Failed to process payment for message.' });
-      return false;
-    }
-
-    // Update Chat model with total duration & cost (message count)
-    const updatedChat = await Chat.findByIdAndUpdate(chatId, {
-      $inc: { durationInMinutes: 1, totalCost: 1 } // Using durationInMinutes temporarily as message count until model is updated
-    }, { new: true });
-
-    // Reuse the balances already returned by processMessageSettlement (no extra DB reads)
-    const boyBalance = result.boyBalance;
-    const girlBalance = result.girlBalance;
-
-    if (boyBalance !== undefined) {
-      io.to(`user:${session.boyId}`).emit('wallet:update', {
-        newBalance: boyBalance,
-        delta: -1,
-        reason: 'CHAT_DEBIT',
-      });
-      // Emit tick-like event to update stats on frontend
-      io.to(`chat:${chatId}`).emit('chat:stats_update', {
+    // If session was already started, start timer if needed and broadcast current elapsed seconds
+    if (session.startedAt) {
+      this.startSessionTimer(session, io);
+      io.to(`chat:${chatId}`).emit('chat:timer_tick', {
         chatId,
-        messagesSent: updatedChat ? updatedChat.totalCost : 1, // Use the current chat's cost
-        remainingCoins: boyBalance
-      });
-    }
-    
-    if (girlBalance !== undefined) {
-      io.to(`user:${session.girlId}`).emit('wallet:update', {
-        newBalance: girlBalance,
-        delta: 1,
-        reason: 'GIRL_EARNING',
+        elapsedSeconds: session.elapsedSeconds,
       });
     }
 
-    return true;
+    // When both participants are connected in the room for the first time
+    if (!session.startedAt && session.boyJoined && session.girlJoined) {
+      session.startedAt = new Date();
+      session.elapsedSeconds = 0;
+      await Chat.findByIdAndUpdate(chatId, { startTime: session.startedAt });
+
+      logger.info(`Both participants present for chat ${chatId}. Starting continuous session timer...`);
+      io.to(`chat:${chatId}`).emit('chat:started', { 
+        chatId, 
+        startedAt: session.startedAt,
+        elapsedSeconds: 0,
+      });
+
+      this.startSessionTimer(session, io);
+    }
   }
 
   /**
-   * Evaluates wallet balance and handles 2-coin deduction per 2-minute chat session completion.
+   * Starts a 1-second ticker for this session to track elapsed seconds and deduct 1 coin every 60 seconds (1 minute).
+   * Runs continuously until all available coins reach 0.
    */
-  public async processTwoMinuteDeduction(chatId: string, io: Server): Promise<boolean> {
+  private startSessionTimer(session: SessionState, io: Server) {
+    if (session.timerHandle) return;
+
+    session.timerHandle = setInterval(async () => {
+      if (session.startedAt) {
+        session.elapsedSeconds = Math.floor((Date.now() - new Date(session.startedAt).getTime()) / 1000);
+      } else {
+        session.elapsedSeconds += 1;
+      }
+
+      // Broadcast timer tick to keep clients in sync
+      io.to(`chat:${session.chatId}`).emit('chat:timer_tick', {
+        chatId: session.chatId,
+        elapsedSeconds: session.elapsedSeconds,
+      });
+
+      // Deduct 1 coin every 60 seconds (1 completed minute)
+      if (session.elapsedSeconds > 0 && session.elapsedSeconds % BILLING_CYCLE_SECONDS === 0) {
+        logger.info(`Chat ${session.chatId} reached ${session.elapsedSeconds}s (1 minute cycle). Deducting 1 coin...`);
+        await this.processTimeIntervalDeduction(session.chatId, io);
+      }
+    }, 1000);
+  }
+
+  /**
+   * Evaluates wallet balance and handles 1-coin deduction per 40-second chat cycle.
+   */
+  public async processTimeIntervalDeduction(chatId: string, io: Server): Promise<boolean> {
     const session = this.sessions.get(chatId);
     if (!session) return false;
-
-    const now = Date.now();
-    if (session.lastDeductionAt && now - session.lastDeductionAt < 10000) {
-      logger.warn(`Skipping duplicate 2-coin deduction for Chat ${chatId} within cooldown window`);
-      return false;
-    }
-    session.lastDeductionAt = now;
 
     const result = await settlementService.processSessionSettlement(
       session.chatId,
       session.boyId,
       session.girlId,
-      2 // 2 coins for 2 minutes talk
+      COINS_PER_CYCLE
     );
 
     if (!result.success) {
-      io.to(`chat:${chatId}`).emit('chat:error', { message: 'Failed to process payment for chat session.' });
+      logger.warn(`Insufficient balance for Boy ${session.boyId} in Chat ${chatId}. Terminating session.`);
+      io.to(`chat:${chatId}`).emit('chat:low_balance', {
+        chatId,
+        message: 'Insufficient coins. Chat session ended.',
+      });
+      await this.stopChatSession(chatId, io, 'INSUFFICIENT_FUNDS');
       return false;
     }
 
-    // Update Chat model with duration & total cost
+    // Update Chat model with duration and total cost
     const updatedChat = await Chat.findByIdAndUpdate(chatId, {
-      $inc: { durationInMinutes: 2, totalCost: 2 }
+      $inc: { durationInMinutes: 1, totalCost: COINS_PER_CYCLE }
     }, { new: true });
 
     const boyBalance = result.boyBalance;
@@ -191,26 +159,126 @@ class ChatSessionService {
     if (boyBalance !== undefined) {
       io.to(`user:${session.boyId}`).emit('wallet:update', {
         newBalance: boyBalance,
-        delta: -2,
+        delta: -COINS_PER_CYCLE,
         reason: 'CHAT_DEBIT',
       });
-      // Emit stats update to update chat stats on frontend
-      io.to(`chat:${chatId}`).emit('chat:stats_update', {
-        chatId,
-        messagesSent: updatedChat ? updatedChat.totalCost : 2,
-        remainingCoins: boyBalance
-      });
+
+      if (boyBalance <= 2 && boyBalance > 0) {
+        io.to(`chat:${chatId}`).emit('chat:low_balance_warning', {
+          chatId,
+          warning: `Low coin balance (${boyBalance} left). Recharge to continue chatting.`,
+        });
+      } else if (boyBalance === 0) {
+        logger.info(`Boy ${session.boyId} reached 0 coins in Chat ${chatId}. Ending chat session...`);
+        io.to(`chat:${chatId}`).emit('chat:low_balance', {
+          chatId,
+          message: 'Your coins have reached 0. Chat session ended.',
+        });
+        await this.stopChatSession(chatId, io, 'INSUFFICIENT_FUNDS');
+        return false;
+      }
     }
 
     if (girlBalance !== undefined) {
       io.to(`user:${session.girlId}`).emit('wallet:update', {
         newBalance: girlBalance,
-        delta: 2,
+        delta: COINS_PER_CYCLE,
         reason: 'GIRL_EARNING',
       });
     }
 
+    io.to(`chat:${chatId}`).emit('chat:stats_update', {
+      chatId,
+      elapsedSeconds: session.elapsedSeconds,
+      totalCost: updatedChat ? updatedChat.totalCost : 1,
+      remainingCoins: boyBalance,
+    });
+
     return true;
+  }
+
+  /**
+   * Helper to ensure session timer starts when first message is sent if not already started
+   */
+  public async ensureSessionStarted(chatId: string, io?: Server) {
+    const session = this.sessions.get(chatId);
+    if (session && !session.startedAt) {
+      session.startedAt = new Date();
+      session.elapsedSeconds = 0;
+      await Chat.findByIdAndUpdate(chatId, { startTime: session.startedAt });
+      if (io) {
+        io.to(`chat:${chatId}`).emit('chat:started', { 
+          chatId, 
+          startedAt: session.startedAt,
+          elapsedSeconds: 0,
+        });
+        this.startSessionTimer(session, io);
+      }
+    }
+  }
+
+  /**
+   * Pre-check to determine if the sender is allowed to send a message.
+   * Girls always send free. Boys must have at least 1 coin in their wallet.
+   */
+  public async canSendMessage(chatId: string, senderId: string): Promise<{ allowed: boolean; error?: string }> {
+    let session = this.sessions.get(chatId);
+
+    // If session is not currently in memory, retrieve from database
+    if (!session) {
+      const chat = await Chat.findById(chatId);
+      if (!chat) {
+        return { allowed: false, error: 'Chat not found' };
+      }
+
+      if (chat.status !== ChatStatus.ACTIVE) {
+        return { allowed: false, error: 'This chat session has ended or is inactive' };
+      }
+
+      const elapsed = chat.startTime 
+        ? Math.floor((Date.now() - new Date(chat.startTime).getTime()) / 1000)
+        : 0;
+
+      session = {
+        chatId,
+        boyId: chat.boyId.toString(),
+        girlId: chat.girlId.toString(),
+        boyJoined: senderId === chat.boyId.toString(),
+        girlJoined: senderId === chat.girlId.toString(),
+        startedAt: chat.startTime || null,
+        elapsedSeconds: Math.max(0, elapsed),
+        boyDisconnectedAt: null,
+        girlDisconnectedAt: null,
+      };
+      this.sessions.set(chatId, session);
+    }
+
+    if (senderId !== session.boyId) {
+      return { allowed: true }; // Girl sends for free
+    }
+
+    const boyWallet = await Wallet.findOne({
+      $or: [
+        { userId: new Types.ObjectId(session.boyId) },
+        { userId: session.boyId }
+      ]
+    }).lean();
+
+    if (!boyWallet || boyWallet.currentBalance < 1) {
+      return { 
+        allowed: false, 
+        error: `Insufficient coins in wallet (Balance: ${boyWallet?.currentBalance ?? 0} coins). Please recharge to send messages.` 
+      };
+    }
+
+    return { allowed: true };
+  }
+
+  /**
+   * Process completed 2-minute chat session settlement (backward compatibility)
+   */
+  public async processTwoMinuteDeduction(chatId: string, io: Server): Promise<boolean> {
+    return this.processTimeIntervalDeduction(chatId, io);
   }
 
   /**
@@ -234,11 +302,14 @@ class ChatSessionService {
 
     io.to(`chat:${chatId}`).emit('chat:participant_disconnected', { chatId, userId });
     
-    // Note: We no longer auto-terminate the session on disconnect. 
-    // It remains active until explicitly ended by the girl.
+    // Pause ticker if both participants have left
+    if (!session.boyJoined && !session.girlJoined) {
+      if (session.timerHandle) {
+        clearInterval(session.timerHandle);
+        session.timerHandle = undefined;
+      }
+    }
   }
-
-
 
   /**
    * Terminate chat session gracefully
@@ -247,6 +318,10 @@ class ChatSessionService {
     const session = this.sessions.get(chatId);
 
     if (session) {
+      if (session.timerHandle) {
+        clearInterval(session.timerHandle);
+        session.timerHandle = undefined;
+      }
       this.sessions.delete(chatId);
     }
 
@@ -283,18 +358,25 @@ class ChatSessionService {
 
       for (const chat of activeChats) {
         const chatId = chat._id.toString();
+        const elapsed = chat.startTime 
+          ? Math.floor((Date.now() - new Date(chat.startTime).getTime()) / 1000)
+          : 0;
+
         const session: SessionState = {
           chatId,
           boyId: chat.boyId.toString(),
           girlId: chat.girlId.toString(),
-          boyJoined: false, // Will re-verify on room join
+          boyJoined: false,
           girlJoined: false,
-          startedAt: chat.startTime || new Date(),
-          completedMinutes: chat.durationInMinutes || 0,
+          startedAt: chat.startTime || null,
+          elapsedSeconds: Math.max(0, elapsed),
           boyDisconnectedAt: null,
           girlDisconnectedAt: null,
         };
         this.sessions.set(chatId, session);
+        if (session.startedAt) {
+          this.startSessionTimer(session, io);
+        }
       }
     } catch (error) {
       logger.error(`Failed to recover active chat sessions: ${(error as Error).message}`);

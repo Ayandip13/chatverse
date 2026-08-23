@@ -81,7 +81,7 @@ export interface IChat extends Document {
   girlId: Types.ObjectId;
   chatRequestId: Types.ObjectId;
   status: ChatStatus;
-  startTime: Date;
+  startTime?: Date;
   endTime?: Date;
   durationInMinutes: number;
   totalCost: number;

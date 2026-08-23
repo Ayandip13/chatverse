@@ -42,7 +42,8 @@ export const useChatDetails = (chatId: string) => {
   return useQuery({
     queryKey: ['chat', chatId],
     queryFn: () => fetchChatDetails(chatId),
-    staleTime: 60000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 };
 

@@ -46,6 +46,7 @@ interface ChatInputProps {
   onTyping: (isTyping: boolean) => void;
   replyingTo?: Message | null;
   onCancelReply?: () => void;
+  bottomInset?: number;
 }
 
 export function ChatInput({
@@ -53,6 +54,7 @@ export function ChatInput({
   onTyping,
   replyingTo,
   onCancelReply,
+  bottomInset = 0,
 }: ChatInputProps) {
   const [text, setText] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -260,7 +262,10 @@ export function ChatInput({
   };
 
   return (
-    <View className="bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
+    <View 
+      className="bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800"
+      style={{ paddingBottom: bottomInset }}
+    >
       {replyingTo && (
         <View
           className="px-4 py-2 bg-indigo-50 flex-row items-center justify-between border-b border-indigo-100 dark:border-indigo-800"

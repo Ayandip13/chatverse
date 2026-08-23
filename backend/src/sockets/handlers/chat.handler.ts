@@ -61,8 +61,8 @@ export const registerChatHandlers = (io: Server, socket: AuthenticatedSocket) =>
         return;
       }
 
-      if (chat.girlId.toString() !== userId) {
-        if (callback) callback({ error: 'Unauthorized: Only girls can end chat sessions' });
+      if (chat.boyId.toString() !== userId && chat.girlId.toString() !== userId) {
+        if (callback) callback({ error: 'Unauthorized: You are not a participant in this chat' });
         return;
       }
 
@@ -91,11 +91,14 @@ export const registerChatHandlers = (io: Server, socket: AuthenticatedSocket) =>
       const { chatId, content, tempId } = payload;
 
       // Cheap pre-check: boys must have >= 1 coin, girls always send free.
-      const canSend = await chatSessionService.canSendMessage(chatId, userId);
-      if (!canSend) {
-        if (callback) callback({ error: 'Insufficient coins to send a message', tempId });
+      const checkResult = await chatSessionService.canSendMessage(chatId, userId);
+      if (!checkResult.allowed) {
+        if (callback) callback({ error: checkResult.error || 'Unable to send message', tempId });
         return;
       }
+
+      // Ensure session is started in real-time if not already started
+      chatSessionService.ensureSessionStarted(chatId, io);
 
       // Validates against regex and persists the message FIRST
       const message = await messageService.validateAndSaveMessage(chatId, userId, content);

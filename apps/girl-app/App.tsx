@@ -6,7 +6,7 @@ import { useAuthStore } from './src/store/authStore';
 import { SplashScreen } from './src/components/ui/SplashScreen';
 import { StatusBar } from 'expo-status-bar';
 import { RootNavigator } from './src/navigation/RootNavigator';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { initBackendConfig } from './src/config/backendConfig';
 
 import './global.css'; // NativeWind v4 requires this
@@ -37,11 +37,20 @@ function MainAppContent() {
     }
   }, [theme, colorScheme]);
 
+  const isDark = theme === 'dark';
+  const navTheme = {
+    ...(isDark ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDark ? DarkTheme.colors : DefaultTheme.colors),
+      background: isDark ? '#0F172A' : '#F8FAFC',
+    },
+  };
+
   return (
-    <View style={{ flex: 1 }}>
-      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
-      <NavigationContainer>
-        <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }}>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <NavigationContainer theme={navTheme}>
+        <View style={{ flex: 1, backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }}>
           <RootNavigator />
           {isLoading && (
             <View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, zIndex: 999 }}>

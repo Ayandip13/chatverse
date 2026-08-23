@@ -8,8 +8,10 @@ import { Alert } from 'react-native';
 
 export interface ChatStatsData {
   chatId: string;
-  messagesSent: number;
-  remainingCoins: number;
+  messagesSent?: number;
+  totalCost?: number;
+  remainingCoins?: number;
+  elapsedSeconds?: number;
 }
 
 export interface ChatEndedSummary {
@@ -101,17 +103,31 @@ export const useChatSocket = (chatId?: string) => {
     const onTypingStart = ({ chatId: typedChatId }: any) => setTyping(typedChatId, true);
     const onTypingStop = ({ chatId: typedChatId }: any) => setTyping(typedChatId, false);
 
-    const onStatsUpdate = (data: ChatStatsData) => {
+    const onTimerTick = (data: { chatId: string; elapsedSeconds: number }) => {
       if (!chatId || data.chatId === chatId) {
-        setChatStats(data);
-        queryClient.setQueryData(['walletSummary'], (old: any) =>
-          old ? { ...old, currentBalance: data.remainingCoins } : { currentBalance: data.remainingCoins }
-        );
+        setChatStats((prev) => ({
+          ...prev,
+          chatId: data.chatId,
+          elapsedSeconds: data.elapsedSeconds,
+        }));
       }
     };
 
-    const onLowBalance = (data: any) => {
-      setLowBalanceWarning(data.message || 'Your coin balance is running low!');
+    const onStatsUpdate = (data: ChatStatsData) => {
+      if (!chatId || data.chatId === chatId) {
+        setChatStats((prev) => ({ ...prev, ...data }));
+        if (data.remainingCoins !== undefined) {
+          queryClient.setQueryData(['walletSummary'], (old: any) =>
+            old ? { ...old, currentBalance: data.remainingCoins } : { currentBalance: data.remainingCoins }
+          );
+        }
+      }
+    };
+
+    const onLowBalanceWarning = (data: any) => {
+      if (!chatId || data.chatId === chatId) {
+        setLowBalanceWarning(data.warning || data.message || 'Low coin balance! Recharge to avoid disconnection.');
+      }
     };
 
     const onChatEnded = (data: ChatEndedSummary) => {
@@ -157,12 +173,35 @@ export const useChatSocket = (chatId?: string) => {
       );
     };
 
+    const onChatStarted = (data: { chatId: string; startedAt?: any; elapsedSeconds?: number }) => {
+      if (!chatId || data.chatId === chatId) {
+        setEndedSummary(null);
+        setDisconnectState(null);
+        queryClient.setQueryData(['chat', chatId], (old: any) =>
+          old ? { ...old, status: 'ACTIVE', startTime: data.startedAt || old.startTime } : old
+        );
+        queryClient.invalidateQueries({ queryKey: ['chat', chatId] });
+        queryClient.invalidateQueries({ queryKey: ['chats'] });
+        if (data.elapsedSeconds !== undefined) {
+          setChatStats((prev) => ({
+            ...prev,
+            chatId: data.chatId,
+            elapsedSeconds: data.elapsedSeconds,
+          }));
+        }
+      }
+    };
+
     socket.on('chat:receive_message', onMessage);
     socket.on('chat:message_status_update', onStatusUpdate);
     socket.on('chat:typing_start', onTypingStart);
     socket.on('chat:typing_stop', onTypingStop);
+    socket.on('chat:started', onChatStarted);
+    socket.on('chat:timer_tick', onTimerTick);
     socket.on('chat:stats_update', onStatsUpdate);
-    socket.on('wallet:low_balance', onLowBalance);
+    socket.on('chat:low_balance', onLowBalanceWarning);
+    socket.on('chat:low_balance_warning', onLowBalanceWarning);
+    socket.on('wallet:low_balance', onLowBalanceWarning);
     socket.on('chat:ended', onChatEnded);
     socket.on('chat:participant_disconnected', onParticipantDisconnected);
     socket.on('chat:participant_reconnected', onParticipantReconnected);
@@ -176,8 +215,12 @@ export const useChatSocket = (chatId?: string) => {
       socket.off('chat:message_status_update', onStatusUpdate);
       socket.off('chat:typing_start', onTypingStart);
       socket.off('chat:typing_stop', onTypingStop);
+      socket.off('chat:started', onChatStarted);
+      socket.off('chat:timer_tick', onTimerTick);
       socket.off('chat:stats_update', onStatsUpdate);
-      socket.off('wallet:low_balance', onLowBalance);
+      socket.off('chat:low_balance', onLowBalanceWarning);
+      socket.off('chat:low_balance_warning', onLowBalanceWarning);
+      socket.off('wallet:low_balance', onLowBalanceWarning);
       socket.off('chat:ended', onChatEnded);
       socket.off('chat:participant_disconnected', onParticipantDisconnected);
       socket.off('chat:participant_reconnected', onParticipantReconnected);

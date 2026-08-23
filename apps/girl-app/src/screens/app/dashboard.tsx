@@ -94,18 +94,23 @@ export default function DashboardScreen() {
       refetchRequests();
     };
 
-    const onRequestCancelled = (payload: any) => {
-      if (incomingRequest && (payload.requestId === incomingRequest.requestId || payload.requestId === incomingRequest._id)) {
-        setIncomingRequest(null);
-        Alert.alert('Request Cancelled', 'The user cancelled the chat request.');
+    const onRequestAccepted = (payload: any) => {
+      setIncomingRequest(null);
+      queryClient.invalidateQueries({ queryKey: ['chatRequests'] });
+      queryClient.invalidateQueries({ queryKey: ['chats'] });
+      if (payload?.chatId) {
+        navigation.navigate('ChatScreen', { id: payload.chatId });
       }
+    };
+
+    const onRequestCancelled = (payload: any) => {
+      setIncomingRequest(null);
       refetchRequests();
+      Alert.alert('Request Cancelled', 'The user cancelled the chat request.');
     };
 
     const onRequestExpired = (payload: any) => {
-      if (incomingRequest && (payload.requestId === incomingRequest.requestId || payload.requestId === incomingRequest._id)) {
-        setIncomingRequest(null);
-      }
+      setIncomingRequest(null);
       refetchRequests();
     };
 
@@ -124,6 +129,7 @@ export default function DashboardScreen() {
 
     socket.on('chat_request:receive', onIncomingRequest);
     socket.on('chat_request:new', onIncomingRequest);
+    socket.on('chat_request:accepted', onRequestAccepted);
     socket.on('chat_request:cancelled', onRequestCancelled);
     socket.on('chat_request:expired', onRequestExpired);
     socket.on('wallet:update', onWalletUpdate);
@@ -131,11 +137,12 @@ export default function DashboardScreen() {
     return () => {
       socket.off('chat_request:receive', onIncomingRequest);
       socket.off('chat_request:new', onIncomingRequest);
+      socket.off('chat_request:accepted', onRequestAccepted);
       socket.off('chat_request:cancelled', onRequestCancelled);
       socket.off('chat_request:expired', onRequestExpired);
       socket.off('wallet:update', onWalletUpdate);
     };
-  }, [socket, isConnected, incomingRequest, isOnline, queryClient, refetchRequests]);
+  }, [socket, isConnected, isOnline, queryClient, refetchRequests]);
 
   // Handle local 60s countdown for incoming request modal
   useEffect(() => {
@@ -156,26 +163,35 @@ export default function DashboardScreen() {
   };
 
   const handleAccept = async (requestId: string) => {
+    setIncomingRequest(null);
     try {
-      const res = await acceptRequest(requestId);
-      setIncomingRequest(null);
-      if (res && res.chat) {
-        navigation.navigate('ChatScreen', { id: res.chat._id || res.chat.id });
+      const res: any = await acceptRequest(requestId);
+      queryClient.invalidateQueries({ queryKey: ['chatRequests'] });
+      queryClient.invalidateQueries({ queryKey: ['chats'] });
+      const chatId = res?.chat?._id || res?.chat?.id || res?.chatId || res?.data?.chat?._id || res?._id;
+      if (chatId) {
+        navigation.navigate('ChatScreen', { id: chatId });
       } else {
         refetchRequests();
       }
     } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.message || 'Failed to accept request');
+      const msg = err.response?.data?.error?.message || err.response?.data?.message || 'Chat request accepted or updated';
+      if (!msg.toLowerCase().includes('already')) {
+        Alert.alert('Notice', msg);
+      }
+      refetchRequests();
     }
   };
 
   const handleReject = async (requestId: string) => {
+    setIncomingRequest(null);
     try {
       await rejectRequest(requestId);
-      setIncomingRequest(null);
+      queryClient.invalidateQueries({ queryKey: ['chatRequests'] });
       refetchRequests();
     } catch (err: any) {
-      Alert.alert('Error', err.response?.data?.message || 'Failed to reject request');
+      Alert.alert('Notice', err.response?.data?.message || 'Chat request updated.');
+      refetchRequests();
     }
   };
 
@@ -584,7 +600,12 @@ export default function DashboardScreen() {
       </ScrollView>
 
       {/* --- 8. REALTIME INCOMING CHAT REQUEST MODAL --- */}
-      <Modal visible={!!incomingRequest} transparent animationType="slide">
+      <Modal 
+        visible={!!incomingRequest} 
+        transparent 
+        animationType="slide"
+        onRequestClose={() => setIncomingRequest(null)}
+      >
         <View className="flex-1 bg-black/70 items-center justify-end">
           <View className="bg-white dark:bg-slate-900 w-full p-6 rounded-t-3xl border-t border-slate-200 dark:border-slate-800 shadow-2xl">
             <View className="flex-row items-center justify-between mb-4">
@@ -620,7 +641,11 @@ export default function DashboardScreen() {
 
             <View className="flex-row gap-4">
               <TouchableOpacity
-                onPress={() => handleReject(incomingRequest.requestId || incomingRequest._id)}
+                onPress={() => {
+                  const reqId = incomingRequest?.requestId || incomingRequest?._id || activeRequestId;
+                  if (reqId) handleReject(reqId);
+                  else setIncomingRequest(null);
+                }}
                 disabled={isRejecting || isAccepting}
                 className="flex-1 bg-slate-100 dark:bg-slate-800 py-4 rounded-2xl items-center flex-row justify-center border border-slate-200 dark:border-slate-700"
               >
@@ -635,7 +660,11 @@ export default function DashboardScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() => handleAccept(incomingRequest.requestId || incomingRequest._id)}
+                onPress={() => {
+                  const reqId = incomingRequest?.requestId || incomingRequest?._id || activeRequestId;
+                  if (reqId) handleAccept(reqId);
+                  else setIncomingRequest(null);
+                }}
                 disabled={isAccepting || isRejecting}
                 className="flex-1 bg-pink-600 py-4 rounded-2xl items-center flex-row justify-center shadow-lg shadow-pink-500/40"
               >

@@ -66,6 +66,10 @@ export default function GirlDetailsScreen() {
     const onAccepted = (data: { requestId: string; chatId: string }) => {
       queryClient.invalidateQueries({ queryKey: ['chats'] });
       queryClient.invalidateQueries({ queryKey: ['chatRequests'] });
+      queryClient.invalidateQueries({ queryKey: ['chat', data.chatId] });
+      queryClient.setQueryData(['chat', data.chatId], (old: any) =>
+        old ? { ...old, status: 'ACTIVE' } : old
+      );
       setActiveRequestId(null);
       setModalConfig({
         title: 'Request Accepted! 🎉',

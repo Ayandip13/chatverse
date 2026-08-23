@@ -1,94 +1,47 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View, Text } from 'react-native';
-import { MessageSquare, Clock, AlertTriangle } from 'lucide-react-native';
+import { AlertTriangle, Clock } from 'lucide-react-native';
 import { ChatDetails } from '../../api/messagingApi';
 import { ChatStatsData } from '../../hooks/useChatSocket';
-import { useChatStore } from '../../store/chatStore';
 
 interface CoinMessageCardProps {
   chat: ChatDetails;
   chatStats?: ChatStatsData | null;
   lowBalanceWarning?: string | null;
-  onTimeLimitReached?: () => void;
+  elapsedSeconds?: number;
 }
 
-export function CoinMessageCard({ chat, chatStats, lowBalanceWarning, onTimeLimitReached }: CoinMessageCardProps) {
-  const [elapsedSecs, setElapsedSecs] = React.useState(0);
-  const hasTriggeredRef = React.useRef(false);
-
-  useEffect(() => {
-    useChatStore.getState().startAdTimerIfNeeded();
-
-    const updateTimer = () => {
-      const startMs = useChatStore.getState().adTimerStartedAt;
-      if (!startMs) return;
-      
-      const realSecs = (Date.now() - startMs) / 1000;
-      // 80 real seconds (1m 20s) maps to 120 visual seconds (2m 00s)
-      const visualSecs = Math.min(120, Math.floor(realSecs * 1.5));
-      
-      setElapsedSecs(visualSecs);
-      
-      if ((realSecs >= 80 || visualSecs >= 120) && !hasTriggeredRef.current) {
-        hasTriggeredRef.current = true;
-        onTimeLimitReached?.();
-      }
-    };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
-  }, [onTimeLimitReached]);
-
-  const formatTimer = (secs: number) => {
-    const hrs = Math.floor(secs / 3600);
-    const mins = Math.floor((secs % 3600) / 60);
-    const s = secs % 60;
-    const pad = (n: number) => n.toString().padStart(2, '0');
+export function CoinMessageCard({ lowBalanceWarning, elapsedSeconds = 0 }: CoinMessageCardProps) {
+  const formatTimer = (sec: number) => {
+    const hrs = Math.floor(sec / 3600);
+    const mins = Math.floor((sec % 3600) / 60);
+    const secs = sec % 60;
     if (hrs > 0) {
-      return `${pad(hrs)}:${pad(mins)}:${pad(s)}`;
+      return `${hrs < 10 ? '0' : ''}${hrs}:${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
     }
-    return `${pad(mins)}:${pad(s)}`;
+    return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
-  const messagesSent = chatStats?.messagesSent || chat.totalCost || 0;
-
   return (
-    <View className="bg-amber-50/80 dark:bg-amber-950/40 px-4 py-2 border-b border-amber-100 dark:border-amber-900/50">
-      <View className="flex-row justify-between items-center">
-        {/* Messages Billed */}
-        <View className="flex-row items-center">
-          <View className="flex-row items-center bg-amber-100/70 dark:bg-amber-900/50 px-2.5 py-1 rounded-xl mr-2">
-            <View className="mr-1.5 items-center justify-center">
-              <MessageSquare size={13} color="#d97706" />
-            </View>
-            <Text className="text-amber-900 dark:text-amber-300 font-mono font-black text-xs">
-              {messagesSent} msgs sent
-            </Text>
-          </View>
-          <Text className="text-amber-700 dark:text-amber-400 text-xs font-extrabold">
-            (1 Coin = 1 Min Talk)
-          </Text>
-        </View>
-
-        {/* Live Timer Badge */}
-        <View className="flex-row items-center bg-white dark:bg-gray-800 px-3 py-1 rounded-full shadow-xs border border-amber-200/80 dark:border-amber-800/60">
-          <View className="mr-1.5 items-center justify-center">
-            <Clock size={14} color="#d97706" />
-          </View>
-          <Text className="text-amber-900 dark:text-amber-300 text-xs font-black font-mono">
-            {formatTimer(elapsedSecs)}
+    <View className="border-b border-indigo-100 dark:border-gray-800">
+      {/* Active Session Timer Bar - Only Timer */}
+      <View className="bg-indigo-50/60 dark:bg-gray-800/80 px-4 py-1.5 flex-row items-center justify-center">
+        <View className="flex-row items-center gap-2">
+          <View className="w-2 h-2 rounded-full bg-emerald-500" />
+          <Clock size={13} color="#6366f1" />
+          <Text className="text-xs font-mono font-bold text-gray-800 dark:text-gray-100">
+            {formatTimer(elapsedSeconds)}
           </Text>
         </View>
       </View>
 
-      {/* Low Balance Alert Banner */}
-      {lowBalanceWarning && (
-        <View className="flex-row items-center bg-rose-100 dark:bg-rose-950/60 px-3 py-1.5 rounded-xl mt-2 border border-rose-200 dark:border-rose-900/40">
+      {/* Low Balance Alert Bar */}
+      {!!lowBalanceWarning && (
+        <View className="bg-rose-100 dark:bg-rose-950/80 px-4 py-1.5 flex-row items-center">
           <View className="mr-1.5 items-center justify-center">
-            <AlertTriangle size={14} color="#ef4444" />
+            <AlertTriangle size={13} color="#ef4444" />
           </View>
-          <Text className="text-rose-700 dark:text-rose-300 text-xs font-bold flex-1" numberOfLines={1}>
+          <Text className="text-rose-700 dark:text-rose-300 text-[11px] font-bold flex-1" numberOfLines={1}>
             {lowBalanceWarning}
           </Text>
         </View>

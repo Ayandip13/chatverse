@@ -12,7 +12,7 @@ const ChatSchema = new Schema<IChat>(
       enum: Object.values(ChatStatus),
       default: ChatStatus.ACTIVE,
     },
-    startTime: { type: Date, required: true, default: Date.now },
+    startTime: { type: Date },
     endTime: { type: Date },
     durationInMinutes: { type: Number, default: 0 },
     totalCost: { type: Number, default: 0 },

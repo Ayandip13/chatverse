@@ -45,58 +45,69 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+export const refreshAccessToken = async (): Promise<string | null> => {
+  if (isRefreshing) {
+    return new Promise((resolve) => {
+      failedQueue.push({
+        resolve: (token) => resolve((token as string) || null),
+        reject: () => resolve(null),
+      });
+    });
+  }
+
+  isRefreshing = true;
+
+  try {
+    const getStorage = Platform.OS === 'web' ? localStorage : SecureStore;
+    const refreshToken = await (Platform.OS === 'web'
+      ? getStorage.getItem('refreshToken')
+      : (getStorage as typeof SecureStore).getItemAsync('refreshToken'));
+
+    if (!refreshToken) {
+      throw new Error('No refresh token available');
+    }
+
+    // Direct request to refresh endpoint
+    const currentBaseUrl = await getApiBaseUrl();
+    const response = await axios.post(`${currentBaseUrl}/auth/refresh`, { refreshToken });
+    const { accessToken } = response.data?.data || {};
+
+    if (!accessToken) {
+      throw new Error('No access token returned from refresh endpoint');
+    }
+
+    await (Platform.OS === 'web'
+      ? getStorage.setItem('accessToken', accessToken)
+      : (getStorage as typeof SecureStore).setItemAsync('accessToken', accessToken));
+
+    getAuthStore().setState({ accessToken, isAuthenticated: true });
+
+    processQueue(null, accessToken);
+    return accessToken;
+  } catch (refreshError) {
+    processQueue(refreshError as AxiosError, null);
+    getAuthStore().getState().logout();
+    return null;
+  } finally {
+    isRefreshing = false;
+  }
+};
+
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then((token) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return apiClient(originalRequest);
-          })
-          .catch((err) => Promise.reject(err));
-      }
-
       originalRequest._retry = true;
-      isRefreshing = true;
 
-      try {
-        const getStorage = Platform.OS === 'web' ? localStorage : SecureStore;
-        const refreshToken = await (Platform.OS === 'web'
-          ? getStorage.getItem('refreshToken')
-          : (getStorage as typeof SecureStore).getItemAsync('refreshToken'));
-
-        if (!refreshToken) {
-          throw new Error('No refresh token available');
-        }
-
-        // Direct request to refresh endpoint
-        const currentBaseUrl = await getApiBaseUrl();
-        const response = await axios.post(`${currentBaseUrl}/auth/refresh`, { refreshToken });
-        const { accessToken } = response.data.data;
-
-        await (Platform.OS === 'web'
-          ? getStorage.setItem('accessToken', accessToken)
-          : (getStorage as typeof SecureStore).setItemAsync('accessToken', accessToken));
-
-        getAuthStore().setState({ accessToken });
-
-        processQueue(null, accessToken);
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-
+      const newAccessToken = await refreshAccessToken();
+      if (newAccessToken) {
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return apiClient(originalRequest);
-      } catch (refreshError) {
-        processQueue(refreshError as AxiosError, null);
-        getAuthStore().getState().logout();
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
       }
+
+      return Promise.reject(error);
     }
 
     if (!error.response) {
