@@ -19,16 +19,21 @@
     },
     "android": {
       "softwareKeyboardLayoutMode": "resize",
-      "androidNavigationBar": {
-        "backgroundColor": "#0F172A",
-        "barStyle": "light-content"
-      },
       "adaptiveIcon": {
         "backgroundColor": "#FDF2F8",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "POST_NOTIFICATIONS",
+        "RECORD_AUDIO",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
       "predictiveBackGestureEnabled": false,
       "package": "com.chatverse.girl"
     },
@@ -49,7 +54,15 @@
           "icon": "./assets/icon.png",
           "color": "#ec4899"
         }
-      ]
+      ],
+      [
+        "expo-navigation-bar",
+        {
+          "backgroundColor": "#0F172A",
+          "barStyle": "light-content"
+        }
+      ],
+      "expo-asset"
     ],
     "extra": {
       "eas": {

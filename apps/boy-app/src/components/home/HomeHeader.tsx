@@ -15,17 +15,9 @@ export function HomeHeader() {
 
   const avatarUri = getAvatarUrl(user?.avatar, user?.name, user?._id);
 
-  // Dynamic greeting based on time
-  const getGreeting = () => {
-    const hours = new Date().getHours();
-    if (hours < 12) return 'Good Morning, 👋';
-    if (hours < 18) return 'Good Afternoon, 👋';
-    return 'Good Evening, 👋';
-  };
-
   return (
     <View className="flex-row items-center justify-between px-6 py-4 bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-md">
-      {/* Left: Avatar & Greeting */}
+      {/* Left: Avatar & Name */}
       <TouchableOpacity 
         onPress={() => navigation.navigate('Profile')}
         className="flex-row items-center"
@@ -38,8 +30,7 @@ export function HomeHeader() {
           <View className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-gray-900" />
         </View>
         <View className="justify-center">
-          <Text className="text-gray-400 dark:text-gray-400 text-[11px] font-bold uppercase tracking-wider mb-0.5">{getGreeting()}</Text>
-          <Text className="text-lg font-black text-gray-900 dark:text-white tracking-tight" numberOfLines={1}>
+          <Text className="text-xl font-black text-gray-900 dark:text-white tracking-tight" numberOfLines={1}>
             {user?.name || 'Explorer'}
           </Text>
         </View>

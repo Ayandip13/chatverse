@@ -51,6 +51,17 @@ export const rateUser = async (req: Request, res: Response, next: NextFunction) 
       });
     }
 
+    // Send push notification to target user (Creator/Girl)
+    const reviewerUser = await User.findById(reviewerId).lean();
+    const reviewerName = reviewerUser?.name || 'A user';
+    const { pushNotificationService } = require('@/services/pushNotification.service');
+    pushNotificationService.sendPushNotification(
+      targetUserId,
+      '⭐ New Review Received!',
+      `${reviewerName} gave you a ${score}★ rating${review ? `: "${review}"` : '.'}`,
+      { type: 'RATING', score }
+    ).catch(() => {});
+
     logger.info(`User ${reviewerId} rated ${targetUserId} with ${score} stars`);
     res.status(201).json(new ApiResponse(newRating, 'Rating submitted successfully'));
   } catch (error) {

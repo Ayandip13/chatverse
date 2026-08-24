@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
-import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { useQueryClient } from '@tanstack/react-query';
@@ -12,18 +11,23 @@ const isExpoGo =
   (Constants as any).appOwnership === 'expo' ||
   Constants.appOwnership === 'expo';
 
-// Configure foreground notification behavior safely only outside Expo Go (Development Builds & Production)
+let Notifications: typeof import('expo-notifications') | null = null;
 if (!isExpoGo) {
   try {
-    Notifications.setNotificationHandler({
+    Notifications = require('expo-notifications');
+    Notifications!.setNotificationHandler({
       handleNotification: async () => ({
         shouldShowAlert: true,
         shouldPlaySound: true,
         shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+        priority: Notifications?.AndroidNotificationPriority?.MAX,
       }),
     });
   } catch (e) {
-    // Ignored in environments where setNotificationHandler is unavailable
+    // Ignored in environments where expo-notifications is unavailable
+    Notifications = null;
   }
 }
 
@@ -37,7 +41,7 @@ export function usePushNotifications() {
   useEffect(() => {
     // In Expo SDK 53+, remote push notifications are not supported in Expo Go.
     // Gracefully bypass push notification registration when running in Expo Go.
-    if (isExpoGo) {
+    if (isExpoGo || !Notifications) {
       return;
     }
 
@@ -48,10 +52,12 @@ export function usePushNotifications() {
     registerForPushNotificationsAsync()
       .then((token) => {
         if (token && isMounted) {
+          console.log('[GirlApp PushNotifications] Token acquired:', token);
           setExpoPushToken(token);
           // Post push token to backend API
           apiClient
             .post('/users/push-token', { pushToken: token })
+            .then(() => console.log('[GirlApp PushNotifications] Token saved on backend successfully'))
             .catch((err) => console.log('Failed to save push token on backend:', err.message));
         }
       })
@@ -80,12 +86,8 @@ export function usePushNotifications() {
     return () => {
       isMounted = false;
       try {
-        if (notificationListener.current) {
-          Notifications.removeNotificationSubscription(notificationListener.current);
-        }
-        if (responseListener.current) {
-          Notifications.removeNotificationSubscription(responseListener.current);
-        }
+        notificationListener.current?.remove();
+        responseListener.current?.remove();
       } catch (e) {
         // Ignored
       }
@@ -96,15 +98,20 @@ export function usePushNotifications() {
 }
 
 async function registerForPushNotificationsAsync(): Promise<string | null> {
-  if (Platform.OS === 'web' || isExpoGo) return null;
+  if (Platform.OS === 'web' || isExpoGo || !Notifications) return null;
 
   try {
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('default', {
-        name: 'default',
+        name: 'Messages & Updates',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 250, 250],
         lightColor: '#ec4899',
+        sound: 'default',
+        enableLights: true,
+        enableVibrate: true,
+        showBadge: true,
+        lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
       });
     }
 
@@ -120,8 +127,12 @@ async function registerForPushNotificationsAsync(): Promise<string | null> {
         return null;
       }
 
-      const projectId = Constants?.expoConfig?.extra?.eas?.projectId || Constants?.easConfig?.projectId;
-      const tokenData = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
+      const projectId =
+        Constants?.expoConfig?.extra?.eas?.projectId ||
+        Constants?.easConfig?.projectId ||
+        '51147b79-8bac-4920-adbe-61482be7d3bc';
+      
+      const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
       return tokenData.data;
     } else {
       console.log('Must use physical device for Push Notifications');

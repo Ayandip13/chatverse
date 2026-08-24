@@ -5,7 +5,9 @@ export const useWalletSummary = () => {
   return useQuery({
     queryKey: ['walletSummary'],
     queryFn: fetchWalletSummary,
-    staleTime: 60000, // 1 minute
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 };
 

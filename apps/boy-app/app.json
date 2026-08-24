@@ -19,16 +19,21 @@
     },
     "android": {
       "softwareKeyboardLayoutMode": "resize",
-      "androidNavigationBar": {
-        "backgroundColor": "#111827",
-        "barStyle": "light-content"
-      },
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "POST_NOTIFICATIONS",
+        "RECORD_AUDIO",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ],
       "predictiveBackGestureEnabled": false,
       "package": "com.chatverse.boy"
     },
@@ -49,7 +54,15 @@
           "icon": "./assets/icon.png",
           "color": "#6366f1"
         }
-      ]
+      ],
+      [
+        "expo-navigation-bar",
+        {
+          "backgroundColor": "#111827",
+          "barStyle": "light-content"
+        }
+      ],
+      "expo-asset"
     ],
     "extra": {
       "eas": {

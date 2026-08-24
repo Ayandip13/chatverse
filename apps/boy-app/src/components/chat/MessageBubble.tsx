@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, Modal } from 'react-native';
-import { Reply, X } from 'lucide-react-native';
+import { Reply, X, Image as ImageIcon } from 'lucide-react-native';
 import { Message } from '../../api/messagingApi';
 import { MessageStatusTicks } from './MessageStatusTicks';
 import { getMediaUrl } from '../../utils/avatarUtil';
@@ -39,8 +39,20 @@ export function MessageBubble({ message, isOwnMessage, onReply }: MessageBubbleP
   }
 
   let imageUrl = '';
+  let imageCaption = '';
   if (isImage) {
-    imageUrl = rawContent.replace('[IMAGE]:', '').trim();
+    const payload = rawContent.replace('[IMAGE]:', '').trim();
+    if (payload.includes('[CAPTION]:')) {
+      const parts = payload.split('[CAPTION]:');
+      imageUrl = parts[0].trim();
+      imageCaption = parts[1]?.trim() || '';
+    } else if (payload.includes('\n')) {
+      const newlineIdx = payload.indexOf('\n');
+      imageUrl = payload.substring(0, newlineIdx).trim();
+      imageCaption = payload.substring(newlineIdx + 1).trim();
+    } else {
+      imageUrl = payload;
+    }
   }
 
   const resolvedImageUrl = getMediaUrl(imageUrl);
@@ -55,6 +67,8 @@ export function MessageBubble({ message, isOwnMessage, onReply }: MessageBubbleP
       actualBody = rawContent.substring(endQuoteIdx + 2);
     }
   }
+
+  const isQuotedImage = quotedText.startsWith('[IMAGE]:') || quotedText.toLowerCase() === 'photo';
 
   return (
     <View className={`mb-3 w-full flex-row ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
@@ -83,9 +97,20 @@ export function MessageBubble({ message, isOwnMessage, onReply }: MessageBubbleP
             <Text className={`text-xs font-bold ${isOwnMessage ? 'text-indigo-200' : 'text-indigo-600 dark:text-indigo-400'}`}>
               Replying to
             </Text>
-            <Text className={`text-xs italic mt-0.5 ${isOwnMessage ? 'text-indigo-100' : 'text-gray-600 dark:text-gray-300'}`} numberOfLines={2}>
-              "{quotedText}"
-            </Text>
+            {isQuotedImage ? (
+              <View className="flex-row items-center mt-0.5">
+                <View className="mr-1 items-center justify-center">
+                  <ImageIcon size={11} color={isOwnMessage ? '#c7d2fe' : '#6366f1'} />
+                </View>
+                <Text className={`text-xs italic font-medium ${isOwnMessage ? 'text-indigo-100' : 'text-indigo-600 dark:text-indigo-400'}`}>
+                  Photo
+                </Text>
+              </View>
+            ) : (
+              <Text className={`text-xs italic mt-0.5 ${isOwnMessage ? 'text-indigo-100' : 'text-gray-600 dark:text-gray-300'}`} numberOfLines={2}>
+                "{quotedText}"
+              </Text>
+            )}
           </View>
         )}
 
@@ -93,9 +118,16 @@ export function MessageBubble({ message, isOwnMessage, onReply }: MessageBubbleP
         {isVoice ? (
           <VoicePlayer audioUrl={voiceUrl} durationSeconds={voiceDuration} isOwnMessage={isOwnMessage} />
         ) : isImage ? (
-          <TouchableOpacity onPress={() => setImageModalUrl(resolvedImageUrl)} className="rounded-xl overflow-hidden mb-1">
-            <Image source={{ uri: resolvedImageUrl }} className="w-56 h-56 rounded-xl bg-gray-200" resizeMode="cover" />
-          </TouchableOpacity>
+          <View className="mb-1">
+            <TouchableOpacity onPress={() => setImageModalUrl(resolvedImageUrl)} className="rounded-2xl overflow-hidden">
+              <Image source={{ uri: resolvedImageUrl }} className="w-56 h-56 rounded-2xl bg-gray-200 dark:bg-gray-700" resizeMode="cover" />
+            </TouchableOpacity>
+            {!!imageCaption && (
+              <Text className={`text-sm mt-2 px-1 font-medium leading-snug ${isOwnMessage ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>
+                {imageCaption}
+              </Text>
+            )}
+          </View>
         ) : (
           /* Text / Emoji Message Body */
           <Text className={`text-base leading-relaxed ${isOwnMessage ? 'text-white font-medium' : 'text-gray-900 dark:text-gray-100'}`}>

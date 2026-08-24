@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { 
@@ -16,7 +17,8 @@ import {
   Sun,
   Moon
 } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
 import { useProfile } from '../../hooks/useUser';
@@ -28,13 +30,22 @@ import { Skeleton } from '../../components/ui/Skeleton';
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
+  const queryClient = useQueryClient();
   const authUser = useAuthStore(state => state.user);
   const logout = useAuthStore(state => state.logout);
-  const { data: profile, isLoading } = useProfile();
+  const { data: profile, isLoading, refetch: refetchProfile } = useProfile();
   
-  const { data: wallet } = useWalletSummary();
+  const { data: wallet, refetch: refetchWallet } = useWalletSummary();
   const { data: favorites } = useFavorites();
   const { data: recentChats } = useRecentChats();
+
+  useFocusEffect(
+    useCallback(() => {
+      refetchWallet();
+      refetchProfile();
+      queryClient.invalidateQueries({ queryKey: ['walletSummary'] });
+    }, [refetchWallet, refetchProfile, queryClient])
+  );
 
   // Prefer fetched profile over local authStore for latest stats
   const user = profile || authUser;

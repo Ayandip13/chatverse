@@ -9,6 +9,9 @@ interface PushMessagePayload {
   sound?: string;
   title: string;
   body: string;
+  channelId?: string;
+  priority?: 'default' | 'normal' | 'high';
+  _displayInForeground?: boolean;
   data?: Record<string, any>;
 }
 
@@ -27,14 +30,31 @@ class PushNotificationService {
       if (!user) return false;
 
       // 1. Record in-app notification in DB
-      await Notification.create({
+      const notifDoc = await Notification.create({
         userId: new Types.ObjectId(userId.toString()),
         title,
         body,
         status: NotificationStatus.UNREAD,
         type: data?.type || 'GENERAL',
-        actionUrl: data?.url || undefined,
-      }).catch((err) => logger.error(`In-app notification creation failed: ${err.message}`));
+        actionUrl: data?.chatId || data?.url || data?.requestId || undefined,
+      }).catch((err) => {
+        logger.error(`In-app notification creation failed: ${err.message}`);
+        return null;
+      });
+
+      // 1.1 Emit real-time notification socket event to user room
+      try {
+        const { getIO } = require('@/sockets');
+        const io = getIO();
+        if (io) {
+          if (notifDoc) {
+            io.to(`user:${userId.toString()}`).emit('notification:received', notifDoc);
+          }
+          io.to(`user:${userId.toString()}`).emit('notification:count_update');
+        }
+      } catch (socketErr) {
+        // Socket may not be initialized in certain script contexts
+      }
 
       // 2. Check if user enabled notifications and has a valid Expo push token
       if (!user.expoPushToken || user.notificationPreference === false) {
@@ -52,6 +72,9 @@ class PushNotificationService {
         sound: 'default',
         title,
         body,
+        channelId: 'default',
+        priority: 'high',
+        _displayInForeground: true,
         data: data || {},
       };
 

@@ -6,7 +6,8 @@ import {
   LogOut, MessageCircle, Clock, Check, X,
   Edit3, Coins, Lock, TrendingUp, ArrowDownToLine,
   ChevronRight, ShieldCheck, MessageCircleHeart,
-  Sparkles, Zap, Sun, Moon, Bell
+  Sparkles, Zap, Sun, Moon, Bell,
+  Image as ImageIcon, Mic, Reply
 } from 'lucide-react-native';
 import { theme } from '../../constants/theme';
 import { useNavigation } from '@react-navigation/native';
@@ -17,6 +18,7 @@ import { useThemeStore } from '../../store/themeStore';
 import { useWithdrawalSummary } from '../../hooks/useWithdrawals';
 import { useUnreadCount } from '../../hooks/useNotifications';
 import { getAvatarUrl } from '../../utils/avatarUtil';
+import { parseMessageContent } from '../../utils/messageUtil';
 
 export default function DashboardScreen() {
   const navigation = useNavigation<any>();
@@ -531,7 +533,7 @@ export default function DashboardScreen() {
                 const otherUser = chat.otherParticipant || (typeof chat.boyId === 'object' ? chat.boyId : undefined);
                 const isOtherOnline = otherUser?.isOnline;
                 const isActive = chat.status === 'ACTIVE';
-                const lastMsg = chat.lastMessage?.content || 'No messages yet';
+                const parsedMsg = parseMessageContent(chat.lastMessage?.content);
                 const timeStr = chat.updatedAt ? new Date(chat.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
 
                 return (
@@ -560,9 +562,42 @@ export default function DashboardScreen() {
                           {timeStr ? <Text className="text-[10px] text-slate-400 font-semibold">{timeStr}</Text> : null}
                         </View>
 
-                        <Text className="text-xs text-slate-500 dark:text-slate-400 mt-0.5" numberOfLines={1}>
-                          {lastMsg}
-                        </Text>
+                        {parsedMsg.type === 'EMPTY' ? (
+                          <Text className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 italic" numberOfLines={1}>
+                            No messages yet
+                          </Text>
+                        ) : parsedMsg.type === 'IMAGE' ? (
+                          <View className="flex-row items-center mt-0.5">
+                            <View className="mr-1 items-center justify-center">
+                              <ImageIcon size={13} color="#ec4899" />
+                            </View>
+                            <Text className="text-xs text-pink-600 dark:text-pink-400 font-semibold" numberOfLines={1}>
+                              Photo
+                            </Text>
+                          </View>
+                        ) : parsedMsg.type === 'VOICE' ? (
+                          <View className="flex-row items-center mt-0.5">
+                            <View className="mr-1 items-center justify-center">
+                              <Mic size={13} color="#ec4899" />
+                            </View>
+                            <Text className="text-xs text-pink-600 dark:text-pink-400 font-semibold" numberOfLines={1}>
+                              {parsedMsg.displayText}
+                            </Text>
+                          </View>
+                        ) : parsedMsg.type === 'REPLY' ? (
+                          <View className="flex-row items-center mt-0.5 flex-1">
+                            <View className="mr-1 items-center justify-center">
+                              <Reply size={13} color="#94a3b8" />
+                            </View>
+                            <Text className="text-xs text-slate-500 dark:text-slate-400 font-medium flex-1" numberOfLines={1}>
+                              {parsedMsg.displayText}
+                            </Text>
+                          </View>
+                        ) : (
+                          <Text className="text-xs text-slate-500 dark:text-slate-400 mt-0.5" numberOfLines={1}>
+                            {parsedMsg.displayText}
+                          </Text>
+                        )}
                       </View>
                     </View>
 

@@ -26,6 +26,48 @@ class ChatSessionService {
   private sessions = new Map<string, SessionState>();
 
   /**
+   * Immediately starts a continuous background session timer for an active chat
+   */
+  public async startSession(
+    chatId: string,
+    boyId: string,
+    girlId: string,
+    io: Server,
+    existingStartTime?: Date
+  ) {
+    let session = this.sessions.get(chatId);
+    const startedAt = existingStartTime || new Date();
+    const elapsed = Math.floor((Date.now() - startedAt.getTime()) / 1000);
+
+    if (!session) {
+      session = {
+        chatId,
+        boyId,
+        girlId,
+        boyJoined: true,
+        girlJoined: true,
+        startedAt,
+        elapsedSeconds: Math.max(0, elapsed),
+        boyDisconnectedAt: null,
+        girlDisconnectedAt: null,
+      };
+      this.sessions.set(chatId, session);
+    } else {
+      session.startedAt = startedAt;
+      session.elapsedSeconds = Math.max(0, elapsed);
+    }
+
+    await Chat.findByIdAndUpdate(chatId, { startTime: startedAt });
+    this.startSessionTimer(session, io);
+
+    io.to(`chat:${chatId}`).emit('chat:started', { 
+      chatId, 
+      startedAt,
+      elapsedSeconds: session.elapsedSeconds,
+    });
+  }
+
+  /**
    * Called when a participant joins the chat socket room
    */
   public async onParticipantJoined(chatId: string, userId: string, io: Server) {
@@ -35,9 +77,8 @@ class ChatSessionService {
       const chat = await Chat.findById(chatId);
       if (!chat || chat.status !== ChatStatus.ACTIVE) return;
 
-      const elapsed = chat.startTime 
-        ? Math.floor((Date.now() - new Date(chat.startTime).getTime()) / 1000)
-        : 0;
+      const startedAt = chat.startTime || new Date();
+      const elapsed = Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000);
 
       session = {
         chatId,
@@ -45,12 +86,13 @@ class ChatSessionService {
         girlId: chat.girlId.toString(),
         boyJoined: false,
         girlJoined: false,
-        startedAt: chat.startTime || null,
+        startedAt,
         elapsedSeconds: Math.max(0, elapsed),
         boyDisconnectedAt: null,
         girlDisconnectedAt: null,
       };
       this.sessions.set(chatId, session);
+      this.startSessionTimer(session, io);
     }
 
     const isBoy = userId === session.boyId;
@@ -70,30 +112,12 @@ class ChatSessionService {
       io.to(`chat:${chatId}`).emit('chat:participant_reconnected', { chatId, userId });
     }
 
-    // If session was already started, start timer if needed and broadcast current elapsed seconds
-    if (session.startedAt) {
-      this.startSessionTimer(session, io);
-      io.to(`chat:${chatId}`).emit('chat:timer_tick', {
-        chatId,
-        elapsedSeconds: session.elapsedSeconds,
-      });
-    }
-
-    // When both participants are connected in the room for the first time
-    if (!session.startedAt && session.boyJoined && session.girlJoined) {
-      session.startedAt = new Date();
-      session.elapsedSeconds = 0;
-      await Chat.findByIdAndUpdate(chatId, { startTime: session.startedAt });
-
-      logger.info(`Both participants present for chat ${chatId}. Starting continuous session timer...`);
-      io.to(`chat:${chatId}`).emit('chat:started', { 
-        chatId, 
-        startedAt: session.startedAt,
-        elapsedSeconds: 0,
-      });
-
-      this.startSessionTimer(session, io);
-    }
+    // Always ensure timer is ticking and broadcast current state
+    this.startSessionTimer(session, io);
+    io.to(`chat:${chatId}`).emit('chat:timer_tick', {
+      chatId,
+      elapsedSeconds: session.elapsedSeconds,
+    });
   }
 
   /**
@@ -302,13 +326,8 @@ class ChatSessionService {
 
     io.to(`chat:${chatId}`).emit('chat:participant_disconnected', { chatId, userId });
     
-    // Pause ticker if both participants have left
-    if (!session.boyJoined && !session.girlJoined) {
-      if (session.timerHandle) {
-        clearInterval(session.timerHandle);
-        session.timerHandle = undefined;
-      }
-    }
+    // Note: Active chat sessions continue continuous background billing on the server
+    // even if users browse outside the chat inbox until explicitly ended or coins reach 0.
   }
 
   /**

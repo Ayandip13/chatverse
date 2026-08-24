@@ -14,7 +14,10 @@ import { getAvatarUrl, getMediaUrl } from '../../utils/avatarUtil';
 import { Message } from '../../api/messagingApi';
 import { MessageStatusTicks } from '../../components/chat/MessageStatusTicks';
 import { VoicePlayer } from '../../components/chat/VoicePlayer';
+import { ImageEditorModal } from '../../components/chat/ImageEditorModal';
+import { WhatsAppEmojiPicker } from '../../components/chat/WhatsAppEmojiPicker';
 import { useAudioRecorder, RecordingPresets, setAudioModeAsync, requestRecordingPermissionsAsync } from 'expo-audio';
+import { parseMessageContent, formatQuoteExcerpt } from '../../utils/messageUtil';
 
 const QUICK_EMOJIS = ['❤️', '🔥', '👍', '😂', '😍', '🎉', '💯', '✨'];
 
@@ -42,6 +45,8 @@ export default function GirlChatScreen() {
   const [showEmojiBar, setShowEmojiBar] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState('');
+  const [editorImageUri, setEditorImageUri] = useState<string | null>(null);
+  const [showImageEditor, setShowImageEditor] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [viewingImageUrl, setViewingImageUrl] = useState<string | null>(null);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
@@ -61,30 +66,6 @@ export default function GirlChatScreen() {
   const timerRef = useRef<any>(null);
 
   const flatListRef = useRef<FlatList>(null);
-  const [localSeconds, setLocalSeconds] = useState(0);
-
-  useEffect(() => {
-    if (chatStats?.elapsedSeconds !== undefined) {
-      setLocalSeconds(chatStats.elapsedSeconds);
-    }
-  }, [chatStats?.elapsedSeconds]);
-
-  useEffect(() => {
-    if (chat?.status !== 'ACTIVE') return;
-
-    if (chat?.startTime) {
-      const elapsed = Math.floor((Date.now() - new Date(chat.startTime).getTime()) / 1000);
-      if (elapsed >= 0) {
-        setLocalSeconds(elapsed);
-      }
-    }
-
-    const interval = setInterval(() => {
-      setLocalSeconds((s) => s + 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [chat?.status, chat?.startTime]);
 
   useEffect(() => {
     return () => {
@@ -119,7 +100,7 @@ export default function GirlChatScreen() {
 
     let finalContent = inputMessage.trim();
     if (replyingTo) {
-      const quoteExcerpt = replyingTo.content.replace(/^\[(IMAGE|REPLY|VOICE):.*?\]:/, '').substring(0, 50);
+      const quoteExcerpt = formatQuoteExcerpt(replyingTo.content);
       finalContent = `[REPLY:${quoteExcerpt}]:${finalContent}`;
       setReplyingTo(null);
     }
@@ -231,35 +212,49 @@ export default function GirlChatScreen() {
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        setIsUploadingImage(true);
         setShowImageModal(false);
-        const uri = result.assets[0].uri;
-        const filename = uri.split('/').pop() || 'chat_image.jpg';
-        const match = /\.(\w+)$/.exec(filename);
-        const type = match ? `image/${match[1]}` : 'image/jpeg';
-
-        const formData = new FormData();
-        formData.append('file', {
-          uri,
-          name: filename,
-          type,
-        } as any);
-
-        const response = await apiClient.post('/chats/upload', formData, {
-          transformRequest: (data) => data,
-          headers: { 'Accept': 'application/json' },
-        });
-
-        const uploadedUrl = response.data?.data?.url;
-        if (uploadedUrl) {
-          sendMessage(id, `[IMAGE]:${uploadedUrl}`, Date.now().toString());
-        } else {
-          Alert.alert('Upload Failed', 'Could not retrieve uploaded image URL.');
-        }
+        setEditorImageUri(result.assets[0].uri);
+        setShowImageEditor(true);
       }
     } catch (error: any) {
-      console.error('Error picking/uploading chat image:', error);
-      Alert.alert('Error', error?.response?.data?.message || error.message || 'Failed to upload image from gallery');
+      console.error('Error picking chat image:', error);
+      Alert.alert('Error', error?.response?.data?.message || error.message || 'Failed to select image from gallery');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleSendEditedImage = async (finalUri: string, imageCaption: string) => {
+    try {
+      setIsUploadingImage(true);
+      const filename = finalUri.split('/').pop() || 'chat_image.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+      const formData = new FormData();
+      formData.append('file', {
+        uri: finalUri,
+        name: filename,
+        type,
+      } as any);
+
+      const response = await apiClient.post('/chats/upload', formData, {
+        transformRequest: (data) => data,
+        headers: { 'Accept': 'application/json' },
+      });
+
+      const uploadedUrl = response.data?.data?.url;
+      if (uploadedUrl) {
+        setShowImageEditor(false);
+        setEditorImageUri(null);
+        const payload = imageCaption ? `[IMAGE]:${uploadedUrl}\n${imageCaption}` : `[IMAGE]:${uploadedUrl}`;
+        sendMessage(id, payload, Date.now().toString());
+      } else {
+        Alert.alert('Upload Failed', 'Could not retrieve uploaded image URL.');
+      }
+    } catch (error: any) {
+      console.error('Error uploading chat image:', error);
+      Alert.alert('Error', error?.response?.data?.message || error.message || 'Failed to upload image');
     } finally {
       setIsUploadingImage(false);
     }
@@ -270,9 +265,11 @@ export default function GirlChatScreen() {
       Alert.alert('Invalid URL', 'Please enter a valid HTTP/HTTPS image URL.');
       return;
     }
-    sendMessage(id, `[IMAGE]:${imageUrlInput.trim()}`, Date.now().toString());
+    const url = imageUrlInput.trim();
     setImageUrlInput('');
     setShowImageModal(false);
+    setEditorImageUri(url);
+    setShowImageEditor(true);
   };
 
   const handleTextChange = (text: string) => {
@@ -302,9 +299,6 @@ export default function GirlChatScreen() {
     const secs = sec % 60;
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
-
-  const messagesBilled = chatStats?.messagesSent || chat.totalCost || 0;
-  const currentEarnings = messagesBilled; // 1 coin per message earned
 
   const otherUser = chat.otherParticipant || (typeof chat.boyId === 'object' ? chat.boyId : undefined);
 
@@ -343,27 +337,6 @@ export default function GirlChatScreen() {
           </TouchableOpacity>
         </View>
       </View>
-
-      {/* Live Earnings Banner */}
-      {chat.status === 'ACTIVE' && (
-        <View className="bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2.5 flex-row items-center justify-between shadow-sm">
-          <View className="flex-row items-center gap-2">
-            <Clock size={15} color="#ffffff" />
-            <Text className="text-white text-xs font-mono font-bold">
-              {formatTimer(localSeconds)}
-            </Text>
-            <Text className="text-emerald-100 text-[10px] font-medium">
-              (+1 coin/min)
-            </Text>
-          </View>
-          <View className="flex-row items-center bg-white/20 px-3 py-1 rounded-full border border-white/30">
-            <Coins size={13} color="#ffffff" className="mr-1" />
-            <Text className="text-white text-xs font-extrabold font-mono">
-              {currentEarnings} Coins Earned
-            </Text>
-          </View>
-        </View>
-      )}
 
         {/* Disconnect Reconnection Banner */}
         {disconnectState && (
@@ -404,7 +377,21 @@ export default function GirlChatScreen() {
             }
 
             let imageUrl = '';
-            if (isImage) imageUrl = rawContent.replace('[IMAGE]:', '').trim();
+            let imageCaption = '';
+            if (isImage) {
+              const payload = rawContent.replace('[IMAGE]:', '').trim();
+              if (payload.includes('[CAPTION]:')) {
+                const parts = payload.split('[CAPTION]:');
+                imageUrl = parts[0].trim();
+                imageCaption = parts[1]?.trim() || '';
+              } else if (payload.includes('\n')) {
+                const newlineIdx = payload.indexOf('\n');
+                imageUrl = payload.substring(0, newlineIdx).trim();
+                imageCaption = payload.substring(newlineIdx + 1).trim();
+              } else {
+                imageUrl = payload;
+              }
+            }
             const resolvedImageUrl = getMediaUrl(imageUrl);
 
             let quotedText = '';
@@ -439,9 +426,20 @@ export default function GirlChatScreen() {
                       isOwn ? 'bg-rose-600/60 border-rose-200' : 'bg-slate-100 dark:bg-slate-700/60 border-rose-500'
                     }`}>
                       <Text className={`text-xs font-bold ${isOwn ? 'text-rose-100' : 'text-rose-600'}`}>Replying to</Text>
-                      <Text className={`text-xs italic mt-0.5 ${isOwn ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`} numberOfLines={2}>
-                        "{quotedText}"
-                      </Text>
+                      {quotedText.startsWith('[IMAGE]:') || quotedText.toLowerCase() === 'photo' ? (
+                        <View className="flex-row items-center mt-0.5">
+                          <View className="mr-1 items-center justify-center">
+                            <ImageIcon size={11} color={isOwn ? '#ffe4e6' : '#ec4899'} />
+                          </View>
+                          <Text className={`text-xs italic font-medium ${isOwn ? 'text-rose-100' : 'text-rose-600 dark:text-rose-400'}`}>
+                            Photo
+                          </Text>
+                        </View>
+                      ) : (
+                        <Text className={`text-xs italic mt-0.5 ${isOwn ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`} numberOfLines={2}>
+                          "{quotedText}"
+                        </Text>
+                      )}
                     </View>
                   )}
 
@@ -449,9 +447,16 @@ export default function GirlChatScreen() {
                   {isVoice ? (
                     <VoicePlayer audioUrl={voiceUrl} durationSeconds={voiceDuration} isOwnMessage={isOwn} />
                   ) : isImage ? (
-                    <TouchableOpacity onPress={() => setViewingImageUrl(resolvedImageUrl)} className="rounded-xl overflow-hidden mb-1">
-                      <Image source={{ uri: resolvedImageUrl }} className="w-56 h-56 rounded-xl bg-slate-200" resizeMode="cover" />
-                    </TouchableOpacity>
+                    <View className="mb-1">
+                      <TouchableOpacity onPress={() => setViewingImageUrl(resolvedImageUrl)} className="rounded-2xl overflow-hidden">
+                        <Image source={{ uri: resolvedImageUrl }} className="w-56 h-56 rounded-2xl bg-slate-200 dark:bg-slate-700" resizeMode="cover" />
+                      </TouchableOpacity>
+                      {!!imageCaption && (
+                        <Text className={`text-sm mt-2 px-1 font-medium leading-snug ${isOwn ? 'text-white' : 'text-slate-800 dark:text-slate-100'}`}>
+                          {imageCaption}
+                        </Text>
+                      )}
+                    </View>
                   ) : (
                     <Text className={`text-sm leading-relaxed ${isOwn ? 'text-white font-medium' : 'text-slate-800 dark:text-slate-100'}`}>
                       {actualBody}
@@ -491,33 +496,59 @@ export default function GirlChatScreen() {
         />
 
         {/* Quote Reply Preview Banner */}
-        {replyingTo && (
-          <View className="px-4 py-2 bg-rose-50 dark:bg-rose-900/30 flex-row items-center justify-between border-t border-rose-200 dark:border-rose-800">
-            <View className="flex-row items-center gap-2 flex-1">
-              <CornerDownRight size={16} color="#e11d48" />
-              <View className="flex-1">
-                <Text className="text-xs font-bold text-rose-600 dark:text-rose-400">Replying to Message</Text>
-                <Text className="text-xs text-slate-600 dark:text-slate-300" numberOfLines={1}>
-                  {replyingTo.content}
-                </Text>
+        {replyingTo && (() => {
+          const parsedReplying = parseMessageContent(replyingTo.content);
+          return (
+            <View className="px-4 py-2 bg-rose-50 dark:bg-rose-900/30 flex-row items-center justify-between border-t border-rose-200 dark:border-rose-800">
+              <View className="flex-row items-center gap-2 flex-1">
+                <CornerDownRight size={16} color="#e11d48" />
+                <View className="flex-1">
+                  <Text className="text-xs font-bold text-rose-600 dark:text-rose-400">Replying to Message</Text>
+                  {parsedReplying.type === 'IMAGE' ? (
+                    <View className="flex-row items-center mt-0.5">
+                      <View className="mr-1 items-center justify-center">
+                        <ImageIcon size={12} color="#f43f5e" />
+                      </View>
+                      <Text className="text-xs text-rose-700 dark:text-rose-300 font-medium" numberOfLines={1}>
+                        Photo
+                      </Text>
+                    </View>
+                  ) : parsedReplying.type === 'VOICE' ? (
+                    <View className="flex-row items-center mt-0.5">
+                      <View className="mr-1 items-center justify-center">
+                        <Mic size={12} color="#f43f5e" />
+                      </View>
+                      <Text className="text-xs text-rose-700 dark:text-rose-300 font-medium" numberOfLines={1}>
+                        {parsedReplying.displayText}
+                      </Text>
+                    </View>
+                  ) : (
+                    <Text className="text-xs text-slate-600 dark:text-slate-300 mt-0.5" numberOfLines={1}>
+                      {parsedReplying.displayText}
+                    </Text>
+                  )}
+                </View>
               </View>
-            </View>
 
-            <TouchableOpacity onPress={() => setReplyingTo(null)} className="p-1 rounded-full bg-slate-200 dark:bg-slate-700">
-              <X size={14} color="#64748b" />
-            </TouchableOpacity>
-          </View>
-        )}
+              <TouchableOpacity onPress={() => setReplyingTo(null)} className="p-1 rounded-full bg-slate-200 dark:bg-slate-700">
+                <X size={14} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+          );
+        })()}
 
         {/* Quick Emoji Bar */}
         {showEmojiBar && (
-          <View className="px-4 py-2 bg-slate-100 dark:bg-slate-800 flex-row justify-around border-t border-slate-200 dark:border-slate-700">
-            {QUICK_EMOJIS.map((emoji, i) => (
-              <TouchableOpacity key={i} onPress={() => setInputMessage((prev) => prev + emoji)} className="p-1">
-                <Text className="text-xl">{emoji}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <WhatsAppEmojiPicker
+            onSelectEmoji={(emoji) => {
+              setInputMessage((prev) => prev + emoji);
+              emitTyping(id, true);
+            }}
+            onDelete={() => {
+              setInputMessage((prev) => Array.from(prev).slice(0, -1).join(''));
+            }}
+            themeColor="#ec4899"
+          />
         )}
 
         {/* Bottom Input Area with Safe Area Background */}
@@ -708,6 +739,19 @@ export default function GirlChatScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* WhatsApp-style Image Editor & Preview Modal */}
+      <ImageEditorModal
+        visible={showImageEditor}
+        imageUri={editorImageUri}
+        onClose={() => {
+          setShowImageEditor(false);
+          setEditorImageUri(null);
+        }}
+        onSend={handleSendEditedImage}
+        isUploading={isUploadingImage}
+        themeColor="#ec4899"
+      />
     </Animated.View>
   );
 }

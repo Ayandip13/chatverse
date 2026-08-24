@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { ScrollView, RefreshControl, View, FlatList } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQueryClient } from '@tanstack/react-query';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import { HomeHeader } from '../../components/home/HomeHeader';
 import { WalletCard } from '../../components/home/WalletCard';
@@ -27,10 +27,18 @@ export default function HomeScreen() {
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
 
-  const { data: wallet, isLoading: isLoadingWallet } = useWalletSummary();
+  const { data: wallet, isLoading: isLoadingWallet, refetch: refetchWallet } = useWalletSummary();
   const { data: onlineGirls, isLoading: isLoadingOnline } = useOnlineGirls();
   const { data: recommendedGirls, isLoading: isLoadingRec } = useRecommendedGirls();
   const { data: recentChats } = useRecentChats();
+
+  // Automatically fetch fresh balance whenever screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      refetchWallet();
+      queryClient.invalidateQueries({ queryKey: ['walletSummary'] });
+    }, [refetchWallet, queryClient])
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

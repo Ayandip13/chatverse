@@ -3,6 +3,7 @@ import { WithdrawStatus, TransactionType, Role, GirlStatus, NotificationStatus }
 import { ApiError } from '@/utils/ApiError.util';
 import { STATUS_CODES } from '@/constants/statusCodes.constant';
 import { Types } from 'mongoose';
+import { pushNotificationService } from '@/services/pushNotification.service';
 import logger from '@/config/logger.config';
 
 export class WithdrawalService {
@@ -95,13 +96,12 @@ export class WithdrawalService {
     });
 
     // Create Notification
-    await Notification.create({
-      userId: new Types.ObjectId(userId),
-      title: 'Withdrawal Requested',
-      body: `Your request for ₹${data.amount} has been submitted for admin review.`,
-      type: 'WITHDRAWAL_REQUESTED',
-      status: NotificationStatus.UNREAD,
-    });
+    pushNotificationService.sendPushNotification(
+      userId,
+      'Withdrawal Requested 💸',
+      `Your request for ₹${data.amount} has been submitted for admin review.`,
+      { type: 'WITHDRAWAL' }
+    ).catch(() => {});
 
     logger.info(`User ${userId} created withdrawal request ${withdrawal._id} for ₹${data.amount}`);
     return withdrawal;
@@ -213,13 +213,12 @@ export class WithdrawalService {
     if (notes) withdrawal.notes = notes;
     await withdrawal.save();
 
-    await Notification.create({
-      userId: withdrawal.userId,
-      title: 'Withdrawal Approved',
-      body: `Your request for ₹${withdrawal.amount} has been approved and is queued for payout transfer.`,
-      type: 'WITHDRAWAL_APPROVED',
-      status: NotificationStatus.UNREAD,
-    });
+    pushNotificationService.sendPushNotification(
+      withdrawal.userId.toString(),
+      'Withdrawal Approved! 🎉',
+      `Your request for ₹${withdrawal.amount} has been approved and is queued for payout transfer.`,
+      { type: 'WITHDRAWAL' }
+    ).catch(() => {});
 
     logger.info(`Admin ${adminId} approved withdrawal ${requestId}`);
     return withdrawal;
@@ -271,13 +270,12 @@ export class WithdrawalService {
       });
     }
 
-    await Notification.create({
-      userId: withdrawal.userId,
-      title: 'Withdrawal Rejected',
-      body: `Your request for ₹${withdrawal.amount} was rejected: ${reason}`,
-      type: 'WITHDRAWAL_REJECTED',
-      status: NotificationStatus.UNREAD,
-    });
+    pushNotificationService.sendPushNotification(
+      withdrawal.userId.toString(),
+      'Withdrawal Rejected ⚠️',
+      `Your request for ₹${withdrawal.amount} was rejected: ${reason}`,
+      { type: 'WITHDRAWAL' }
+    ).catch(() => {});
 
     logger.info(`Admin ${adminId} rejected withdrawal ${requestId} for reason: ${reason}`);
     return withdrawal;
@@ -322,13 +320,12 @@ export class WithdrawalService {
       { $inc: { lifetimeWithdraw: withdrawal.amount } }
     );
 
-    await Notification.create({
-      userId: withdrawal.userId,
-      title: 'Payout Completed',
-      body: `₹${withdrawal.amount} has been successfully transferred to your account. Ref: ${withdrawal.transactionReference}`,
-      type: 'WITHDRAWAL_COMPLETED',
-      status: NotificationStatus.UNREAD,
-    });
+    pushNotificationService.sendPushNotification(
+      withdrawal.userId.toString(),
+      'Payout Completed! 💰',
+      `₹${withdrawal.amount} has been successfully transferred to your account. Ref: ${withdrawal.transactionReference}`,
+      { type: 'WITHDRAWAL' }
+    ).catch(() => {});
 
     logger.info(`Admin ${adminId} marked withdrawal ${requestId} paid with ref ${withdrawal.transactionReference}`);
     return withdrawal;

@@ -3,6 +3,7 @@ import { View, FlatList, ActivityIndicator, Text, Platform, Modal, TouchableOpac
 import Animated, { useAnimatedKeyboard, useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useQueryClient } from '@tanstack/react-query';
 import { AppStackParamList } from '../../navigation/types';
 import { useAuthStore } from '../../store/authStore';
 import { useChatDetails, useChatMessages } from '../../hooks/useMessaging';
@@ -24,6 +25,7 @@ export default function ChatScreen() {
   const route = useRoute<RouteProp<AppStackParamList, 'ChatScreen'>>();
   const { id } = route.params;
   const navigation = useNavigation<any>();
+  const queryClient = useQueryClient();
   const userId = useAuthStore(state => state.user?._id);
   const { data: chat, isLoading: isChatLoading, isError } = useChatDetails(id);
   
@@ -106,6 +108,8 @@ export default function ChatScreen() {
   };
 
   const handleCloseSummary = () => {
+    queryClient.invalidateQueries({ queryKey: ['walletSummary'] });
+    queryClient.invalidateQueries({ queryKey: ['chats'] });
     navigation.replace('Home');
   };
 

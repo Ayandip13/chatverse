@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../store/authStore';
 import { getSocketBaseUrl } from '../config/backendConfig';
 import { refreshAccessToken } from '../api/apiClient';
@@ -27,6 +28,7 @@ interface SocketProviderProps {
 export const SocketProvider = ({ children }: SocketProviderProps) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const queryClient = useQueryClient();
   const { accessToken, isAuthenticated } = useAuthStore();
   const isRefreshingAuth = useRef(false);
 
@@ -54,6 +56,41 @@ export const SocketProvider = ({ children }: SocketProviderProps) => {
     newSocket.on('connect', () => {
       setIsConnected(true);
       isRefreshingAuth.current = false;
+    });
+
+    // Real-time Global Wallet Sync
+    newSocket.on('wallet:update', (payload: any) => {
+      console.log('[SocketProvider] wallet:update event received:', payload);
+      const newBal = payload.newBalance !== undefined ? payload.newBalance : payload.balance;
+      if (newBal !== undefined) {
+        queryClient.setQueryData(['walletSummary'], (old: any) =>
+          old ? { ...old, currentBalance: newBal } : { currentBalance: newBal }
+        );
+      }
+      queryClient.invalidateQueries({ queryKey: ['walletSummary'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    });
+
+    newSocket.on('chat:stats_update', (payload: any) => {
+      if (payload?.remainingCoins !== undefined) {
+        queryClient.setQueryData(['walletSummary'], (old: any) =>
+          old ? { ...old, currentBalance: payload.remainingCoins } : { currentBalance: payload.remainingCoins }
+        );
+        queryClient.invalidateQueries({ queryKey: ['walletSummary'] });
+      }
+    });
+
+    // Real-time In-App Notifications Sync
+    newSocket.on('notification:received', () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['unreadCount'] });
+      queryClient.invalidateQueries({ queryKey: ['unreadNotificationsCount'] });
+    });
+
+    newSocket.on('notification:count_update', () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['unreadCount'] });
+      queryClient.invalidateQueries({ queryKey: ['unreadNotificationsCount'] });
     });
 
     newSocket.on('disconnect', () => setIsConnected(false));

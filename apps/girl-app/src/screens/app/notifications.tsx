@@ -30,7 +30,27 @@ export default function NotificationsScreen() {
   };
 
   const getNotificationMessage = (item: Notification) => {
-    return item.body || item.message || 'No additional details provided.';
+    let msg = item.body || item.message || 'No additional details provided.';
+    if (msg.startsWith('[IMAGE]:')) {
+      const payload = msg.replace('[IMAGE]:', '').trim();
+      let caption = '';
+      if (payload.includes('[CAPTION]:')) {
+        caption = payload.split('[CAPTION]:')[1]?.trim() || '';
+      } else if (payload.includes('\n')) {
+        caption = payload.substring(payload.indexOf('\n') + 1).trim();
+      }
+      return caption ? `📷 ${caption}` : '📷 Sent a photo';
+    }
+    if (msg.startsWith('[VOICE')) {
+      const match = /^\[VOICE(?::(\d+))?\]:/.exec(msg.trim());
+      const duration = match && match[1] ? parseInt(match[1], 10) : 0;
+      return duration > 0 ? `🎤 Voice message (${duration}s)` : '🎤 Sent a voice message';
+    }
+    if (msg.startsWith('[REPLY:')) {
+      const endQuoteIdx = msg.indexOf(']:');
+      if (endQuoteIdx !== -1) return `↩️ ${msg.substring(endQuoteIdx + 2)}`;
+    }
+    return msg;
   };
 
   const handleNotificationClick = (item: Notification) => {

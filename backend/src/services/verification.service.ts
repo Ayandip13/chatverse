@@ -70,13 +70,13 @@ class VerificationService {
     }
 
     try {
-      await notificationRepository.create({
-        userId: user._id,
-        title: notifTitle,
-        body: notifBody,
-        status: NotificationStatus.UNREAD,
-        type: 'VERIFICATION_UPDATE',
-      });
+      const { pushNotificationService } = require('./pushNotification.service');
+      await pushNotificationService.sendPushNotification(
+        user._id,
+        notifTitle,
+        notifBody,
+        { type: 'VERIFICATION' }
+      );
     } catch (notifErr) {
       console.warn('Failed to create verification update notification:', notifErr);
     }

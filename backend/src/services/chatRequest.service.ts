@@ -141,6 +141,10 @@ class ChatRequestService {
       requestId
     );
 
+    const startTime = new Date();
+    const { Chat } = require('@/models');
+    await Chat.findByIdAndUpdate(activeChat._id, { startTime });
+
     const io = getSocketIO();
     if (io) {
       const acceptedPayload = {
@@ -154,6 +158,16 @@ class ChatRequestService {
       io.to(`user:${receiverId}`).emit('chat_request:accepted', acceptedPayload);
       io.to(`user:${request.senderId.toString()}`).emit('chat:started', { chatId: activeChat._id.toString() });
       io.to(`user:${receiverId}`).emit('chat:started', { chatId: activeChat._id.toString() });
+
+      // Start continuous background 1-coin/min deduction timer immediately
+      const { chatSessionService } = require('./chatSession.service');
+      await chatSessionService.startSession(
+        activeChat._id.toString(),
+        request.senderId.toString(),
+        receiverId,
+        io,
+        startTime
+      );
     }
 
     // Trigger push notification to Boy

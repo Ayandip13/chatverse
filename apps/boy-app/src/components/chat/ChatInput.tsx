@@ -22,6 +22,9 @@ import { useAudioRecorder, RecordingPresets, setAudioModeAsync, requestRecording
 import * as ImagePicker from 'expo-image-picker';
 import apiClient from '../../api/apiClient';
 import { Message } from '../../api/messagingApi';
+import { parseMessageContent, formatQuoteExcerpt } from '../../utils/messageUtil';
+import { ImageEditorModal } from './ImageEditorModal';
+import { WhatsAppEmojiPicker } from './WhatsAppEmojiPicker';
 
 const QUICK_EMOJIS = [
   '❤️',
@@ -39,6 +42,12 @@ const QUICK_EMOJIS = [
   '😎',
   '🤔',
   '😊',
+  '😘',
+  '💋',
+  '🌹',
+  '🥂',
+  '💎',
+  '👑',
 ];
 
 interface ChatInputProps {
@@ -60,6 +69,8 @@ export function ChatInput({
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [imageUrlInput, setImageUrlInput] = useState('');
+  const [editorImageUri, setEditorImageUri] = useState<string | null>(null);
+  const [showImageEditor, setShowImageEditor] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
   // Voice recording state
@@ -86,9 +97,7 @@ export function ChatInput({
     let finalContent = text.trim();
 
     if (replyingTo) {
-      const quoteExcerpt = replyingTo.content
-        .replace(/^\[(IMAGE|REPLY|VOICE):.*?\]:/, '')
-        .substring(0, 50);
+      const quoteExcerpt = formatQuoteExcerpt(replyingTo.content);
 
       finalContent = `[REPLY:${quoteExcerpt}]:${finalContent}`;
 
@@ -202,35 +211,47 @@ export function ChatInput({
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        setIsUploading(true);
         setShowImageModal(false);
-        const uri = result.assets[0].uri;
-        const filename = uri.split('/').pop() || 'chat_image.jpg';
-        const match = /\.(\w+)$/.exec(filename);
-        const type = match ? `image/${match[1]}` : 'image/jpeg';
-
-        const formData = new FormData();
-        formData.append('file', {
-          uri,
-          name: filename,
-          type,
-        } as any);
-
-        const response = await apiClient.post('/chats/upload', formData, {
-          transformRequest: (data) => data,
-          headers: { 'Accept': 'application/json' },
-        });
-
-        const uploadedUrl = response.data?.data?.url;
-        if (uploadedUrl) {
-          onSend(`[IMAGE]:${uploadedUrl}`);
-        } else {
-          Alert.alert('Upload Failed', 'Could not retrieve uploaded image URL.');
-        }
+        setEditorImageUri(result.assets[0].uri);
+        setShowImageEditor(true);
       }
     } catch (error: any) {
       console.error('Error picking/uploading chat image:', error);
       Alert.alert('Error', error?.response?.data?.message || error.message || 'Failed to upload image from gallery');
+    }
+  };
+
+  const handleSendEditedImage = async (finalUri: string, imageCaption: string) => {
+    try {
+      setIsUploading(true);
+      const filename = finalUri.split('/').pop() || 'chat_image.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+      const formData = new FormData();
+      formData.append('file', {
+        uri: finalUri,
+        name: filename,
+        type,
+      } as any);
+
+      const response = await apiClient.post('/chats/upload', formData, {
+        transformRequest: (data) => data,
+        headers: { 'Accept': 'application/json' },
+      });
+
+      const uploadedUrl = response.data?.data?.url;
+      if (uploadedUrl) {
+        setShowImageEditor(false);
+        setEditorImageUri(null);
+        const payload = imageCaption ? `[IMAGE]:${uploadedUrl}\n${imageCaption}` : `[IMAGE]:${uploadedUrl}`;
+        onSend(payload);
+      } else {
+        Alert.alert('Upload Failed', 'Could not retrieve uploaded image URL.');
+      }
+    } catch (error: any) {
+      console.error('Error uploading chat image:', error);
+      Alert.alert('Error', error?.response?.data?.message || error.message || 'Failed to upload image');
     } finally {
       setIsUploading(false);
     }
@@ -245,9 +266,11 @@ export function ChatInput({
       return;
     }
 
-    onSend(`[IMAGE]:${imageUrlInput.trim()}`);
+    const url = imageUrlInput.trim();
     setImageUrlInput('');
     setShowImageModal(false);
+    setEditorImageUri(url);
+    setShowImageEditor(true);
   };
 
   const addEmoji = (emoji: string) => {
@@ -261,6 +284,8 @@ export function ChatInput({
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
+  const parsedReplying = replyingTo ? parseMessageContent(replyingTo.content) : null;
+
   return (
     <View 
       className="bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800"
@@ -268,10 +293,7 @@ export function ChatInput({
     >
       {replyingTo && (
         <View
-          className="px-4 py-2 bg-indigo-50 flex-row items-center justify-between border-b border-indigo-100 dark:border-indigo-800"
-          style={{
-            backgroundColor: 'rgba(49,46,129,0.3)',
-          }}
+          className="px-4 py-2 bg-indigo-50 dark:bg-indigo-950/40 flex-row items-center justify-between border-b border-indigo-100 dark:border-indigo-900/40"
         >
           <View className="flex-row items-center gap-2 flex-1">
             <CornerDownRight size={16} color="#6366f1" />
@@ -281,12 +303,32 @@ export function ChatInput({
                 Replying to Message
               </Text>
 
-              <Text
-                className="text-xs text-gray-600 dark:text-gray-300"
-                numberOfLines={1}
-              >
-                {replyingTo.content}
-              </Text>
+              {parsedReplying?.type === 'IMAGE' ? (
+                <View className="flex-row items-center mt-0.5">
+                  <View className="mr-1 items-center justify-center">
+                    <ImageIcon size={12} color="#818cf8" />
+                  </View>
+                  <Text className="text-xs text-indigo-700 dark:text-indigo-300 font-medium" numberOfLines={1}>
+                    Photo
+                  </Text>
+                </View>
+              ) : parsedReplying?.type === 'VOICE' ? (
+                <View className="flex-row items-center mt-0.5">
+                  <View className="mr-1 items-center justify-center">
+                    <Mic size={12} color="#818cf8" />
+                  </View>
+                  <Text className="text-xs text-indigo-700 dark:text-indigo-300 font-medium" numberOfLines={1}>
+                    {parsedReplying.displayText}
+                  </Text>
+                </View>
+              ) : (
+                <Text
+                  className="text-xs text-gray-600 dark:text-gray-300 mt-0.5"
+                  numberOfLines={1}
+                >
+                  {parsedReplying?.displayText}
+                </Text>
+              )}
             </View>
           </View>
 
@@ -302,17 +344,13 @@ export function ChatInput({
       )}
 
       {showEmojiPicker && (
-        <View className="px-4 py-2 bg-gray-50 dark:bg-gray-800 flex-row justify-around border-b border-gray-100 dark:border-gray-700">
-          {QUICK_EMOJIS.map((emoji, i) => (
-            <TouchableOpacity
-              key={i}
-              onPress={() => addEmoji(emoji)}
-              className="p-1"
-            >
-              <Text className="text-xl">{emoji}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <WhatsAppEmojiPicker
+          onSelectEmoji={addEmoji}
+          onDelete={() => {
+            setText((prev) => Array.from(prev).slice(0, -1).join(''));
+          }}
+          themeColor="#6366f1"
+        />
       )}
 
       {isRecording ? (
@@ -498,6 +536,19 @@ export function ChatInput({
           </View>
         </View>
       </Modal>
+
+      {/* WhatsApp-style Image Editor & Preview Modal */}
+      <ImageEditorModal
+        visible={showImageEditor}
+        imageUri={editorImageUri}
+        onClose={() => {
+          setShowImageEditor(false);
+          setEditorImageUri(null);
+        }}
+        onSend={handleSendEditedImage}
+        isUploading={isUploading}
+        themeColor="#6366f1"
+      />
     </View>
   );
 }

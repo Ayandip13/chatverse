@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../store/authStore';
 import { getSocketBaseUrl } from '../config/backendConfig';
 import { refreshAccessToken } from '../api/apiClient';
@@ -27,6 +28,7 @@ interface SocketProviderProps {
 export const SocketProvider = ({ children }: SocketProviderProps) => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const queryClient = useQueryClient();
   const { accessToken, isAuthenticated, user } = useAuthStore();
   const isRefreshingAuth = useRef(false);
 
@@ -57,6 +59,26 @@ export const SocketProvider = ({ children }: SocketProviderProps) => {
     newSocket.on('connect', () => {
       setIsConnected(true);
       isRefreshingAuth.current = false;
+    });
+
+    // Real-time Global Wallet Sync
+    newSocket.on('wallet:update', (payload: any) => {
+      console.log('[GirlSocketProvider] wallet:update received:', payload);
+      queryClient.invalidateQueries({ queryKey: ['walletSummary'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    });
+
+    // Real-time In-App Notifications Sync
+    newSocket.on('notification:received', () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['unreadCount'] });
+      queryClient.invalidateQueries({ queryKey: ['unreadNotificationsCount'] });
+    });
+
+    newSocket.on('notification:count_update', () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['unreadCount'] });
+      queryClient.invalidateQueries({ queryKey: ['unreadNotificationsCount'] });
     });
 
     newSocket.on('disconnect', () => setIsConnected(false));

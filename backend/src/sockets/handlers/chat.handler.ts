@@ -131,11 +131,34 @@ export const registerChatHandlers = (io: Server, socket: AuthenticatedSocket) =>
           const recipientId = chatObj.boyId.toString() === userId ? chatObj.girlId.toString() : chatObj.boyId.toString();
           const senderUser = await User.findById(userId).lean();
           const senderName = senderUser?.name || 'Someone';
+          let notificationBody = content;
+          if (content.startsWith('[IMAGE]:')) {
+            const payload = content.replace('[IMAGE]:', '').trim();
+            let caption = '';
+            if (payload.includes('[CAPTION]:')) {
+              caption = payload.split('[CAPTION]:')[1]?.trim() || '';
+            } else if (payload.includes('\n')) {
+              caption = payload.substring(payload.indexOf('\n') + 1).trim();
+            }
+            notificationBody = caption ? `📷 Photo: ${caption}` : '📷 Sent a photo';
+          } else if (content.startsWith('[VOICE')) {
+            const match = /^\[VOICE(?::(\d+))?\]:/.exec(content.trim());
+            const duration = match && match[1] ? parseInt(match[1], 10) : 0;
+            notificationBody = duration > 0 ? `🎤 Voice message (${duration}s)` : '🎤 Sent a voice message';
+          } else if (content.startsWith('[REPLY:')) {
+            const endQuoteIdx = content.indexOf(']:');
+            notificationBody = endQuoteIdx !== -1 ? `↩️ ${content.substring(endQuoteIdx + 2)}` : content;
+          }
+
+          if (notificationBody.length > 80) {
+            notificationBody = `${notificationBody.substring(0, 77)}...`;
+          }
+
           pushNotificationService.sendPushNotification(
             recipientId,
-            `New message from ${senderName} 💬`,
-            content.length > 50 ? `${content.substring(0, 50)}...` : content,
-            { type: 'CHAT_MESSAGE', chatId }
+            `${senderName} 💬`,
+            notificationBody,
+            { type: 'CHAT', chatId }
           ).catch((err) => logger.error(`Message push failed: ${err.message}`));
         }
       }

@@ -3,10 +3,12 @@ import { useNavigation } from '@react-navigation/native';
 import { ChatSummary } from '../../api/homeApi';
 import { formatRelativeTime } from '../../utils/date';
 import { getAvatarUrl } from '../../utils/avatarUtil';
-import { ShieldCheck } from 'lucide-react-native';
+import { ShieldCheck, Image as ImageIcon, Mic, Reply } from 'lucide-react-native';
+import { parseMessageContent } from '../../utils/messageUtil';
 
 export function RecentChatCard({ chat }: { chat: ChatSummary }) {
   const navigation = useNavigation<any>();
+  const parsedMsg = parseMessageContent(chat.lastMessage?.content);
   
   return (
     <TouchableOpacity 
@@ -42,9 +44,43 @@ export function RecentChatCard({ chat }: { chat: ChatSummary }) {
             {chat.lastMessage?.createdAt ? formatRelativeTime(chat.lastMessage.createdAt) : ''}
           </Text>
         </View>
-        <Text className="text-xs text-gray-500 dark:text-gray-400 font-medium" numberOfLines={1}>
-          {chat.lastMessage?.content || 'Tap to start conversation'}
-        </Text>
+
+        {parsedMsg.type === 'EMPTY' ? (
+          <Text className="text-xs text-gray-400 dark:text-gray-500 font-medium italic" numberOfLines={1}>
+            Tap to start conversation
+          </Text>
+        ) : parsedMsg.type === 'IMAGE' ? (
+          <View className="flex-row items-center">
+            <View className="mr-1 items-center justify-center">
+              <ImageIcon size={13} color="#6366f1" />
+            </View>
+            <Text className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold" numberOfLines={1}>
+              Photo
+            </Text>
+          </View>
+        ) : parsedMsg.type === 'VOICE' ? (
+          <View className="flex-row items-center">
+            <View className="mr-1 items-center justify-center">
+              <Mic size={13} color="#6366f1" />
+            </View>
+            <Text className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold" numberOfLines={1}>
+              {parsedMsg.displayText}
+            </Text>
+          </View>
+        ) : parsedMsg.type === 'REPLY' ? (
+          <View className="flex-row items-center flex-1">
+            <View className="mr-1 items-center justify-center">
+              <Reply size={13} color="#6b7280" />
+            </View>
+            <Text className="text-xs text-gray-500 dark:text-gray-400 font-medium flex-1" numberOfLines={1}>
+              {parsedMsg.displayText}
+            </Text>
+          </View>
+        ) : (
+          <Text className="text-xs text-gray-500 dark:text-gray-400 font-medium" numberOfLines={1}>
+            {parsedMsg.displayText}
+          </Text>
+        )}
       </View>
 
       {chat.unreadCount > 0 && (

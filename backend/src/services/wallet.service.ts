@@ -73,6 +73,15 @@ class WalletService {
       referenceId: refId,
     });
 
+    // Send push notification & in-app notification
+    const { pushNotificationService } = require('./pushNotification.service');
+    pushNotificationService.sendPushNotification(
+      userId,
+      '💰 Recharge Successful!',
+      `₹${coinsToCredit} added successfully (${coinsToCredit} coins credited to your wallet).`,
+      { type: 'WALLET', amount: coinsToCredit }
+    ).catch(() => {});
+
     return transaction;
   }
 
